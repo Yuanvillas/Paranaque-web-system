@@ -1,0 +1,5 @@
+# Ignore backend
+backend/
+
+# Include public files
+!public/

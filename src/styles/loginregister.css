@@ -1,0 +1,152 @@
+/* Full height setup */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Left image side */
+.auth-image {
+    flex: 1;
+    height: 100%;
+}
+
+.auth-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0 20px 20px 0;
+}
+
+/* Right form side */
+.logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.auth-container {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-card {
+    background-color: #fff;
+    padding: 5rem;
+    border-radius: 20px;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.auth-card h2 {
+    margin-bottom: 1.5rem;
+    color: #006644;
+    text-align: center;
+}
+
+/* Form styles */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 60%;
+}
+
+.auth-form input {
+  padding: 12px;
+  height:100%;
+  margin-bottom: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.auth-form select {
+  padding: 12px;
+  height:100%;
+  margin-bottom: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.auth-form input.valid-email {
+  border-color: #4caf50;
+  background-color: #f8fff8;
+}
+
+.auth-form input.invalid-email {
+  border-color: #f44336;
+  background-color: #fff8f8;
+}
+
+.auth-form input:focus {
+    border-color: #1dbf73;
+    outline: none;
+}
+
+.auth-form button {
+    padding: 0.8rem;
+    border: none;
+    border-radius: 25px;
+    background-color: #1dbf73;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.auth-form button:hover {
+    background-color: #148f5a;
+}
+
+.terms-text {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+
+    .auth-image {
+        display: none;
+    }
+
+    .auth-container {
+        flex: unset;
+        height: 100vh;
+    }
+}
+
+input[type=password]::-ms-reveal,
+input[type=password]::-ms-clear
+{
+    display: none;
+}

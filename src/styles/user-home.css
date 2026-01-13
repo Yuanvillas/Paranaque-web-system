@@ -1,0 +1,205 @@
+.book-info {
+  padding: 12px;
+  background: #f7f7f7;
+  border-radius: 6px;
+}
+
+.modal-right{
+    width: 100%;
+}
+
+.image-info-container{
+    width: 100%;
+    display: flex;
+    margin-right: 20px;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  padding-right: 1rem;
+  border-radius: 10px;
+  min-width: 650px;
+  max-width: 90vw;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* Shelf Tabs */
+.shelf-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: 2px solid #ccc;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.tab-btn:hover {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.tab-btn.active {
+  background: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+
+/* Shelf Cards */
+.shelf-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.shelf-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.shelf-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.shelf-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  word-break: break-word;
+}
+
+.shelf-card-badge {
+  margin-bottom: 15px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.pending {
+  background: #fff3cd;
+  color: #ff9800;
+}
+
+.badge.borrowed {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge.reserved {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.badge.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.shelf-card-info {
+  margin-bottom: 12px;
+}
+
+.info-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #333;
+  margin: 0;
+  font-weight: 500;
+}
+
+.empty-shelf {
+  grid-column: 1 / -1;
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+}
+
+.shelf-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.shelf-card-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: #ff6b6b;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #ff5252;
+}
+
+/* Back button for catalog pages */
+.back-btn {
+  display: inline-block;
+  padding: 8px 12px;
+  background: #e8f0ff;
+  color: #0a66ff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(10,102,255,0.08);
+}
+
+.back-btn:hover {
+  background: #d7e7ff;
+}
+
+/* Out of stock badge on book cards */
+.book-item { position: relative; }
+.out-of-stock-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #ff6b6b;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  z-index: 5;
+}

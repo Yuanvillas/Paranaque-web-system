@@ -1,0 +1,305 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-input {
+  width: 94%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-save {
+  background: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-cancel {
+  background: #ccc;
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.error-text {
+  color: red;
+  margin-bottom: 10px;
+}
+
+
+.um-container {
+  background: #f5f7fa;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+.um-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.um-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+}
+
+.um-back-btn {
+  background: #4caf50;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.um-back-btn:hover {
+  background: #45a049;
+}
+
+.um-create {
+  background: #1dbf73;
+  color: white;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.um-create:hover {
+  background: #1a9d63;
+}
+
+.um-back-btn:hover {
+  background: #3d8d42;
+}
+
+.um-table-wrapper {
+  margin-top: 25px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.um-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.um-table thead {
+  background: #4caf50;
+  color: white;
+}
+
+.um-table th,
+.um-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.um-row:hover {
+  background: #f0f4ff;
+}
+
+.um-input,
+.um-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+}
+
+.um-input:focus,
+.um-select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.um-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.um-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.um-edit {
+  background: #3f75eb;
+  color: white;
+}
+
+.um-edit:hover {
+  background: #1e4fc7;
+}
+
+.um-delete {
+  background: #e75a5a;
+  color: white;
+}
+
+.um-delete:hover {
+  background: #b91c1c;
+}
+
+.um-save {
+  background: #22c55e;
+  color: white;
+}
+
+.um-save:hover {
+  background: #16a34a;
+}
+
+.um-cancel {
+  background: #64748b;
+  color: white;
+}
+
+.um-cancel:hover {
+  background: #475569;
+}
+
+.um-error {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.um-empty {
+  font-size: 18px;
+  margin-top: 20px;
+  color: #6b7280;
+}
+
+.mt-6 {
+  margin-top: 6px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.um-actions-col {
+  width: 160px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  padding-left: 30px;
+  border-radius: 8px;
+  width: 450px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.history-container {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  padding: 12px;
+  background: #f7f7f7;
+  border-radius: 6px;
+}
+
+.history-action {
+  font-weight: 600;
+  margin: 0;
+}
+
+.history-date {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 4px 0 0;
+}
+
+.modal-content {
+  position: relative;
+  background: #fff;
+  padding: 20px 20px 20px 30px;
+  border-radius: 8px;
+  width: 450px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #444;
+}
+
+.modal-close-btn:hover {
+  color: #000;
+}
