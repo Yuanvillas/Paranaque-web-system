@@ -1,4 +1,6 @@
 // routes/authRoutes.js
+require('dotenv').config();
+
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
@@ -8,7 +10,6 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Resend } = require('resend');
 const { uploadBase64ToSupabase } = require('../utils/upload');
-require('dotenv').config();
 
 // Initialize Resend email service
 const resend = new Resend(process.env.RESEND_API_KEY);
