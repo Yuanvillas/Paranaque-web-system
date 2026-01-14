@@ -10,18 +10,18 @@ const nodemailer = require('nodemailer');
 const { uploadBase64ToSupabase } = require('../utils/upload');
 require('dotenv').config();
 
-// Gmail transporter setup
-const gmailPass = (process.env.GMAIL_PASS || '').replace(/\s/g, ''); // Remove spaces from app password
+// Gmail transporter setup with enhanced configuration
+const gmailPass = (process.env.GMAIL_USER || '').replace(/\s/g, ''); // Remove spaces from app password
 console.log(`Gmail configured with user: ${process.env.GMAIL_USER}`);
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  service: 'gmail', // Use Gmail service directly
   auth: {
     user: process.env.GMAIL_USER,
-    pass: gmailPass
-  }
+    pass: process.env.GMAIL_PASS.replace(/\s/g, '') // Remove spaces from app password
+  },
+  connectionTimeout: 10000,
+  socketTimeout: 10000
 });
 
 // Register
@@ -106,17 +106,14 @@ router.post("/register", async (req, res) => {
 
     console.log(`Attempting to send verification email to: ${email}`);
     
-    // Set a timeout for email sending (increased to 30 seconds)
-    const emailPromise = transporter.sendMail(mailOptions);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000)
-    );
-
+    // Send email directly
     try {
-      await Promise.race([emailPromise, timeoutPromise]);
+      await transporter.sendMail(mailOptions);
       console.log(`Verification email sent successfully to: ${email}`);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
+      console.error("Email send error code:", emailErr.code);
+      console.error("Email send error:", emailErr);
       throw emailErr;
     }
     
@@ -595,17 +592,14 @@ router.post('/forgot-password', async (req, res) => {
 
     console.log(`Attempting to send password reset email to: ${email}`);
     
-    // Set a timeout for email sending (increased to 30 seconds)
-    const emailPromise = transporter.sendMail(mailOptions);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000)
-    );
-
+    // Send email directly without race condition
     try {
-      await Promise.race([emailPromise, timeoutPromise]);
+      await transporter.sendMail(mailOptions);
       console.log(`Password reset email sent successfully to: ${email}`);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
+      console.error("Email send error code:", emailErr.code);
+      console.error("Email send error:", emailErr);
       throw emailErr;
     }
     
