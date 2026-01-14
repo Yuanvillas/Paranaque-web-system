@@ -1250,6 +1250,38 @@ router.get('/reserved', async (req, res) => {
   }
 });
 
+// Generic PUT endpoint for updating book fields (year, stock, etc)
+router.put('/:id', async (req, res) => {
+  try {
+    const { title, author, publisher, year, stock, category, status, genre } = req.body;
+
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (author !== undefined) updateData.author = author;
+    if (publisher !== undefined) updateData.publisher = publisher;
+    if (year !== undefined) updateData.year = year;
+    if (stock !== undefined) updateData.stock = stock;
+    if (category !== undefined) updateData.category = category;
+    if (status !== undefined) updateData.status = status;
+    if (genre !== undefined) updateData.genre = genre;
+
+    const updatedBook = await Book.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedBook) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    res.status(200).json({ message: 'Book updated successfully', book: updatedBook });
+  } catch (err) {
+    console.error("Error updating book:", err);
+    res.status(500).json({ error: 'Error updating book: ' + err.message });
+  }
+});
+
 // Update book details
 router.put('/update/:id', upload.single('image'), async (req, res) => {
   try {
