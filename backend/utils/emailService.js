@@ -1,54 +1,40 @@
-const nodemailer = require('nodemailer');
 require('dotenv').config();
+const { Resend } = require('resend');
 
-// Lazy initialize transporter - only create when actually needed
-let transporter = null;
+// Initialize Resend email service
+let resend = null;
 let emailConfigured = false;
 
-const getTransporter = () => {
-  if (!transporter) {
+const getResend = () => {
+  if (!resend) {
     try {
-      transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASS
-        },
-        connectionTimeout: 10000,
-        socketTimeout: 10000,
-        pool: {
-          maxConnections: 1
-        }
-      });
+      resend = new Resend(process.env.RESEND_API_KEY);
       emailConfigured = true;
-      console.log('📧 Email service configured');
+      console.log('📧 Email service configured with Resend');
     } catch (error) {
       console.error('⚠️  Failed to configure email service:', error.message);
       emailConfigured = false;
     }
   }
-  return transporter;
+  return resend;
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
   try {
-    const transporter = getTransporter();
-    if (!transporter) {
+    const emailService = getResend();
+    if (!emailService) {
       console.warn('⚠️  Email service not configured, skipping email');
       return { messageId: 'mock-' + Date.now() };
     }
     
-    const info = await transporter.sendMail({
-      from: `"Library System" <${process.env.GMAIL_USER}>`,
+    const result = await emailService.emails.send({
+      from: 'Parañaledge <onboarding@resend.dev>',
       to,
       subject,
-      text,
-      html
+      html: html || `<p>${text}</p>`
     });
-    console.log('📧 Email sent:', info.messageId);
-    return info;
+    console.log('📧 Email sent:', result.id);
+    return { messageId: result.id };
   } catch (error) {
     console.error('⚠️  Error sending email:', error.message);
     // Don't crash - just log the error and continue
