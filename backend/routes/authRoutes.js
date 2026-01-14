@@ -6,23 +6,13 @@ const ArchivedUser = require('../models/ArchivedUser');
 const Log = require('../models/Log');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { uploadBase64ToSupabase } = require('../utils/upload');
 require('dotenv').config();
 
-// Gmail transporter setup with enhanced configuration
-const gmailPass = (process.env.GMAIL_USER || '').replace(/\s/g, ''); // Remove spaces from app password
-console.log(`Gmail configured with user: ${process.env.GMAIL_USER}`);
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // Use Gmail service directly
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS.replace(/\s/g, '') // Remove spaces from app password
-  },
-  connectionTimeout: 10000,
-  socketTimeout: 10000
-});
+// Initialize Resend email service
+const resend = new Resend(process.env.RESEND_API_KEY);
+console.log(`Email service configured with Resend API Key present: ${!!process.env.RESEND_API_KEY}`);
 
 // Register
 router.post("/register", async (req, res) => {
@@ -106,13 +96,24 @@ router.post("/register", async (req, res) => {
 
     console.log(`Attempting to send verification email to: ${email}`);
     
-    // Send email directly
+    // Send email using Resend
     try {
-      await transporter.sendMail(mailOptions);
+      await resend.emails.send({
+        from: 'Parañaledge <onboarding@resend.dev>',
+        to: email,
+        subject: 'Email Verification - Parañaledge',
+        html: `
+          <h2>Email Verification</h2>
+          <p>Welcome to Parañaledge! Please verify your email by clicking the link below:</p>
+          <a href="https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Verify Email</a>
+          <p>Or copy and paste this link: https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}</p>
+          <p>This link expires in 24 hours.</p>
+          <p>If you did not register, please ignore this email.</p>
+        `,
+      });
       console.log(`Verification email sent successfully to: ${email}`);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
-      console.error("Email send error code:", emailErr.code);
       console.error("Email send error:", emailErr);
       throw emailErr;
     }
@@ -576,29 +577,27 @@ router.post('/forgot-password', async (req, res) => {
 
     // Send email with reset link
     const resetLink = `https://paranaque-web-system.onrender.com/reset-password/${resetToken}`;
-    const mailOptions = {
-      from: process.env.GMAIL_USER,
-      to: email,
-      subject: "Password Reset Request - Parañaledge",
-      html: `
-        <h2>Password Reset Request</h2>
-        <p>You requested a password reset for your Parañaledge account. Please click the link below to reset your password:</p>
-        <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reset Password</a>
-        <p>Or copy and paste this link: ${resetLink}</p>
-        <p>This link expires in 1 hour.</p>
-        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-      `,
-    };
 
     console.log(`Attempting to send password reset email to: ${email}`);
     
-    // Send email directly without race condition
+    // Send email using Resend
     try {
-      await transporter.sendMail(mailOptions);
+      await resend.emails.send({
+        from: 'Parañaledge <onboarding@resend.dev>',
+        to: email,
+        subject: 'Password Reset Request - Parañaledge',
+        html: `
+          <h2>Password Reset Request</h2>
+          <p>You requested a password reset for your Parañaledge account. Please click the link below to reset your password:</p>
+          <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reset Password</a>
+          <p>Or copy and paste this link: ${resetLink}</p>
+          <p>This link expires in 1 hour.</p>
+          <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+        `,
+      });
       console.log(`Password reset email sent successfully to: ${email}`);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
-      console.error("Email send error code:", emailErr.code);
       console.error("Email send error:", emailErr);
       throw emailErr;
     }
