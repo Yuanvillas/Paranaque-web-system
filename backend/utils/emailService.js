@@ -27,16 +27,24 @@ const sendEmail = async ({ to, subject, text, html }) => {
       return { messageId: 'mock-' + Date.now() };
     }
     
+    console.log('📧 Sending email via Resend to:', to);
     const result = await emailService.emails.send({
       from: 'Parañaledge <onboarding@resend.dev>',
       to,
       subject,
       html: html || `<p>${text}</p>`
     });
-    console.log('📧 Email sent:', result.id);
+    
+    if (result.error) {
+      console.error('❌ Resend error:', result.error);
+      throw new Error(result.error);
+    }
+    
+    console.log('✅ Email sent successfully:', result.id);
     return { messageId: result.id };
   } catch (error) {
-    console.error('⚠️  Error sending email:', error.message);
+    console.error('❌ Error sending email:', error.message);
+    console.error('❌ Full error:', error);
     // Don't crash - just log the error and continue
     return { messageId: 'error-' + Date.now(), error: error.message };
   }
