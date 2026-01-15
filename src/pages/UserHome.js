@@ -28,16 +28,18 @@ const UserHome = () => {
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchPendingReservations();
     fetchBookmarks();
     fetchBorrowedBooks();
     fetchAllBooksForRecommendations();
-  }, [fetchPendingReservations, fetchBookmarks, fetchBorrowedBooks, fetchAllBooksForRecommendations]);
+  }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchBooks();
-  }, [page, fetchBooks]);
+  }, [page]);
 
   useEffect(() => {
     if (allBooks.length > 0 && borrowedBooks.length > 0) {

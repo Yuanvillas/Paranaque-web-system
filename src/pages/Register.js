@@ -352,7 +352,7 @@ function Register() {
 
             <label className="terms-text d-flex justify-content-center align-items-center">
               <input type="checkbox" className="form-control flex-0" name="termsAccepted" checked={form.termsAccepted} onChange={handleChange} />
-              <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="terms-link">I agree to the Terms of Service and Privacy Policy.</a>
+              <button type="button" onClick={() => setShowTermsModal(true)} className="terms-link" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>I agree to the Terms of Service and Privacy Policy.</button>
             </label>
             {errors.termsAccepted && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.termsAccepted}</p>}
 

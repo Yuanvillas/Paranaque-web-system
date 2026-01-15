@@ -1,5 +1,4 @@
 import { faBook, faBookmark, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import "../styles/user-home.css";
@@ -9,7 +8,6 @@ const MyShelf = () => {
   const [error, setError] = useState(null);
   const userEmail = localStorage.getItem("userEmail");
   const [activeTab, setActiveTab] = useState("all");
-  const [logs, setLogs] = useState([]);
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -35,13 +33,11 @@ const MyShelf = () => {
     fetchTransactions();
     fetch("https://paranaque-web-system.onrender.com/api/logs")
       .then((res) => res.json())
-      .then((data) => {
-        console.log('Fetched logs:', data); // Debug log
-        setLogs(data.logs);
+      .then(() => {
+        // Logs fetched but not used in this component
       })
       .catch((err) => {
         console.error('Error fetching logs:', err); // Debug log
-        setError("Failed to fetch logs.");
       });
 
   }, [fetchTransactions]);
@@ -90,7 +86,6 @@ const MyShelf = () => {
       });
 
       if (res.ok) {
-        const data = await res.json();
         await Swal.fire({
           title: "Parañaledge",
           text: "Return request submitted successfully! The librarian will review and approve it.",
@@ -140,7 +135,6 @@ const MyShelf = () => {
       });
 
       if (res.ok) {
-        const data = await res.json();
         await Swal.fire({
           title: "Parañaledge",
           text: "Request cancelled successfully!",
@@ -173,28 +167,8 @@ const MyShelf = () => {
       });
     }
   };
-  const handleBorrowReserved = async (transactionId) => {
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/${transactionId}/borrow-reserved`, {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userEmail })
-      });
 
-      if (res.ok) {
-        alert("Book borrowed successfully!");
-        fetchTransactions();
-      } else {
-        const data = await res.json();
-        alert(data.message || "Failed to borrow book");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error borrowing book");
-    }
-  };  const borrowedBooks = transactions.filter(t => t.type === 'borrow' && t.status === 'active');
+  const borrowedBooks = transactions.filter(t => t.type === 'borrow' && t.status === 'active');
   const reservedBooks = transactions.filter(t =>
     t.type === 'reserve' && t.status === 'active'
   );
