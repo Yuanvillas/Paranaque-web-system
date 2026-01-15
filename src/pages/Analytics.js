@@ -155,11 +155,6 @@ const Analytics = () => {
     fetchBorrowedBooks();
   }, []);
 
-  // Filtered books helper
-  const filteredBooks = books.filter((book) =>
-    book.title?.toLowerCase().includes(''.toLowerCase()) || false
-  );
-
   return (
     <div className="dashboard">
       <aside className="sidebar">

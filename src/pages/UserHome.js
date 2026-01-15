@@ -43,10 +43,8 @@ const UserHome = () => {
 
   useEffect(() => {
     if (allBooks.length > 0 && borrowedBooks.length > 0) {
-      console.log("useEffect triggered - calling generateRecommendations with", borrowedBooks.length, "borrowed books");
       generateRecommendations(borrowedBooks, bookmarks, pendingReservations);
     } else if (allBooks.length > 0) {
-      console.log("No borrowed books yet");
       setRecommendedBooks([]);
     }
   }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
