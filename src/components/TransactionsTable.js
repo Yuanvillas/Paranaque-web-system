@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { SearchContext } from "../layouts/UserLayout";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState, useEffect } from 'react';
 
 const TransactionsTable = () => {
   const [transactions, setTransactions] = useState([]);

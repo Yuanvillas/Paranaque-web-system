@@ -5,9 +5,6 @@ import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import BorrowedBooksTable from "../components/BorrowedBooksTable";
 import TransactionsTable from "../components/TransactionsTable";
-import PendingReservationsTable from "../components/PendingReservationsTable";
-import PendingBorrowingTable from "../components/PendingBorrowingTable";
-import AddBook from "./AddBook";
 import ReservedBooksTable from "../components/ReservedBooksTable";
 import logo from "../imgs/liblogo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,14 +14,12 @@ import {
   faBook,
   faFileAlt,
   faSignOutAlt,
-  faGear,
   faUser
 } from "@fortawesome/free-solid-svg-icons";
 import BooksTable from "../components/BooksTable";
 import AdminDashboardTable from "../components/AdminDashboardTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import UploadAvatar from "../components/UploadAvatar";
-import BorrowedReturnedChart from "../components/BorrowedReturnedChart";
 import UserEntryMonitor from "../components/UserEntryMonitor";
 
 const AdminDashboard = () => {
@@ -32,11 +27,8 @@ const AdminDashboard = () => {
   const userEmail = localStorage.getItem("userEmail");
 
   const [selectedResource, setSelectedResource] = useState(null);
-  const [storedBooks, setStoredBooks] = useState([]);
-  const [error, setError] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
-  const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [logs, setLogs] = useState([]);
   const [borrowedBoos, setBorrowedBooks] = useState([]);
