@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faUndo, faTrash, faBook, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faTimes } from "@fortawesome/free-solid-svg-icons";
 import logo from "../imgs/liblogo.png";
 import printIcon from "../imgs/print-icon.png";
 import BorrowedReturnedChart from "../components/BorrowedReturnedChart";

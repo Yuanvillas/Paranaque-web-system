@@ -30,9 +30,6 @@ const AdminDashboard = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
   const [isCollapsed] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [borrowedBoos, setBorrowedBooks] = useState([]);
-  const [returnedBooks, setReturnedBooks] = useState([]);
 
   const handleSectionClick = (name) => {
     if (name === "User Management") {
@@ -64,7 +61,6 @@ const AdminDashboard = () => {
       .then((res) => res.json())
       .then((data) => {
         console.log('Fetched logs:', data);
-        setLogs(data.logs);
         const resBorrowedBook = data.logs
           .filter(log =>
             log.action.includes("Requested to borrow book:")
@@ -76,8 +72,6 @@ const AdminDashboard = () => {
             log.action.includes("Returned book:")
           )
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        setBorrowedBooks(resBorrowedBook);
-        setReturnedBooks(resReturnedBook);
       })
       .catch((err) => {
         console.error('Error fetching logs:', err); // Debug log
@@ -135,7 +129,7 @@ const AdminDashboard = () => {
       role: storedUser.role || '',
       profilePicture: storedUser.profilePicture || ''
     });
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     // Clear any stored tokens or session data if used
