@@ -1,4 +1,3 @@
-import { faBook, faBookmark, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { useCallback, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import "../styles/user-home.css";

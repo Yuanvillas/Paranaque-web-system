@@ -6,7 +6,6 @@ import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faTimes } from "@fortawesome/free-solid-svg-icons";
 import logo from "../imgs/liblogo.png";
-import printIcon from "../imgs/print-icon.png";
 import BorrowedReturnedChart from "../components/BorrowedReturnedChart";
 
 const Analytics = () => {
@@ -17,12 +16,10 @@ const Analytics = () => {
   const [borrowedWeekCount, setBorrowedWeekCount] = useState(0);
   const [error, setError] = useState(null);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedModal, setSelectedModal] = useState(null);
   const [todayBooks, setTodayBooks] = useState([]);
   const [searchStored, setSearchStored] = useState("");
   const [searchToday, setSearchToday] = useState("");
-  const [searchWeek, setSearchWeek] = useState("");
   const [weekBorrowedBooks, setWeekBorrowedBooks] = useState([]);
   const [mostBorrowedBooks, setMostBorrowedBooks] = useState([]);
   const [searchMostBorrowed, setSearchMostBorrowed] = useState("");
@@ -158,45 +155,9 @@ const Analytics = () => {
     fetchBorrowedBooks();
   }, []);
 
-  const handleExportReport = () => {
-    // Prepare data for Excel export
-    const excelData = filteredBooks.map((book) => ({
-      Title: book.title,
-      Year: book.year,
-      Category: book.category,
-      Author: book.author,
-      "Accession Number": book.accessionNumber,
-      "Call Number": book.callNumber,
-      Location: book.location
-        ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
-        : "N/A",
-      Status: book.status ? book.status : "Available",
-    }));
-
-    // Create a new workbook
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Stored Books");
-
-    // Set column widths
-    const columnWidths = [
-      { wch: 30 }, // Title
-      { wch: 8 },  // Year
-      { wch: 15 }, // Category
-      { wch: 20 }, // Author
-      { wch: 18 }, // Accession Number
-      { wch: 15 }, // Call Number
-      { wch: 20 }, // Location
-      { wch: 12 }, // Status
-    ];
-    worksheet["!cols"] = columnWidths;
-
-    // Save the file
-    XLSX.writeFile(workbook, "library-report.xlsx");
-  };
-
+  // Filtered books helper
   const filteredBooks = books.filter((book) =>
-    book.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+    book.title?.toLowerCase().includes(''.toLowerCase()) || false
   );
 
   return (

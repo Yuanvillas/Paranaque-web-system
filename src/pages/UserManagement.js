@@ -290,11 +290,10 @@ const UserManagement = () => {
     fetch("https://paranaque-web-system.onrender.com/api/logs")
       .then((res) => res.json())
       .then((data) => {
-        console.log('Fetched logs:', data); // Debug log
         setLogs(data.logs);
       })
       .catch((err) => {
-        console.error('Error fetching logs:', err); // Debug log
+        console.error('Error fetching logs:', err);
         setError("Failed to fetch logs.");
       });
   }, []);

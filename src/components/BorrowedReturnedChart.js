@@ -24,7 +24,6 @@ const BorrowedReturnedChart = ({ borrowedBooks, allBooks }) => {
   // Count borrowed and returned
   const borrowedCount = borrowedBooks.length;
   const returnedCount = allBooks.length - borrowedCount;
-  console.log("Data: ", borrowedCount, returnedCount)
   const data = {
     labels: ["Books"],
     datasets: [

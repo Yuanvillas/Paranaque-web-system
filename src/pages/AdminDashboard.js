@@ -61,17 +61,7 @@ const AdminDashboard = () => {
       .then((res) => res.json())
       .then((data) => {
         console.log('Fetched logs:', data);
-        const resBorrowedBook = data.logs
-          .filter(log =>
-            log.action.includes("Requested to borrow book:")
-          )
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        const resReturnedBook = data.logs
-          .filter(log =>
-            log.action.includes("Returned book:")
-          )
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // Data fetched but not currently used in component
       })
       .catch((err) => {
         console.error('Error fetching logs:', err); // Debug log
