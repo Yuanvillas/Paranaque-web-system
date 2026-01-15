@@ -29,6 +29,7 @@ const AdminDashboard = () => {
   const [selectedResource, setSelectedResource] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
+  const [isCollapsed] = useState(false);
   const [logs, setLogs] = useState([]);
   const [borrowedBoos, setBorrowedBooks] = useState([]);
   const [returnedBooks, setReturnedBooks] = useState([]);
