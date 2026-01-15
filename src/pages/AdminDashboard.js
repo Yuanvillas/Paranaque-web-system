@@ -27,12 +27,8 @@ const AdminDashboard = () => {
   const userEmail = localStorage.getItem("userEmail");
 
   const [selectedResource, setSelectedResource] = useState(null);
-  const [storedBooks, setStoredBooks] = useState([]);
-  const [error, setError] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
-  const [showAddBookModal, setShowAddBookModal] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [logs, setLogs] = useState([]);
   const [borrowedBoos, setBorrowedBooks] = useState([]);
   const [returnedBooks, setReturnedBooks] = useState([]);
@@ -84,7 +80,6 @@ const AdminDashboard = () => {
       })
       .catch((err) => {
         console.error('Error fetching logs:', err); // Debug log
-        setError("Failed to fetch logs.");
       });
 
   }, [userEmail]);
@@ -100,9 +95,7 @@ const AdminDashboard = () => {
   ];
 
   const handleResourceClick = (option) => {
-    if (option === "Add Book") {
-      setShowAddBookModal(true);
-    } else if (option === "Archive Books") {
+    if (option === "Archive Books") {
       navigate("/admin/archived-books");
     } else if (option === "All Books") {
       setSelectedSubResource("All Books");
@@ -120,13 +113,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch("https://paranaque-web-system.onrender.com/api/books");
-        const data = await response.json();
-        const availableBooks = data.books.filter((book) => !book.archived);
-        setStoredBooks(availableBooks);
+        fetch("https://paranaque-web-system.onrender.com/api/books");
       } catch (error) {
         console.error("Error fetching books:", error);
-        setError("Failed to load books");
       }
     };
 
