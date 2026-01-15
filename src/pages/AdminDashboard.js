@@ -27,8 +27,11 @@ const AdminDashboard = () => {
   const userEmail = localStorage.getItem("userEmail");
 
   const [selectedResource, setSelectedResource] = useState(null);
+  const [storedBooks, setStoredBooks] = useState([]);
+  const [error, setError] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
+  const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [logs, setLogs] = useState([]);
   const [borrowedBoos, setBorrowedBooks] = useState([]);
