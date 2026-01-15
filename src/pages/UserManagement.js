@@ -104,7 +104,6 @@ const UserManagement = () => {
 
   const handleChangeUserRole = async (e, userId) => {
     console.log("Edit change:", e.target.name, e.target.value, userId);
-    const { name, value } = e.target;
     const passcode = window.prompt("Enter passcode to set user as admin:");
     if (passcode !== ADMIN_PASSCODE) {
       setEditError("Incorrect passcode. Role not changed.");
@@ -113,7 +112,7 @@ const UserManagement = () => {
       setEditError("");
     }
     console.log("Passcode correct. Updating role.", passcode);
-    const res = await fetch(`https://paranaque-web-system.onrender.com/api/auth/users/${userId}/update-role`, {
+    await fetch(`https://paranaque-web-system.onrender.com/api/auth/users/${userId}/update-role`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: e.target.value })

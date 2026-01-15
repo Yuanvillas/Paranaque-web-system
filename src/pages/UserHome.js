@@ -33,11 +33,11 @@ const UserHome = () => {
     fetchBookmarks();
     fetchBorrowedBooks();
     fetchAllBooksForRecommendations();
-  }, []);
+  }, [fetchPendingReservations, fetchBookmarks, fetchBorrowedBooks, fetchAllBooksForRecommendations]);
 
   useEffect(() => {
     fetchBooks();
-  }, [page]);
+  }, [page, fetchBooks]);
 
   useEffect(() => {
     if (allBooks.length > 0 && borrowedBooks.length > 0) {

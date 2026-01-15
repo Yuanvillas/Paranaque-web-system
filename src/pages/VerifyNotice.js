@@ -2,8 +2,6 @@ import React, { useEffect } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faUndo, faTrash, faBook } from "@fortawesome/free-solid-svg-icons";
 import logo from "../imgs/liblogo.png";
 import "../components/App.css";
 import API_BASE_URL from "../config/api";

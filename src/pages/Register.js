@@ -6,7 +6,6 @@ import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
-import AddBook from "./AddBook";
 
 function Register() {
   const navigate = useNavigate();
@@ -30,7 +29,6 @@ function Register() {
 
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [fullAddress, setFullAddress] = useState("");
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const validateEmail = (email) => {
@@ -354,7 +352,7 @@ function Register() {
 
             <label className="terms-text d-flex justify-content-center align-items-center">
               <input type="checkbox" className="form-control flex-0" name="termsAccepted" checked={form.termsAccepted} onChange={handleChange} />
-              <a onClick={() => setShowTermsModal(true)} className="terms-link">I agree to the Terms of Service and Privacy Policy.</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="terms-link">I agree to the Terms of Service and Privacy Policy.</a>
             </label>
             {errors.termsAccepted && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.termsAccepted}</p>}
 
