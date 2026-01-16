@@ -13,7 +13,7 @@ const { uploadBase64ToSupabase } = require('../utils/upload');
 
 // Initialize Resend email service
 const resend = new Resend(process.env.RESEND_API_KEY);
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Parañaledge <onboarding@resend.dev>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
 console.log(`Email service configured with Resend API Key present: ${!!process.env.RESEND_API_KEY}`);
 console.log(`Email sender: ${EMAIL_FROM}`);
 
@@ -104,10 +104,10 @@ router.post("/register", async (req, res) => {
       const emailResponse = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
-        subject: 'Email Verification - Parañaledge',
+        subject: 'Email Verification - Paranaledge',
         html: `
           <h2>Email Verification</h2>
-          <p>Welcome to Parañaledge! Please verify your email by clicking the link below:</p>
+          <p>Welcome to Paranaledge! Please verify your email by clicking the link below:</p>
           <a href="https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Verify Email</a>
           <p>Or copy and paste this link: https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}</p>
           <p>This link expires in 24 hours.</p>
@@ -589,10 +589,10 @@ router.post('/forgot-password', async (req, res) => {
       const emailResponse = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
-        subject: 'Password Reset Request - Parañaledge',
+        subject: 'Password Reset Request - Paranaledge',
         html: `
           <h2>Password Reset Request</h2>
-          <p>You requested a password reset for your Parañaledge account. Please click the link below to reset your password:</p>
+          <p>You requested a password reset for your Paranaledge account. Please click the link below to reset your password:</p>
           <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reset Password</a>
           <p>Or copy and paste this link: ${resetLink}</p>
           <p>This link expires in 1 hour.</p>
