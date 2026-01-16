@@ -13,7 +13,9 @@ const { uploadBase64ToSupabase } = require('../utils/upload');
 
 // Initialize Resend email service
 const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Parañaledge <onboarding@resend.dev>';
 console.log(`Email service configured with Resend API Key present: ${!!process.env.RESEND_API_KEY}`);
+console.log(`Email sender: ${EMAIL_FROM}`);
 
 // Register
 router.post("/register", async (req, res) => {
@@ -99,8 +101,8 @@ router.post("/register", async (req, res) => {
     
     // Send email using Resend
     try {
-      await resend.emails.send({
-        from: 'Parañaledge <onboarding@resend.dev>',
+      const emailResponse = await resend.emails.send({
+        from: EMAIL_FROM,
         to: email,
         subject: 'Email Verification - Parañaledge',
         html: `
@@ -112,11 +114,12 @@ router.post("/register", async (req, res) => {
           <p>If you did not register, please ignore this email.</p>
         `,
       });
-      console.log(`Verification email sent successfully to: ${email}`);
+      console.log(`Verification email sent successfully to: ${email}`, emailResponse);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
-      console.error("Email send error:", emailErr);
-      throw emailErr;
+      console.error("Full email error:", JSON.stringify(emailErr, null, 2));
+      // Don't throw error - still allow user registration even if email fails
+      console.warn(`User registered but email failed for: ${email}`);
     }
     
     return res.status(200).json({ message: 'User registered successfully. Please check your email to verify your account.' });
@@ -583,8 +586,8 @@ router.post('/forgot-password', async (req, res) => {
     
     // Send email using Resend
     try {
-      await resend.emails.send({
-        from: 'Parañaledge <onboarding@resend.dev>',
+      const emailResponse = await resend.emails.send({
+        from: EMAIL_FROM,
         to: email,
         subject: 'Password Reset Request - Parañaledge',
         html: `
@@ -596,11 +599,11 @@ router.post('/forgot-password', async (req, res) => {
           <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
         `,
       });
-      console.log(`Password reset email sent successfully to: ${email}`);
+      console.log(`Password reset email sent successfully to: ${email}`, emailResponse);
     } catch (emailErr) {
       console.error("Email send error details:", emailErr.message);
-      console.error("Email send error:", emailErr);
-      throw emailErr;
+      console.error("Full email error:", JSON.stringify(emailErr, null, 2));
+      throw new Error('Failed to send password reset email. Please try again later.');
     }
     
     // Log the action
