@@ -250,7 +250,7 @@ const UserHome = () => {
     }
   };
 
-  const handleBookmark = async (bookId) => {
+  const handleBookmark = useCallback(async (bookId) => {
     try {
       const res = await fetch("https://paranaque-web-system.onrender.com/api/bookmarks/add", {
         method: "POST",
@@ -278,7 +278,7 @@ const UserHome = () => {
         confirmButtonText: "OK"
       });
     }
-  }, []);
+  }, [userEmail, bookmarks]);
 
   const fetchBorrowedBooks = useCallback(async () => {
     const userEmail = localStorage.getItem("userEmail");
