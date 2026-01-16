@@ -28,25 +28,6 @@ const UserHome = () => {
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
 
-  useEffect(() => {
-    fetchPendingReservations();
-    fetchBookmarks();
-    fetchBorrowedBooks();
-    fetchAllBooksForRecommendations();
-  }, [fetchBookmarks]);
-
-  useEffect(() => {
-    fetchBooks();
-  }, [page, fetchBooks]);
-
-  useEffect(() => {
-    if (allBooks.length > 0 && borrowedBooks.length > 0) {
-      generateRecommendations(borrowedBooks, bookmarks, pendingReservations);
-    } else if (allBooks.length > 0) {
-      setRecommendedBooks([]);
-    }
-  }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
-
   const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
     const limit = 24;
@@ -62,7 +43,26 @@ const UserHome = () => {
       .catch(console.error);
   }, [page]);
 
-  const fetchAllBooksForRecommendations = async () => {
+  const fetchBookmarks = useCallback(async () => {
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/bookmarks/get?email=${userEmail}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      console.log("fetched:", data)
+      setBookmarks(data.bookmarks);
+    } catch (error) {
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "Error listing in booksmarks",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+    }
+  }, [userEmail]);
+
+  const fetchAllBooksForRecommendations = useCallback(async () => {
     try {
       const timestamp = new Date().getTime();
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/books?limit=10000&_t=${timestamp}`);
@@ -71,9 +71,9 @@ const UserHome = () => {
     } catch (error) {
       console.error("Error fetching all books:", error);
     }
-  };
+  }, []);
 
-  const fetchPendingReservations = async () => {
+  const fetchPendingReservations = useCallback(async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) return;
 
@@ -93,7 +93,27 @@ const UserHome = () => {
     } catch (error) {
       console.error("Error fetching reservations:", error);
     }
-  };
+  }, []);
+
+  // useEffect hooks
+  useEffect(() => {
+    fetchPendingReservations();
+    fetchBookmarks();
+    fetchBorrowedBooks();
+    fetchAllBooksForRecommendations();
+  }, [fetchBookmarks, fetchPendingReservations, fetchBorrowedBooks, fetchAllBooksForRecommendations]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
+
+  useEffect(() => {
+    if (allBooks.length > 0 && borrowedBooks.length > 0) {
+      generateRecommendations(borrowedBooks, bookmarks, pendingReservations);
+    } else if (allBooks.length > 0) {
+      setRecommendedBooks([]);
+    }
+  }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
 
   const handleBorrow = async () => {
     const avail = selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0;
@@ -258,9 +278,9 @@ const UserHome = () => {
         confirmButtonText: "OK"
       });
     }
-  };
+  }, []);
 
-  const fetchBorrowedBooks = async () => {
+  const fetchBorrowedBooks = useCallback(async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) return;
 
@@ -279,7 +299,7 @@ const UserHome = () => {
     } catch (error) {
       console.error("Error fetching borrowed books:", error);
     }
-  };
+  }, []);
 
   const generateRecommendations = async (borrowed, bookmarks, reservations) => {
     console.log("=== GENERATING AI RECOMMENDATIONS ===");
@@ -320,25 +340,6 @@ const UserHome = () => {
       setRecommendedBooks([]);
     }
   };
-
-  const fetchBookmarks = useCallback(async () => {
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/bookmarks/get?email=${userEmail}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-      console.log("fetched:", data)
-      setBookmarks(data.bookmarks);
-    } catch (error) {
-      await Swal.fire({
-        title: "Parañaledge",
-        text: "Error listing in booksmarks",
-        icon: "error",
-        confirmButtonText: "OK"
-      });
-    }
-  }, [userEmail]);
 
   const openModal = (book) => {
     setSelectedBook(book);
