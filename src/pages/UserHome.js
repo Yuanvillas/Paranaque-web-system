@@ -1,5 +1,5 @@
 // src/pages/UserHome.js
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { SearchContext } from "../layouts/UserLayout";
@@ -28,16 +28,16 @@ const UserHome = () => {
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
     fetchPendingReservations();
     fetchBookmarks();
     fetchBorrowedBooks();
     fetchAllBooksForRecommendations();
-  }, []);
+  }, [fetchBookmarks]);
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
     fetchBooks();
-  }, [page]);
+  }, [page, fetchBooks]);
 
   useEffect(() => {
     if (allBooks.length > 0 && borrowedBooks.length > 0) {
@@ -47,7 +47,7 @@ const UserHome = () => {
     }
   }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
 
-  const fetchBooks = () => {
+  const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
     const limit = 24;
     // Add cache busting with timestamp
@@ -60,7 +60,7 @@ const UserHome = () => {
         setTotalPages(data.totalPages || 1);
       })
       .catch(console.error);
-  };
+  }, [page]);
 
   const fetchAllBooksForRecommendations = async () => {
     try {
@@ -321,7 +321,7 @@ const UserHome = () => {
     }
   };
 
-  const fetchBookmarks = async () => {
+  const fetchBookmarks = useCallback(async () => {
     try {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/bookmarks/get?email=${userEmail}`, {
         method: "GET",
@@ -338,7 +338,7 @@ const UserHome = () => {
         confirmButtonText: "OK"
       });
     }
-  }
+  }, [userEmail]);
 
   const openModal = (book) => {
     setSelectedBook(book);
