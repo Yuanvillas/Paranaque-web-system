@@ -95,6 +95,27 @@ const UserHome = () => {
     }
   }, []);
 
+  const fetchBorrowedBooks = useCallback(async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) return;
+
+    try {
+      const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
+      const data = await response.json();
+      
+      if (response.ok && data.transactions && Array.isArray(data.transactions)) {
+        let borrowed = data.transactions.filter(t => 
+          (t.type === 'borrow' || t.transactionType === 'borrow')
+        );
+        
+        console.log("All borrow transactions found:", borrowed.length, borrowed);
+        setBorrowedBooks(borrowed);
+      }
+    } catch (error) {
+      console.error("Error fetching borrowed books:", error);
+    }
+  }, []);
+
   // useEffect hooks
   useEffect(() => {
     fetchPendingReservations();
@@ -279,27 +300,6 @@ const UserHome = () => {
       });
     }
   }, [userEmail, bookmarks]);
-
-  const fetchBorrowedBooks = useCallback(async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) return;
-
-    try {
-      const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
-      const data = await response.json();
-      
-      if (response.ok && data.transactions && Array.isArray(data.transactions)) {
-        let borrowed = data.transactions.filter(t => 
-          (t.type === 'borrow' || t.transactionType === 'borrow')
-        );
-        
-        console.log("All borrow transactions found:", borrowed.length, borrowed);
-        setBorrowedBooks(borrowed);
-      }
-    } catch (error) {
-      console.error("Error fetching borrowed books:", error);
-    }
-  }, []);
 
   const generateRecommendations = async (borrowed, bookmarks, reservations) => {
     console.log("=== GENERATING AI RECOMMENDATIONS ===");
