@@ -630,7 +630,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// GET /reset-password/:token - Verify reset token and redirect to frontend
+// GET /api/auth/reset-password/:token - Verify reset token and redirect to frontend
 router.get('/reset-password/:token', async (req, res) => {
   try {
     const { token } = req.params;
