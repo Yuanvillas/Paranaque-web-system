@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Swal from "sweetalert2";
 import logo from "../imgs/liblogo.png";
 import "../components/App.css";
 
