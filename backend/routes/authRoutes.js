@@ -134,15 +134,19 @@ router.post("/register", async (req, res) => {
 router.get('/verify/:token', async (req, res) => {
   try {
     const user = await User.findOne({ verificationToken: req.params.token });
-    if (!user) return res.status(400).json({ message: 'Invalid or expired token.' });
+    if (!user) {
+      // Redirect to error page if token is invalid
+      return res.redirect(`https://paranaque-web-system.onrender.com/verify-error?reason=invalid`);
+    }
 
     user.isVerified = true;
     user.verificationToken = undefined;
     await user.save();
 
-    res.send('Email verified successfully. You can now log in.');
+    // Redirect to success page with email parameter
+    res.redirect(`https://paranaque-web-system.onrender.com/verify-success?email=${encodeURIComponent(user.email)}`);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.redirect(`https://paranaque-web-system.onrender.com/verify-error?reason=server_error`);
   }
 });
 

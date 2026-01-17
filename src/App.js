@@ -17,6 +17,7 @@ import Bookmarks from "./pages/Bookmarks";
 import UserLayout from "./layouts/UserLayout";
 import Analytics from "./pages/Analytics";
 import VerifyNotice from "./pages/VerifyNotice";
+import VerificationSuccess from "./pages/VerificationSuccess";
 import FAQ from "./pages/FAQ";
 import About from "./pages/About";
 import ChatPopup from "./pages/ChatPopup";
@@ -28,7 +29,7 @@ function AppContent() {
   const location = useLocation();
   
   // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password)
-  const showChat = !["/", "/register", "/verify-notice", "/forgot-password"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
+  const showChat = !["/", "/register", "/verify-notice", "/verify-success", "/forgot-password"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
 
   return (
     <>
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-success" element={<VerificationSuccess />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin/add-book" element={<AddBook />} />
         <Route path="/admin/archived-books" element={<ArchivedBooks />} />
