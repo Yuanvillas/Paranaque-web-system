@@ -38,7 +38,7 @@ function ForgotPassword() {
       });
 
       setEmail("");
-      setTimeout(() => navigate("/login"), 2000);
+      setTimeout(() => navigate("/Login"), 2000);
     } catch (err) {
       await Swal.fire({
         title: "Parañaledge",
