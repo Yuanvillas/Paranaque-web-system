@@ -630,6 +630,33 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// GET /reset-password/:token - Verify reset token and redirect to frontend
+router.get('/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=missing_token');
+    }
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=invalid_token');
+    }
+
+    // Token is valid, redirect to reset password page with token in query
+    res.redirect(`https://paranaque-web-system.onrender.com/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`);
+  } catch (err) {
+    console.error("Error in reset-password GET route:", err);
+    res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=server_error');
+  }
+});
+
 // POST /reset-password - Reset password with token
 router.post('/reset-password', async (req, res) => {
   try {

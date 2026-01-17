@@ -1,17 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { useParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import axios from "axios";
 import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
+import API_BASE_URL from "../config/api";
 
 function ResetPassword() {
-  const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const email = searchParams.get("email");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+
+  useEffect(() => {
+    // Redirect to forgot password if no token
+    if (!token) {
+      window.location.href = "/forgot-password?error=missing_token";
+    }
+  }, [token]);
 
   const validatePassword = (password) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/;
@@ -58,7 +68,7 @@ function ResetPassword() {
 
     setLoading(true);
     try {
-      const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/reset-password", {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
         token,
         newPassword
       });
@@ -87,6 +97,10 @@ function ResetPassword() {
     }
   };
 
+  if (!token) {
+    return null; // Will redirect via useEffect
+  }
+
   return (
     <div className="auth-container">
       <div className="auth-wrapper">
@@ -99,6 +113,11 @@ function ResetPassword() {
           <p style={{ textAlign: "center", color: "#666", marginBottom: "20px", fontSize: "14px" }}>
             Please enter your new password below.
           </p>
+          {email && (
+            <p style={{ textAlign: "center", color: "#888", marginBottom: "20px", fontSize: "13px", backgroundColor: "#f5f5f5", padding: "8px", borderRadius: "4px" }}>
+              <strong>Email:</strong> {email}
+            </p>
+          )}
           <form className="auth-form" onSubmit={handleResetPassword}>
             <input
               type="password"
