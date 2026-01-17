@@ -33,6 +33,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve React build folder as static files
+const buildPath = path.join(__dirname, '../build');
+app.use(express.static(buildPath));
+
 // Database connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
@@ -68,13 +72,25 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
 app.use("/api/ai", aiRoutes);
 
-// 404 Not Found - AFTER all routes
-app.use((req, res) => {
-  console.warn(`404 - Not Found: ${req.method} ${req.path}`);
-  res.status(404).json({ 
-    message: 'Endpoint not found',
-    method: req.method,
-    path: req.path
+// Serve React app for client-side routes (BEFORE 404 handler)
+app.get('*', (req, res) => {
+  // Check if it's an API route (should have been caught above)
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ 
+      message: 'API Endpoint not found',
+      method: req.method,
+      path: req.path
+    });
+  }
+  // Serve index.html for all other routes (React Router will handle them)
+  res.sendFile(path.join(buildPath, 'index.html'), (err) => {
+    if (err) {
+      console.warn(`Could not serve index.html: ${err.message}`);
+      res.status(404).json({ 
+        message: 'Page not found',
+        path: req.path
+      });
+    }
   });
 });
 
