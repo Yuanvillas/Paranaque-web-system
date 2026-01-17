@@ -37,20 +37,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const buildPath = path.join(__dirname, '../build');
 console.log(`📁 Build path: ${buildPath}`);
 
-// Try different possible build paths
-let resolvedBuildPath = buildPath;
-if (!require('fs').existsSync(buildPath)) {
-  console.warn(`⚠️  Build path not found at: ${buildPath}`);
-  const altPath = path.join(__dirname, '../src/build');
-  if (require('fs').existsSync(altPath)) {
-    resolvedBuildPath = altPath;
-    console.log(`✅ Using alternative build path: ${altPath}`);
-  } else {
-    console.warn(`⚠️  Alternative path not found either: ${altPath}`);
-  }
-}
-
-app.use(express.static(resolvedBuildPath));
+app.use(express.static(buildPath));
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI)
@@ -98,12 +85,13 @@ app.get('*', (req, res) => {
     });
   }
   // Serve index.html for all other routes (React Router will handle them)
-  res.sendFile(path.join(resolvedBuildPath, 'index.html'), (err) => {
+  res.sendFile(path.join(buildPath, 'index.html'), (err) => {
     if (err) {
-      console.warn(`Could not serve index.html: ${err.message}`);
+      console.warn(`⚠️  Could not serve index.html from ${buildPath}: ${err.message}`);
       res.status(404).json({ 
         message: 'Page not found',
-        path: req.path
+        path: req.path,
+        buildPath: buildPath
       });
     }
   });
