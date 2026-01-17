@@ -583,8 +583,8 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = resetTokenExpiry;
     await user.save();
 
-    // Send email with reset link
-    const resetLink = `https://paranaque-web-system.onrender.com/reset-password/${resetToken}`;
+    // Send email with reset link - point to backend API which will redirect to frontend
+    const resetLink = `https://paranaque-web-system.onrender.com/api/auth/reset-password/${resetToken}`;
 
     console.log(`Attempting to send password reset email to: ${email}`);
     
