@@ -325,6 +325,95 @@ const ApprovedBooks = () => {
               />
             </div>
 
+            {/* Image Upload Section */}
+            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '4px', border: '2px solid #2196F3' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', fontSize: '16px' }}>📸 Book Picture</label>
+              
+              {/* Image Preview */}
+              {imagePreview && (
+                <div style={{ marginBottom: '10px' }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '150px',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd'
+                    }}
+                  />
+                  <div style={{ marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('editImageInput').click()}
+                      style={{
+                        backgroundColor: '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        marginRight: '5px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      🔄 Change Picture
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      style={{
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      ❌ Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              {!imagePreview && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('editImageInput').click()}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px dashed #2196F3',
+                      backgroundColor: '#e3f2fd',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      color: '#2196F3',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}
+                  >
+                    📷 Click to add picture
+                  </button>
+                  <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                    Max size: 5MB (JPG, PNG)
+                  </p>
+                </div>
+              )}
+
+              {/* Hidden File Input */}
+              <input
+                id="editImageInput"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Year</label>
@@ -400,95 +489,6 @@ const ApprovedBooks = () => {
                 <option value="returned">Returned</option>
                 <option value="archived">Archived</option>
               </select>
-            </div>
-
-            {/* Image Upload Section */}
-            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>📸 Book Picture</label>
-              
-              {/* Image Preview */}
-              {imagePreview && (
-                <div style={{ marginBottom: '10px' }}>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '200px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd'
-                    }}
-                  />
-                  <div style={{ marginTop: '10px' }}>
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('editImageInput').click()}
-                      style={{
-                        backgroundColor: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginRight: '5px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      🔄 Change Picture
-                    </button>
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      style={{
-                        backgroundColor: '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      ❌ Remove
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Upload Button */}
-              {!imagePreview && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('editImageInput').click()}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px dashed #2196F3',
-                      backgroundColor: '#e3f2fd',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: '#2196F3',
-                      fontWeight: 'bold',
-                      fontSize: '14px'
-                    }}
-                  >
-                    📷 Click to add picture
-                  </button>
-                  <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                    Max size: 5MB (JPG, PNG)
-                  </p>
-                </div>
-              )}
-
-              {/* Hidden File Input */}
-              <input
-                id="editImageInput"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={{ display: 'none' }}
-              />
             </div>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
