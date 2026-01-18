@@ -34,33 +34,39 @@ const AddBook = ({ onBookAdded }) => {
     const fetchNextAccessionNumber = async () => {
       try {
         console.log("📚 Fetching next accession number...");
-        const response = await fetch("https://paranaque-web-system.onrender.com/api/books/?limit=1&sort=-createdAt");
+        
+        // Get all books to find the highest accession number
+        const response = await fetch("https://paranaque-web-system.onrender.com/api/books/?limit=9999");
         const data = await response.json();
         
+        const currentYear = new Date().getFullYear();
+        let highestNumber = 0;
+        let highestBook = null;
+        
         if (data.books && data.books.length > 0) {
-          const lastBook = data.books[0];
-          const lastAccession = lastBook.accessionNumber || "2026-0000";
-          console.log("📚 Last accession number:", lastAccession);
-          
-          // Parse and increment
-          const parts = lastAccession.split('-');
-          const year = parseInt(parts[0]);
-          const sequence = parseInt(parts[1]);
-          const currentYear = new Date().getFullYear();
-          
-          let nextSequence;
-          if (year === currentYear) {
-            nextSequence = sequence + 1;
-          } else {
-            nextSequence = 1;
+          // Loop through ALL books to find the actual highest numeric accession number
+          for (const book of data.books) {
+            const accession = book.accessionNumber || "";
+            if (accession.startsWith(`${currentYear}-`)) {
+              const parts = accession.split('-');
+              if (parts.length === 2) {
+                const sequenceNum = parseInt(parts[1]);
+                if (sequenceNum > highestNumber) {
+                  highestNumber = sequenceNum;
+                  highestBook = accession;
+                }
+              }
+            }
           }
           
+          console.log("📚 Highest accession number found:", highestBook || "None");
+          
+          const nextSequence = highestNumber + 1;
           const nextAccession = `${currentYear}-${String(nextSequence).padStart(4, '0')}`;
           console.log("📚 Next accession number will be:", nextAccession);
           setNextAccessionNumber(nextAccession);
         } else {
           // No books exist yet
-          const currentYear = new Date().getFullYear();
           setNextAccessionNumber(`${currentYear}-0001`);
         }
       } catch (err) {
