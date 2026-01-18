@@ -19,15 +19,19 @@ const getNextAccessionNumber = async () => {
     
     const currentYear = new Date().getFullYear();
     
+    // Use YEAR-SPECIFIC counter to handle year rollovers correctly
+    // This way each year has its own counter (2026-0001, 2026-0002, etc)
+    const counterName = `accessionNumber-${currentYear}`;
+    
     // Use atomic Counter operation to prevent race conditions
     const counter = await Counter.findOneAndUpdate(
-      { name: 'accessionNumber' },
+      { name: counterName },
       { $inc: { value: 1 } },
       { new: true, upsert: true }
     );
     
     const nextNumber = counter.value;
-    console.log("📈 Counter value after increment:", nextNumber);
+    console.log(`📈 Counter value for ${currentYear} after increment:`, nextNumber);
     
     // Format as YYYY-XXXX
     const sequenceNumber = String(nextNumber).padStart(4, '0');
@@ -1613,6 +1617,73 @@ router.get("/quick-fix-accessions", async (req, res) => {
     }
     
     res.json({ success: true, updated: allBooks.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin endpoint to check counter status
+router.get('/admin/counter-status', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const counterName = `accessionNumber-${currentYear}`;
+    
+    const counter = await Counter.findOne({ name: counterName });
+    
+    if (!counter) {
+      return res.json({
+        year: currentYear,
+        counterName: counterName,
+        currentValue: 0,
+        message: 'Counter does not exist yet. Will be created on first book addition.'
+      });
+    }
+    
+    res.json({
+      year: currentYear,
+      counterName: counterName,
+      currentValue: counter.value,
+      nextAccessionNumber: `${currentYear}-${String(counter.value + 1).padStart(4, '0')}`,
+      message: 'Counter is working correctly'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin endpoint to reset counter for current year
+router.post('/admin/reset-counter', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const counterName = `accessionNumber-${currentYear}`;
+    
+    // Delete the counter to reset it
+    const deleted = await Counter.findOneAndDelete({ name: counterName });
+    
+    res.json({
+      message: `Counter for ${currentYear} has been reset`,
+      deletedCounter: deleted,
+      nextCounterValue: 1,
+      nextAccessionNumber: `${currentYear}-0001`
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin endpoint to see all counters
+router.get('/admin/all-counters', async (req, res) => {
+  try {
+    const counters = await Counter.find({}).sort({ name: 1 });
+    
+    res.json({
+      totalCounters: counters.length,
+      counters: counters.map(c => ({
+        name: c.name,
+        value: c.value,
+        nextValue: c.value + 1
+      }))
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
