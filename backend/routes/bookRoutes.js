@@ -15,48 +15,25 @@ const router = express.Router();
 // Function to get next accession number by incrementing the last book's number
 const getNextAccessionNumber = async () => {
   try {
-    console.log("🔢 Generating next accession number...");
+    console.log("🔢 Generating next accession number using atomic Counter...");
     
     const currentYear = new Date().getFullYear();
-    let nextNumber = 1;
     
-    // Try to find the highest accession number in the database
-    try {
-      const books = await Book.find({ accessionNumber: { $exists: true, $ne: null, $ne: '' } })
-        .sort({ createdAt: -1 })
-        .limit(1);
-      
-      if (books && books.length > 0) {
-        const lastBook = books[0];
-        console.log("📚 Found book with accession:", lastBook.accessionNumber);
-        
-        const parts = lastBook.accessionNumber.split('-');
-        if (parts.length === 2) {
-          const lastYear = parseInt(parts[0]);
-          const lastSequence = parseInt(parts[1]);
-          
-          if (lastYear === currentYear) {
-            nextNumber = lastSequence + 1;
-            console.log("📈 Incrementing sequence to:", nextNumber);
-          } else {
-            console.log("📆 New year, resetting sequence to 1");
-            nextNumber = 1;
-          }
-        }
-      } else {
-        console.log("📚 No previous accession numbers found, starting from 1");
-        nextNumber = 1;
-      }
-    } catch (dbErr) {
-      console.error("⚠️  Error querying books:", dbErr.message);
-      nextNumber = 1;
-    }
+    // Use atomic Counter operation to prevent race conditions
+    const counter = await Counter.findOneAndUpdate(
+      { name: 'accessionNumber' },
+      { $inc: { value: 1 } },
+      { new: true, upsert: true }
+    );
+    
+    const nextNumber = counter.value;
+    console.log("📈 Counter value after increment:", nextNumber);
     
     // Format as YYYY-XXXX
     const sequenceNumber = String(nextNumber).padStart(4, '0');
     const accessionNumber = `${currentYear}-${sequenceNumber}`;
     
-    console.log(`✅ Generated accession number: ${accessionNumber}`);
+    console.log(`✅ Generated accession number atomically: ${accessionNumber}`);
     return accessionNumber;
   } catch (err) {
     console.error('❌ Error in getNextAccessionNumber:', err.message);
