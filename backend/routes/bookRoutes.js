@@ -1230,7 +1230,7 @@ router.get('/reserved', async (req, res) => {
 // Generic PUT endpoint for updating book fields (year, stock, etc)
 router.put('/:id', async (req, res) => {
   try {
-    const { title, author, publisher, year, stock, category, status, genre } = req.body;
+    const { title, author, publisher, year, stock, category, status, genre, image } = req.body;
 
     const updateData = {};
     if (title !== undefined) updateData.title = title;
@@ -1241,6 +1241,23 @@ router.put('/:id', async (req, res) => {
     if (category !== undefined) updateData.category = category;
     if (status !== undefined) updateData.status = status;
     if (genre !== undefined) updateData.genre = genre;
+
+    // Handle image upload if provided
+    if (image && typeof image === 'string' && image.startsWith('data:image/')) {
+      try {
+        console.log("📸 Image upload detected for book:", req.params.id);
+        const imageUrl = await uploadBase64ToSupabase(
+          image,
+          "book_bucket",
+          `book/${Date.now()}-${title || 'book'}-updated.jpg`
+        );
+        console.log("✅ Image uploaded to:", imageUrl);
+        updateData.image = imageUrl;
+      } catch (uploadErr) {
+        console.error("⚠️  Image upload failed:", uploadErr.message);
+        // Continue without image update - don't fail the entire request
+      }
+    }
 
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,

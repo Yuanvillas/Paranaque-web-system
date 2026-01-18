@@ -9,6 +9,8 @@ const ApprovedBooks = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [editingBook, setEditingBook] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [imagePreview, setImagePreview] = useState(null);
+  const [base64Image, setBase64Image] = useState(null);
 
   useEffect(() => {
     fetchApprovedBooks();
@@ -66,6 +68,8 @@ const ApprovedBooks = () => {
       category: book.category || '',
       status: book.status || 'active'
     });
+    setImagePreview(book.image || null);
+    setBase64Image(null);
   };
 
   const handleEditChange = (e) => {
@@ -76,19 +80,69 @@ const ApprovedBooks = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    // Show preview
+    setImagePreview(URL.createObjectURL(file));
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (reader.result) {
+        console.log('✅ Image converted to base64, size:', reader.result.length);
+        setBase64Image(reader.result);
+      }
+    };
+    reader.onerror = () => {
+      console.error('❌ Error reading image file');
+      alert('Error reading image file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setBase64Image(null);
+  };
+
   const saveEdit = async () => {
     try {
+      const updatePayload = { ...editForm };
+
+      // Add image if one was selected
+      if (base64Image) {
+        updatePayload.image = base64Image;
+      }
+
       const response = await fetch(`https://paranaque-web-system.onrender.com/api/books/${editingBook}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(updatePayload)
       });
       if (response.ok) {
+        const data = await response.json();
         const updatedBooks = approvedBooks.map(book =>
-          book._id === editingBook ? { ...book, ...editForm } : book
+          book._id === editingBook ? { ...book, ...data.book } : book
         );
         setApprovedBooks(updatedBooks);
         setEditingBook(null);
+        setImagePreview(null);
+        setBase64Image(null);
+        alert('Book updated successfully!');
       } else {
         alert('Failed to update book');
       }
@@ -346,6 +400,95 @@ const ApprovedBooks = () => {
                 <option value="returned">Returned</option>
                 <option value="archived">Archived</option>
               </select>
+            </div>
+
+            {/* Image Upload Section */}
+            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>📸 Book Picture</label>
+              
+              {/* Image Preview */}
+              {imagePreview && (
+                <div style={{ marginBottom: '10px' }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '200px',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd'
+                    }}
+                  />
+                  <div style={{ marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('editImageInput').click()}
+                      style={{
+                        backgroundColor: '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        marginRight: '5px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      🔄 Change Picture
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      style={{
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      ❌ Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              {!imagePreview && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('editImageInput').click()}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px dashed #2196F3',
+                      backgroundColor: '#e3f2fd',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      color: '#2196F3',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}
+                  >
+                    📷 Click to add picture
+                  </button>
+                  <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                    Max size: 5MB (JPG, PNG)
+                  </p>
+                </div>
+              )}
+
+              {/* Hidden File Input */}
+              <input
+                id="editImageInput"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+              />
             </div>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
