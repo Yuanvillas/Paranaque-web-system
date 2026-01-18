@@ -9,19 +9,35 @@ const initializeCounter = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✅ Connected to MongoDB");
     
-    // Count existing books with accession numbers
+    const currentYear = new Date().getFullYear();
+    const counterName = `accessionNumber-${currentYear}`;
+    
+    // Check if counter already exists
+    const existingCounter = await Counter.findOne({ name: counterName });
+    
+    if (existingCounter) {
+      console.log(`✅ Counter for ${currentYear} already exists with value: ${existingCounter.value}`);
+      console.log(`   Next accession number will be: ${currentYear}-${String(existingCounter.value + 1).padStart(4, '0')}`);
+      await mongoose.connection.close();
+      console.log("✅ Database connection closed");
+      return;
+    }
+    
+    // Only initialize if counter doesn't exist
+    console.log(`🔢 Initializing new counter for year ${currentYear}...`);
+    
+    // Count books with accession numbers for THIS YEAR
     const booksWithAccession = await Book.find({
-      accessionNumber: { $exists: true, $ne: null, $ne: '' }
+      accessionNumber: { $exists: true, $ne: null, $ne: '', $regex: `^${currentYear}-` }
     });
     
-    console.log(`📚 Found ${booksWithAccession.length} books with accession numbers`);
+    console.log(`📚 Found ${booksWithAccession.length} books with accession numbers for ${currentYear}`);
     
-    // Initialize or update the counter to the highest current accession number
+    // Find the highest accession number for this year
     let counterValue = booksWithAccession.length;
     
-    // Also check the actual highest number in case there are gaps
     const lastBook = await Book.findOne({
-      accessionNumber: { $exists: true, $ne: null, $ne: '' }
+      accessionNumber: { $regex: `^${currentYear}-` }
     }).sort({ createdAt: -1 });
     
     if (lastBook && lastBook.accessionNumber) {
@@ -29,19 +45,22 @@ const initializeCounter = async () => {
       if (parts.length === 2) {
         const highestSequence = parseInt(parts[1]);
         counterValue = Math.max(counterValue, highestSequence);
-        console.log(`📈 Highest sequence number found: ${highestSequence}`);
+        console.log(`📈 Highest sequence number found for ${currentYear}: ${highestSequence}`);
       }
     }
     
-    // Update or create the counter
-    const counter = await Counter.findOneAndUpdate(
-      { name: 'accessionNumber' },
-      { value: counterValue },
-      { new: true, upsert: true }
-    );
+    // Create the counter for this year
+    const counter = await Counter.create({
+      name: counterName,
+      value: counterValue
+    });
     
-    console.log(`✅ Counter initialized with value: ${counter.value}`);
-    console.log(`   Next accession number will be: ${new Date().getFullYear()}-${String(counter.value + 1).padStart(4, '0')}`);
+    console.log(`✅ Counter initialized for ${currentYear} with value: ${counter.value}`);
+    console.log(`   Next accession number will be: ${currentYear}-${String(counter.value + 1).padStart(4, '0')}`);
+    
+    // Clean up old counter if it exists
+    await Counter.findOneAndDelete({ name: 'accessionNumber' });
+    console.log(`🧹 Cleaned up old global counter`);
     
     await mongoose.connection.close();
     console.log("✅ Database connection closed");

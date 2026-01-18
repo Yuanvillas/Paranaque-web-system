@@ -1472,9 +1472,12 @@ router.get('/diagnostic/images', async (req, res) => {
 // Admin endpoint to fix accession numbers for existing books using Counter model
 router.post('/admin/fix-accession-numbers', async (req, res) => {
   try {
-    // Reset the counter
+    const currentYear = new Date().getFullYear();
+    const counterName = `accessionNumber-${currentYear}`;
+    
+    // Reset the YEAR-SPECIFIC counter
     await Counter.findOneAndUpdate(
-      { name: 'accessionNumber' },
+      { name: counterName },
       { value: 0 },
       { upsert: true }
     );
@@ -1485,7 +1488,6 @@ router.post('/admin/fix-accession-numbers', async (req, res) => {
     console.log(`📚 Fixing accession numbers for ${books.length} books`);
     
     let counter = 0;
-    const currentYear = new Date().getFullYear();
     const updatePromises = [];
     
     for (const book of books) {
@@ -1501,8 +1503,9 @@ router.post('/admin/fix-accession-numbers', async (req, res) => {
     
     // Update counter to reflect the fixed numbers
     await Counter.findOneAndUpdate(
-      { name: 'accessionNumber' },
-      { value: counter }
+      { name: counterName },
+      { value: counter },
+      { upsert: true }
     );
     
     console.log("✅ Fixed accession numbers for", counter, "books in DDC format");
@@ -1685,6 +1688,120 @@ router.get('/admin/all-counters', async (req, res) => {
       }))
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin endpoint to remove duplicate accession numbers and keep only one copy
+router.post('/admin/remove-duplicates', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    console.log("🔍 Scanning for duplicate accession numbers...");
+    
+    // Find all books with accession numbers
+    const books = await Book.find({
+      accessionNumber: { $exists: true, $ne: null, $ne: '' }
+    }).sort({ createdAt: 1 });
+    
+    console.log(`📚 Total books with accession numbers: ${books.length}`);
+    
+    // Group by accession number to find duplicates
+    const accessionMap = {};
+    const duplicates = [];
+    
+    for (const book of books) {
+      const accession = book.accessionNumber;
+      
+      if (!accessionMap[accession]) {
+        accessionMap[accession] = [];
+      }
+      accessionMap[accession].push(book._id);
+    }
+    
+    // Find which accession numbers have duplicates
+    for (const [accession, bookIds] of Object.entries(accessionMap)) {
+      if (bookIds.length > 1) {
+        console.log(`⚠️  Found ${bookIds.length} books with accession number: ${accession}`);
+        // Keep the first one, mark others for deletion
+        duplicates.push({
+          accession,
+          keepId: bookIds[0],
+          deleteIds: bookIds.slice(1)
+        });
+      }
+    }
+    
+    console.log(`🔴 Found ${duplicates.length} accession numbers with duplicates`);
+    
+    // Delete the duplicates
+    let deletedCount = 0;
+    for (const dup of duplicates) {
+      for (const deleteId of dup.deleteIds) {
+        await Book.findByIdAndDelete(deleteId);
+        deletedCount++;
+        console.log(`🗑️  Deleted duplicate book with accession: ${dup.accession}`);
+      }
+    }
+    
+    console.log(`✅ Deleted ${deletedCount} duplicate books`);
+    
+    res.json({
+      message: 'Duplicate accession numbers removed',
+      duplicateGroupsFound: duplicates.length,
+      booksDeleted: deletedCount,
+      booksRemaining: books.length - deletedCount
+    });
+  } catch (err) {
+    console.error('❌ Error removing duplicates:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin endpoint to sync counter to the highest existing accession number
+router.post('/admin/sync-counter', async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const counterName = `accessionNumber-${currentYear}`;
+    
+    console.log(`🔄 Syncing counter to highest accession number for ${currentYear}...`);
+    
+    // Find the book with the highest accession number for this year
+    const books = await Book.find({
+      accessionNumber: { $regex: `^${currentYear}-` }
+    }).sort({ createdAt: -1 });
+    
+    let highestNumber = 0;
+    
+    if (books.length > 0) {
+      const lastBook = books[0];
+      const parts = lastBook.accessionNumber.split('-');
+      if (parts.length === 2) {
+        highestNumber = parseInt(parts[1]);
+        console.log(`📈 Highest accession number found: ${lastBook.accessionNumber}`);
+      }
+    }
+    
+    // Update counter to this value
+    await Counter.findOneAndUpdate(
+      { name: counterName },
+      { value: highestNumber },
+      { upsert: true }
+    );
+    
+    const nextNumber = highestNumber + 1;
+    const nextAccession = `${currentYear}-${String(nextNumber).padStart(4, '0')}`;
+    
+    console.log(`✅ Counter synced! Next accession number will be: ${nextAccession}`);
+    
+    res.json({
+      message: 'Counter synced successfully',
+      year: currentYear,
+      highestExistingNumber: highestNumber,
+      nextAccessionNumber: nextAccession,
+      totalBooks: books.length
+    });
+  } catch (err) {
+    console.error('❌ Error syncing counter:', err);
     res.status(500).json({ error: err.message });
   }
 });
