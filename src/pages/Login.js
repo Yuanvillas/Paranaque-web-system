@@ -74,6 +74,7 @@ function Login() {
               placeholder="Email"
               value={form.email}
               onChange={handleChange}
+              autoComplete="off"
               required
             />
             <PasswordInput

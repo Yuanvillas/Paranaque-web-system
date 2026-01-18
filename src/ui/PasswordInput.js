@@ -17,6 +17,7 @@ const PasswordInput = ({ value, onChange, onClick, name, placeholder }) => {
         value={value}
         onChange={onChange}
         placeholder={placeholder || "Enter password"}
+        autoComplete="off"
         style={{ width: "100%", paddingRight: "2rem"}}
       />
       <span
