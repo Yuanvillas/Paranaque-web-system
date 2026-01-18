@@ -1765,21 +1765,27 @@ router.post('/admin/sync-counter', async (req, res) => {
     
     console.log(`🔄 Syncing counter to highest accession number for ${currentYear}...`);
     
-    // Find the book with the highest accession number for this year
+    // Find ALL books with accession numbers for this year
     const books = await Book.find({
       accessionNumber: { $regex: `^${currentYear}-` }
-    }).sort({ createdAt: -1 });
+    });
     
     let highestNumber = 0;
+    let highestBook = null;
     
-    if (books.length > 0) {
-      const lastBook = books[0];
-      const parts = lastBook.accessionNumber.split('-');
+    // Loop through ALL books to find the actual highest numeric value
+    for (const book of books) {
+      const parts = book.accessionNumber.split('-');
       if (parts.length === 2) {
-        highestNumber = parseInt(parts[1]);
-        console.log(`📈 Highest accession number found: ${lastBook.accessionNumber}`);
+        const sequenceNum = parseInt(parts[1]);
+        if (sequenceNum > highestNumber) {
+          highestNumber = sequenceNum;
+          highestBook = book.accessionNumber;
+        }
       }
     }
+    
+    console.log(`📈 Highest accession number found: ${highestBook || 'None'} (value: ${highestNumber})`);
     
     // Update counter to this value
     await Counter.findOneAndUpdate(
