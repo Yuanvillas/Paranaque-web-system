@@ -326,7 +326,7 @@ const ApprovedBooks = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Book Image</label>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📷 Book Image</label>
               <input 
                 type="file" 
                 name="image" 
@@ -335,25 +335,12 @@ const ApprovedBooks = () => {
                 style={{
                   width: '100%',
                   padding: '8px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #ccc',
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxSizing: 'border-box'
                 }}
               />
-              {imagePreview && (
-                <div style={{ marginTop: '10px' }}>
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '150px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd'
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
