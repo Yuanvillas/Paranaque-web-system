@@ -266,7 +266,7 @@ const ApprovedBooks = () => {
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
             maxWidth: '500px',
             width: '90%',
-            maxHeight: '90vh',
+            maxHeight: '95vh',
             overflowY: 'auto'
           }}>
             <h2 style={{ marginTop: 0 }}>Edit Book Details</h2>
