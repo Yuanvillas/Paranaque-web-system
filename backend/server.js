@@ -34,8 +34,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve React build folder as static files
-// React builds to /src/build, and server.js is in /backend, so ../src/build gets us there
-const buildPath = path.join(__dirname, '../src/build');
+// React builds to /build at project root, server.js is in /backend, so ../build is correct
+const buildPath = path.join(__dirname, '../build');
 console.log(`📁 Build path: ${buildPath}`);
 console.log(`📁 Current directory: ${__dirname}`);
 
