@@ -39,7 +39,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const fs = require('fs');
 
 // React's npm run build outputs to /build at project root
-const buildPath = path.join(__dirname, '../build');
+let buildPath = path.join(__dirname, '../build');
+
+// Fallback: check for /src/build if root doesn't exist
+if (!fs.existsSync(buildPath)) {
+  const altPath = path.join(__dirname, '../src/build');
+  if (fs.existsSync(altPath)) {
+    buildPath = altPath;
+  }
+}
 
 console.log(`\n📁 ========== BUILD PATH ==========`);
 console.log(`📁 Backend directory (__dirname): ${__dirname}`);
