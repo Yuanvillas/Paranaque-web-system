@@ -34,16 +34,39 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve React build folder as static files
-// React builds to /build at project root, server.js is in /backend, so ../build is correct
-const buildPath = path.join(__dirname, '../build');
-console.log(`📁 Build path: ${buildPath}`);
-console.log(`📁 Current directory: ${__dirname}`);
-
-// Check if build folder exists
+// React should build to /build at project root
+// But we'll check both /build and /src/build for flexibility
 const fs = require('fs');
+let buildPath = path.join(__dirname, '../build');
+
+// Check if build exists at root level
 if (!fs.existsSync(buildPath)) {
-  console.error(`❌ Build folder not found at: ${buildPath}`);
-  console.error(`📁 Contents of parent directory:`, fs.readdirSync(path.join(__dirname, '..')));
+  const altBuildPath = path.join(__dirname, '../src/build');
+  if (fs.existsSync(altBuildPath)) {
+    console.warn(`⚠️  Build folder not at root, using alternative path: ${altBuildPath}`);
+    buildPath = altBuildPath;
+  } else {
+    console.error(`❌ Build folder not found at either:
+      - ${buildPath}
+      - ${altBuildPath}
+    `);
+  }
+}
+
+console.log(`📁 Using build path: ${buildPath}`);
+console.log(`📁 Current directory (__dirname): ${__dirname}`);
+
+// Detailed logging for debugging
+try {
+  const parentContents = fs.readdirSync(path.join(__dirname, '..'));
+  console.log(`📁 Root project contents:`, parentContents);
+  
+  if (fs.existsSync(buildPath)) {
+    const buildContents = fs.readdirSync(buildPath);
+    console.log(`✅ Build folder exists with contents:`, buildContents);
+  }
+} catch (e) {
+  console.error(`❌ Error reading directories: ${e.message}`);
 }
 
 app.use(express.static(buildPath));

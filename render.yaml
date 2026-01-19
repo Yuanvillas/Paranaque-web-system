@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && CI=false npm run build && cd backend && npm install
+    buildCommand: npm install && CI=false npm run build && echo "===== BUILD COMPLETE =====" && pwd && find . -maxdepth 3 -name "index.html" 2>/dev/null && cd backend && npm install
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
