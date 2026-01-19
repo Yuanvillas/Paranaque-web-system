@@ -14,8 +14,13 @@ const { uploadBase64ToSupabase } = require('../utils/upload');
 // Initialize Resend email service
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://paranaque-web-system.onrender.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://paranaque-web-system.onrender.com';
+
 console.log(`Email service configured with Resend API Key present: ${!!process.env.RESEND_API_KEY}`);
 console.log(`Email sender: ${EMAIL_FROM}`);
+console.log(`Backend URL: ${BACKEND_URL}`);
+console.log(`Frontend URL: ${FRONTEND_URL}`);
 
 // Register
 router.post("/register", async (req, res) => {
@@ -108,8 +113,8 @@ router.post("/register", async (req, res) => {
         html: `
           <h2>Email Verification</h2>
           <p>Welcome to Paranaledge! Please verify your email by clicking the link below:</p>
-          <a href="https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Verify Email</a>
-          <p>Or copy and paste this link: https://paranaque-web-system.onrender.com/api/auth/verify/${verificationToken}</p>
+          <a href="${BACKEND_URL}/api/auth/verify/${verificationToken}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Verify Email</a>
+          <p>Or copy and paste this link: ${BACKEND_URL}/api/auth/verify/${verificationToken}</p>
           <p>This link expires in 24 hours.</p>
           <p>If you did not register, please ignore this email.</p>
         `,
@@ -136,7 +141,7 @@ router.get('/verify/:token', async (req, res) => {
     const user = await User.findOne({ verificationToken: req.params.token });
     if (!user) {
       // Redirect to error page if token is invalid
-      return res.redirect(`https://paranaque-web-system.onrender.com/verify-error?reason=invalid`);
+      return res.redirect(`${FRONTEND_URL}/verify-error?reason=invalid`);
     }
 
     user.isVerified = true;
@@ -144,9 +149,9 @@ router.get('/verify/:token', async (req, res) => {
     await user.save();
 
     // Redirect to success page with email parameter
-    res.redirect(`https://paranaque-web-system.onrender.com/verify-success?email=${encodeURIComponent(user.email)}`);
+    res.redirect(`${FRONTEND_URL}/verify-success?email=${encodeURIComponent(user.email)}`);
   } catch (err) {
-    res.redirect(`https://paranaque-web-system.onrender.com/verify-error?reason=server_error`);
+    res.redirect(`${FRONTEND_URL}/verify-error?reason=server_error`);
   }
 });
 
@@ -584,7 +589,7 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     // Send email with reset link - point to backend API which will redirect to frontend
-    const resetLink = `https://paranaque-web-system.onrender.com/api/auth/reset-password/${resetToken}`;
+    const resetLink = `${BACKEND_URL}/api/auth/reset-password/${resetToken}`;
 
     console.log(`Attempting to send password reset email to: ${email}`);
     
@@ -636,7 +641,7 @@ router.get('/reset-password/:token', async (req, res) => {
     const { token } = req.params;
 
     if (!token) {
-      return res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=missing_token');
+      return res.redirect(`${FRONTEND_URL}/forgot-password?error=missing_token`);
     }
 
     // Find user with valid reset token
@@ -646,14 +651,14 @@ router.get('/reset-password/:token', async (req, res) => {
     });
 
     if (!user) {
-      return res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=invalid_token');
+      return res.redirect(`${FRONTEND_URL}/forgot-password?error=invalid_token`);
     }
 
     // Token is valid, redirect to reset password page with token in query
-    res.redirect(`https://paranaque-web-system.onrender.com/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`);
+    res.redirect(`${FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`);
   } catch (err) {
     console.error("Error in reset-password GET route:", err);
-    res.redirect('https://paranaque-web-system.onrender.com/forgot-password?error=server_error');
+    res.redirect(`${FRONTEND_URL}/forgot-password?error=server_error`);
   }
 });
 
