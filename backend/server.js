@@ -34,34 +34,49 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve React build folder as static files
-// After Render build, the build folder should be at project root
-// render.yaml copies it there if React creates it in /src
-const buildPath = path.join(__dirname, '../build');
-console.log(`📁 Using build path: ${buildPath}`);
+const fs = require('fs');
+const path = require('path');
+
+// Determine build path - check multiple possible locations
+let buildPath;
+const possiblePaths = [
+  path.join(__dirname, '../build'),           // Root /build
+  path.join(__dirname, '../src/build'),       // /src/build  
+];
+
+console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
 console.log(`📁 Backend directory (__dirname): ${__dirname}`);
 
-// Check if build folder exists and log details
-const fs = require('fs');
-if (fs.existsSync(buildPath)) {
-  const buildContents = fs.readdirSync(buildPath);
-  console.log(`✅ Build folder found. Contents:`, buildContents.slice(0, 10)); // Show first 10 items
-  
-  // Verify index.html exists
-  const indexPath = path.join(buildPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log(`✅ index.html found at: ${indexPath}`);
-  } else {
-    console.error(`❌ index.html NOT found at: ${indexPath}`);
-  }
-} else {
-  console.error(`❌ Build folder NOT found at: ${buildPath}`);
-  try {
-    const parentContents = fs.readdirSync(path.join(__dirname, '..'));
-    console.error(`Parent directory contents:`, parentContents);
-  } catch (e) {
-    console.error(`Cannot read parent directory: ${e.message}`);
+for (const testPath of possiblePaths) {
+  console.log(`📁 Checking: ${testPath}`);
+  if (fs.existsSync(testPath)) {
+    const indexPath = path.join(testPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      buildPath = testPath;
+      console.log(`✅ FOUND build with index.html at: ${testPath}`);
+      break;
+    }
   }
 }
+
+if (!buildPath) {
+  console.error(`❌ ERROR: Build folder not found anywhere!`);
+  console.error(`Checked paths:`);
+  possiblePaths.forEach(p => console.error(`  - ${p}`));
+  
+  // List what's actually in parent directory
+  try {
+    const parentContents = fs.readdirSync(path.join(__dirname, '..'));
+    console.error(`\nActual contents of parent directory:`, parentContents);
+  } catch (e) {
+    console.error(`Cannot list parent directory: ${e.message}`);
+  }
+  
+  buildPath = possiblePaths[0]; // Default to root as fallback
+}
+
+console.log(`📁 Using final buildPath: ${buildPath}`);
+console.log(`📁 ========================================\n`);
 
 app.use(express.static(buildPath));
 
