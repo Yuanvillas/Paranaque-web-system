@@ -35,7 +35,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve React build folder as static files
 const fs = require('fs');
-const path = require('path');
 
 // Determine build path - check multiple possible locations
 let buildPath;
