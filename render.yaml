@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && CI=false npm run build && [ -d src/build ] && mv src/build ./build || true && cd backend && npm install && echo "✅ Backend dependencies installed"
+    buildCommand: npm install && CI=false npm run build && cd backend && npm install && echo "✅ Build complete and backend dependencies installed"
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV

@@ -36,46 +36,21 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve React build folder as static files
 const fs = require('fs');
 
-// Determine build path - check multiple possible locations
-let buildPath;
-const possiblePaths = [
-  path.join(__dirname, '../build'),           // Root /build
-  path.join(__dirname, '../src/build'),       // /src/build  
-];
+// Use the root build folder (where npm run build places the output)
+const buildPath = path.join(__dirname, '../build');
 
-console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
+console.log(`\n📁 ========== BUILD PATH ==========`);
 console.log(`📁 Backend directory (__dirname): ${__dirname}`);
+console.log(`📁 Using buildPath: ${buildPath}`);
 
-for (const testPath of possiblePaths) {
-  console.log(`📁 Checking: ${testPath}`);
-  if (fs.existsSync(testPath)) {
-    const indexPath = path.join(testPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      buildPath = testPath;
-      console.log(`✅ FOUND build with index.html at: ${testPath}`);
-      break;
-    }
-  }
+if (fs.existsSync(buildPath)) {
+  console.log(`✅ Build folder found`);
+} else {
+  console.warn(`⚠️  Warning: Build folder not found at ${buildPath}`);
+  console.warn(`Make sure to run 'npm run build' before starting the server`);
 }
 
-if (!buildPath) {
-  console.error(`❌ ERROR: Build folder not found anywhere!`);
-  console.error(`Checked paths:`);
-  possiblePaths.forEach(p => console.error(`  - ${p}`));
-  
-  // List what's actually in parent directory
-  try {
-    const parentContents = fs.readdirSync(path.join(__dirname, '..'));
-    console.error(`\nActual contents of parent directory:`, parentContents);
-  } catch (e) {
-    console.error(`Cannot list parent directory: ${e.message}`);
-  }
-  
-  buildPath = possiblePaths[0]; // Default to root as fallback
-}
-
-console.log(`📁 Using final buildPath: ${buildPath}`);
-console.log(`📁 ========================================\n`);
+console.log(`📁 ================================\n`);
 
 app.use(express.static(buildPath));
 
