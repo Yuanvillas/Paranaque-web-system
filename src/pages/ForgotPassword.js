@@ -5,6 +5,7 @@ import axios from "axios";
 import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
+import API_BASE_URL from "../config/api";
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
-      const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/forgot-password", { email });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
 
       await Swal.fire({
         title: "Parañaledge",

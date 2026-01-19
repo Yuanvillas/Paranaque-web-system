@@ -45,14 +45,29 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
 // ROUTES - MUST BE BEFORE ERROR HANDLERS
-// Root status route
+// Root status route - MUST serve the React app for SPA
 app.get('/', (req, res) => {
-  res.status(200).json({ 
-    message: '✅ Parañaledge Library Backend - API Server',
-    status: 'running',
-    version: '1.1.0',
-    environment: process.env.NODE_ENV || 'production',
-    timestamp: new Date().toISOString()
+  // For API clients checking backend health
+  const userAgent = req.get('user-agent') || '';
+  if (userAgent.includes('curl') || userAgent.includes('Postman') || req.accepts('json')) {
+    return res.status(200).json({ 
+      message: '✅ Parañaledge Library Backend - API Server',
+      status: 'running',
+      version: '1.1.0',
+      environment: process.env.NODE_ENV || 'production',
+      timestamp: new Date().toISOString()
+    });
+  }
+  // For browser requests, serve the React app
+  res.sendFile(path.join(buildPath, 'index.html'), (err) => {
+    if (err) {
+      console.warn(`⚠️  Could not serve index.html from ${buildPath}: ${err.message}`);
+      res.status(404).json({ 
+        message: 'Page not found',
+        buildPath: buildPath,
+        error: err.message
+      });
+    }
   });
 });
 
