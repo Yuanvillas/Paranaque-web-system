@@ -4,10 +4,14 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build && cd backend && npm install
+    buildCommand: npm install && npm run build && mv build ../build && cd backend && npm install
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5050
+      - key: BACKEND_URL
+        value: https://paranaque-web-system.onrender.com
+      - key: FRONTEND_URL
+        value: https://paranaque-web-system.onrender.com

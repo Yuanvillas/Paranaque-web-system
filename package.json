@@ -2,7 +2,6 @@
   "name": "paranaledgeweb",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://paranaque-web-system.onrender.com",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^7.1.0",
