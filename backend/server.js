@@ -39,34 +39,38 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const fs = require('fs');
 
 // Build path depends on where backend is located
-// React builds to: /opt/render/project/src/build (from src directory)
+// React builds to: /opt/render/project/build (at root level, NOT in src)
 // Backend is at: /opt/render/project/backend
-// So from backend/__dirname, we need to go up 1 level then into src/build
+// So from backend/__dirname, we need to go up 1 level to reach /build
 const buildPathOptions = [
-  path.join(__dirname, '../src/build'),     // For /backend structure: ../src/build (CORRECT for Render)
-  path.join(__dirname, '../../build'),      // For /src/backend structure (2 levels up)
-  path.join(__dirname, '../build'),         // For /backend structure (1 level up) - fallback
+  path.join(__dirname, '../build'),         // ✅ CORRECT: React build outputs here
+  path.join(__dirname, '../../build'),      // Fallback for other directory structures
 ];
 
 let buildPath = null;
 for (const option of buildPathOptions) {
+  console.log(`📁 Checking: ${option}`);
   if (fs.existsSync(option)) {
+    console.log(`📁 ✅ Found at: ${option}`);
     buildPath = option;
     break;
+  } else {
+    console.log(`📁 ❌ Not found`);
   }
 }
 
 // If still not found, default to first option
 if (!buildPath) {
+  console.log(`📁 Using default fallback path`);
   buildPath = buildPathOptions[0];
 }
 
-console.log(`\n📁 ========== BUILD PATH ==========`);
-console.log(`📁 Backend directory (__dirname): ${__dirname}`);
-console.log(`📁 Using buildPath: ${buildPath}`);
+console.log(`\n📁 ========== BUILD PATH SUMMARY ==========`);
+console.log(`📁 Backend __dirname: ${__dirname}`);
+console.log(`📁 Final buildPath: ${buildPath}`);
 
 if (fs.existsSync(buildPath)) {
-  console.log(`✅ Build folder found`);
+  console.log(`✅ Build folder EXISTS`);
   const indexPath = path.join(buildPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     console.log(`✅ index.html exists - Ready to serve!`);
@@ -78,7 +82,7 @@ if (fs.existsSync(buildPath)) {
   console.error(`This means 'npm run build' hasn't been run or failed`);
 }
 
-console.log(`📁 ================================\n`);
+console.log(`📁 ==========================================\n`);
 
 app.use(express.static(buildPath));
 
