@@ -39,11 +39,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const fs = require('fs');
 
 // Build path depends on where backend is located
-// If backend is at /opt/render/project/src/backend, build is at /opt/render/project/build
-// If backend is at /opt/render/project/backend, build is at /opt/render/project/build
+// React builds to: /opt/render/project/src/build (from src directory)
+// Backend is at: /opt/render/project/backend
+// So from backend/__dirname, we need to go up 1 level then into src/build
 const buildPathOptions = [
+  path.join(__dirname, '../src/build'),     // For /backend structure: ../src/build (CORRECT for Render)
   path.join(__dirname, '../../build'),      // For /src/backend structure (2 levels up)
-  path.join(__dirname, '../build'),         // For /backend structure (1 level up)
+  path.join(__dirname, '../build'),         // For /backend structure (1 level up) - fallback
 ];
 
 let buildPath = null;
