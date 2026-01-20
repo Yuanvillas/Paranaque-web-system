@@ -39,47 +39,55 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const fs = require('fs');
 
 // Build path depends on where backend is located
-// render.yaml moves the build folder to /opt/render/project/build
-// Backend is at: /opt/render/project/backend
-// So from backend/__dirname, we need to go up 1 level to reach /build
+// React can output build to different locations depending on structure:
+// - /opt/render/project/build (root level)
+// - /opt/render/project/src/build (inside src folder)
+// We'll check all possibilities
 const buildPathOptions = [
-  path.join(__dirname, '../build'),         // ✅ CORRECT: /opt/render/project/build (root level)
-  path.join(__dirname, '../../build'),      // Fallback for alternative structures
+  path.join(__dirname, '../build'),         // For /backend at root: ../build = /project/build
+  path.join(__dirname, '../src/build'),     // For /backend at root, React builds to /src/build
+  path.join(__dirname, '../../build'),      // For /src/backend: ../../build = /project/build
 ];
 
 let buildPath = null;
+
+console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
+console.log(`📁 Backend __dirname: ${__dirname}`);
+console.log(`📁 Checking for React build folder...`);
+
+// Try each path option
 for (const option of buildPathOptions) {
-  console.log(`📁 Checking: ${option}`);
+  console.log(`📁   Checking: ${option}`);
   if (fs.existsSync(option)) {
-    console.log(`📁 ✅ Found at: ${option}`);
+    console.log(`📁   ✅ FOUND!`);
     buildPath = option;
     break;
   } else {
-    console.log(`📁 ❌ Not found`);
+    console.log(`📁   ❌ Not found`);
   }
 }
 
-// If still not found, default to first option
+// If still not found, use first option as default (will show error later)
 if (!buildPath) {
-  console.log(`📁 Using default fallback path`);
+  console.log(`📁 Using default fallback: ${buildPathOptions[0]}`);
   buildPath = buildPathOptions[0];
 }
 
-console.log(`\n📁 ========== BUILD PATH SUMMARY ==========`);
-console.log(`📁 Backend __dirname: ${__dirname}`);
-console.log(`📁 Final buildPath: ${buildPath}`);
+console.log(`📁 Selected buildPath: ${buildPath}`);
 
 if (fs.existsSync(buildPath)) {
-  console.log(`✅ Build folder EXISTS`);
+  console.log(`✅ Build folder EXISTS at ${buildPath}`);
   const indexPath = path.join(buildPath, 'index.html');
   if (fs.existsSync(indexPath)) {
-    console.log(`✅ index.html exists - Ready to serve!`);
+    console.log(`✅ index.html found - React app will be served!`);
   } else {
     console.error(`❌ index.html NOT found in build folder`);
+    console.error(`   Expected at: ${indexPath}`);
   }
 } else {
-  console.error(`❌ Build folder NOT found at ${buildPath}`);
-  console.error(`This means 'npm run build' hasn't been run or failed`);
+  console.error(`❌ Build folder NOT FOUND`);
+  console.error(`   Checked all paths - none exist`);
+  console.error(`   This means React build ('npm run build') hasn't completed successfully`);
 }
 
 console.log(`📁 ==========================================\n`);
