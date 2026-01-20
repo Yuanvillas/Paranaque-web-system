@@ -40,76 +40,48 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve React build folder as static files
 const fs = require('fs');
 
-// React builds to /build at the project root when npm run build is executed
-// __dirname = /opt/render/project/backend, so ../build points to /opt/render/project/build
-const buildPath = path.join(__dirname, '../build');
+// The build folder location depends on where __dirname points
+// On Render, __dirname might be /opt/render/project/backend or /opt/render/project/src/backend
+// So we need to go up appropriately to find the build folder
 
-console.log(`\n📁 ========== BUILD PATH CONFIGURATION ==========`);
-console.log(`📁 Backend directory (__dirname): ${__dirname}`);
-console.log(`📁 Using buildPath: ${buildPath}`);
+// Try these paths in order of preference
+const possibleBuildPaths = [
+  path.join(__dirname, '../build'),        // If backend is at /backend → go to /build
+  path.join(__dirname, '../../build'),     // If backend is at /src/backend → go to /build
+  path.join(__dirname, '../src/build'),    // Alternative: if build is at /src/build
+];
 
-// Verify build folder exists
-if (fs.existsSync(buildPath)) {
-  const indexPath = path.join(buildPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log(`✅ Build folder found and index.html exists`);
-    const buildContents = fs.readdirSync(buildPath);
-    console.log(`✅ Build folder contents:`, buildContents.slice(0, 5));
-  } else {
-    console.error(`❌ Build folder found but index.html missing at: ${indexPath}`);
-  }
-} else {
-  console.error(`❌ Build folder NOT found at: ${buildPath}`);
-  try {
-    const parentContents = fs.readdirSync(path.join(__dirname, '..'));
-    console.error(`Parent directory contents:`, parentContents);
-  } catch (e) {
-    console.error(`Cannot list parent directory: ${e.message}`);
-  }
-}
+let buildPath = null;
 
-console.log(`📁 ================================================\n`);
+console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
+console.log(`📁 Backend __dirname: ${__dirname}`);
 
-app.use(express.static(buildPath));
-
-console.log(`📁 Selected buildPath: ${buildPath}`);
-
-if (fs.existsSync(buildPath)) {
-  console.log(`✅ Build folder EXISTS`);
-  const indexPath = path.join(buildPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log(`✅ index.html found - React app will be served!`);
-  } else {
-    console.error(`❌ index.html NOT found in ${buildPath}`);
-    // List what's actually in the build folder
-    try {
-      const files = fs.readdirSync(buildPath);
-      console.error(`📁 Contents of ${buildPath}:`);
-      files.slice(0, 10).forEach(f => console.error(`   - ${f}`));
-    } catch (err) {
-      console.error(`   (cannot read directory)`);
+// Find the first path that has a build folder with index.html
+for (const testPath of possibleBuildPaths) {
+  if (fs.existsSync(testPath)) {
+    const indexPath = path.join(testPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      buildPath = testPath;
+      console.log(`✅ Found build at: ${buildPath}`);
+      break;
     }
   }
-} else {
-  console.error(`❌ Build folder NOT FOUND at ${buildPath}`);
-  console.error(`   This means React build did not complete successfully or is in wrong location`);
 }
 
-console.log(`📁 ==========================================\n`);
+// Fallback to first option if nothing found
+if (!buildPath) {
+  buildPath = possibleBuildPaths[0];
+  console.error(`⚠️  Build folder not found. Using fallback: ${buildPath}`);
+  console.error(`Tried locations:`);
+  possibleBuildPaths.forEach(p => {
+    console.error(`  - ${p}`);
+  });
+}
+
+console.log(`📁 Using buildPath: ${buildPath}`);
+console.log(`📁 ========================================\n`);
 
 app.use(express.static(buildPath));
-
-// Add detailed logging for debugging build folder detection
-console.log(`\n🔍 Debugging Build Folder Detection`);
-console.log(`🔍 Build Path Options: ${buildPathOptions.join(', ')}`);
-console.log(`🔍 Selected Build Path: ${buildPath}`);
-console.log(`🔍 Does Build Path Exist? ${fs.existsSync(buildPath)}`);
-if (fs.existsSync(buildPath)) {
-  const files = fs.readdirSync(buildPath);
-  console.log(`🔍 Files in Build Path: ${files.join(', ')}`);
-} else {
-  console.log(`🔍 Build Path does not exist. Check deployment process.`);
-}
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI)
