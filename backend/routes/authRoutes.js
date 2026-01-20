@@ -709,4 +709,28 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// GET /api/auth/diagnostics - Debug password reset configuration
+router.get('/diagnostics', async (req, res) => {
+  try {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: {
+        BACKEND_URL: BACKEND_URL,
+        FRONTEND_URL: FRONTEND_URL,
+        EMAIL_FROM: EMAIL_FROM,
+        RESEND_API_KEY_PRESENT: !!process.env.RESEND_API_KEY,
+        NODE_ENV: process.env.NODE_ENV || 'production'
+      },
+      passwordResetFlow: {
+        emailLink: `${BACKEND_URL}/api/auth/reset-password/{token}`,
+        redirectsTo: `${FRONTEND_URL}/reset-password?token={token}&email={email}`,
+        emailExpiryHours: 1
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
