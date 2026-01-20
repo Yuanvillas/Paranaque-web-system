@@ -1,72 +1,34 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import API_BASE_URL from "../config/api";
 
-/**
- * Reset Password Component
- * 
- * Flow:
- * 1. User receives email with link: https://domain.com/api/auth/reset-password/{token}
- * 2. Backend verifies token and redirects to: /reset-password?token={token}&email={email}
- * 3. This component loads with token and email from URL
- * 4. User enters new password
- * 5. Component submits to POST /api/auth/reset-password with token and newPassword
- * 6. Backend updates password and returns success
- * 7. Component redirects to login page
- */
-
 function ResetPassword() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const email = searchParams.get("email");
-  const errorParam = searchParams.get("error");
+  const navigate = useNavigate();
   
+  const token = searchParams.get("token");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(!token);
 
-  // Check if user has a valid token
+  // Validate token on mount
   useEffect(() => {
     if (!token) {
-      console.error("❌ No reset token found in URL");
-      // Show error and redirect after 2 seconds
-      setTimeout(() => {
-        window.location.href = "/forgot-password?error=invalid_token";
-      }, 1500);
-    } else {
-      console.log("✅ Reset token found:", token.substring(0, 10) + "...");
-      setPageLoading(false);
-    }
-  }, [token]);
-
-  // Handle error parameters from backend redirect
-  useEffect(() => {
-    if (errorParam) {
-      let errorMsg = "An error occurred.";
-      if (errorParam === "missing_token") {
-        errorMsg = "No reset token provided. Please request a new password reset.";
-      } else if (errorParam === "invalid_token") {
-        errorMsg = "Reset link is invalid or has expired. Please request a new password reset.";
-      } else if (errorParam === "server_error") {
-        errorMsg = "Server error. Please try again later.";
-      }
-
       Swal.fire({
         title: "Parañaledge",
-        text: errorMsg,
+        text: "Invalid reset link. Please request a new password reset.",
         icon: "error",
         confirmButtonText: "OK"
       }).then(() => {
-        window.location.href = "/forgot-password";
+        navigate("/forgot-password");
       });
     }
-  }, [errorParam]);
+  }, [token, navigate]);
 
   const validatePassword = (password) => {
     if (!password) return "Password is required.";
@@ -116,22 +78,21 @@ function ResetPassword() {
     // Submit password reset
     setLoading(true);
     try {
-      console.log("📤 Submitting password reset...");
+      console.log("📤 Sending password reset request to:", `${API_BASE_URL}/api/auth/reset-password`);
       const res = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
         token,
         newPassword
       });
 
-      console.log("✅ Password reset successful:", res.data.message);
+      console.log("✅ Password reset successful");
 
       Swal.fire({
         title: "Parañaledge",
-        text: res.data.message || "Password reset successfully!",
+        text: "Password reset successfully! Redirecting to login...",
         icon: "success",
         confirmButtonText: "OK"
       }).then(() => {
-        // Redirect to login page
-        window.location.href = "/";
+        navigate("/");
       });
     } catch (err) {
       console.error("❌ Password reset error:", err);
@@ -148,29 +109,8 @@ function ResetPassword() {
     }
   };
 
-  // Show loading state while checking token
-  if (pageLoading) {
-    return (
-      <div className="auth-container">
-        <div className="auth-wrapper">
-          <div className="auth-image">
-            <img src={schoolImage} alt="School" />
-          </div>
-          <div className="auth-card">
-            <img className="logo" src={logo} alt="logo" />
-            <h2>Loading...</h2>
-            <p style={{ textAlign: "center", color: "#666" }}>
-              Verifying your reset link...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If no token, component will redirect via useEffect
   if (!token) {
-    return null;
+    return null; // Will redirect via useEffect
   }
 
   return (
@@ -181,29 +121,11 @@ function ResetPassword() {
         </div>
         <div className="auth-card">
           <img className="logo" src={logo} alt="logo" />
-          <h2>Reset Your Password</h2>
-          <p style={{ textAlign: "center", color: "#666", marginBottom: "20px", fontSize: "14px" }}>
-            Please enter your new password below. Make sure it meets all requirements.
-          </p>
+          <h2>Reset Password</h2>
           
-          {email && (
-            <p style={{ 
-              textAlign: "center", 
-              color: "#555", 
-              marginBottom: "20px", 
-              fontSize: "13px", 
-              backgroundColor: "#f0f0f0", 
-              padding: "10px", 
-              borderRadius: "4px",
-              borderLeft: "4px solid #2e7d32"
-            }}>
-              <strong>Email:</strong> {decodeURIComponent(email)}
-            </p>
-          )}
-
-          <form className="auth-form" onSubmit={handleResetPassword}>
+          <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
             {/* New Password Field */}
-            <div>
+            <div style={{ marginBottom: "15px" }}>
               <label style={{ fontSize: "12px", fontWeight: "bold", color: "#333", display: "block", marginBottom: "5px" }}>
                 New Password
               </label>
@@ -221,22 +143,23 @@ function ResetPassword() {
                   fontSize: "14px",
                   border: "1px solid #ddd",
                   borderRadius: "4px",
+                  boxSizing: "border-box",
                   opacity: loading ? 0.6 : 1
                 }}
               />
               <small style={{ color: "#888", fontSize: "11px", display: "block", marginTop: "5px" }}>
-                Min 8 chars, uppercase, lowercase, number, special char
+                Min 8 chars, uppercase, lowercase, number, special char (@$!%*#?&^_-)
               </small>
             </div>
 
             {/* Confirm Password Field */}
-            <div>
-              <label style={{ fontSize: "12px", fontWeight: "bold", color: "#333", display: "block", marginBottom: "5px", marginTop: "15px" }}>
+            <div style={{ marginBottom: "15px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "bold", color: "#333", display: "block", marginBottom: "5px" }}>
                 Confirm Password
               </label>
               <input
                 type="password"
-                placeholder="Confirm password"
+                placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -248,6 +171,7 @@ function ResetPassword() {
                   fontSize: "14px",
                   border: "1px solid #ddd",
                   borderRadius: "4px",
+                  boxSizing: "border-box",
                   opacity: loading ? 0.6 : 1
                 }}
               />
@@ -275,10 +199,9 @@ function ResetPassword() {
             </button>
           </form>
 
-          {/* Back to Login Link */}
           <div style={{ textAlign: "center", marginTop: "20px" }}>
-            <Link 
-              to="/"
+            <a 
+              href="/"
               style={{
                 color: "#2e7d32",
                 fontWeight: "bold",
@@ -287,7 +210,7 @@ function ResetPassword() {
               }}
             >
               ← Back to Login
-            </Link>
+            </a>
           </div>
         </div>
       </div>
