@@ -38,28 +38,36 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve React build folder as static files
 const fs = require('fs');
 
-// Build path depends on where backend is located
-// React can output build to different locations depending on structure:
-// - /opt/render/project/src/build (inside src folder) - THIS IS WHERE RENDER PUTS IT
-// - /opt/render/project/build (root level)
-// We check /src/build FIRST because that's where Render's React build goes
+// Build path detection
+// Render's directory structure can be:
+// Option 1: /opt/render/project/backend/ (backend at root level)
+//           → build is at /opt/render/project/src/build
+//           → from backend: ../src/build
+//
+// Option 2: /opt/render/project/src/backend/ (backend inside src folder)
+//           → build is at /opt/render/project/src/build  
+//           → from backend: ../build
+//
+// We check all possible paths and use the one that EXISTS
 const buildPathOptions = [
-  path.join(__dirname, '../src/build'),     // ✅ FIRST: Check /src/build (THIS IS WHERE REACT BUILDS ON RENDER)
-  path.join(__dirname, '../build'),         // Fallback: /project/build (root level)
-  path.join(__dirname, '../../build'),      // Fallback: For /src/backend structure
+  path.join(__dirname, '../build'),         // For /src/backend structure: ../build = /src/build
+  path.join(__dirname, '../src/build'),     // For /backend at root: ../src/build = /src/build
+  path.join(__dirname, '../../build'),      // Other fallback
+  path.join(__dirname, '../../src/build'),  // Other fallback
 ];
 
 let buildPath = null;
 
 console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
 console.log(`📁 Backend __dirname: ${__dirname}`);
-console.log(`📁 Looking for React build folder (checking multiple locations)...`);
+console.log(`📁 Parent directory: ${path.dirname(__dirname)}`);
+console.log(`📁 Looking for React build folder...`);
 
-// Try each path option
+// Try each path option in order
 for (const option of buildPathOptions) {
   console.log(`📁   → Checking: ${option}`);
   if (fs.existsSync(option)) {
-    console.log(`📁   ✅ FOUND at: ${option}`);
+    console.log(`📁   ✅ FOUND!`);
     buildPath = option;
     break;
   } else {
@@ -67,10 +75,9 @@ for (const option of buildPathOptions) {
   }
 }
 
-// If still not found, use first option as default (will show error later)
+// If still not found, use first option as default
 if (!buildPath) {
   console.log(`📁 ⚠️  Build folder not found in any location`);
-  console.log(`📁 Using fallback: ${buildPathOptions[0]}`);
   buildPath = buildPathOptions[0];
 }
 
