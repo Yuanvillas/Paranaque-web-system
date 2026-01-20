@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && echo "========== STARTING REACT BUILD ==========" && pwd && npm run build && echo "========== BUILD COMPLETE ==========" && test -f build/index.html && echo "✅ index.html EXISTS" || (echo "❌ index.html NOT FOUND" && ls -la build/ && exit 1) && echo "========== INSTALLING BACKEND ==========" && cd backend && npm install && echo "========== ALL DONE =========="
+    buildCommand: set -e && npm install --legacy-peer-deps && echo "======= RUNNING REACT BUILD =======" && npm run build 2>&1 && echo "======= CHECKING BUILD =======" && ls -la build/ && test -f build/index.html && echo "✅ SUCCESS: index.html created" && cd backend && npm install --legacy-peer-deps && echo "======= BACKEND READY =======" || (echo "❌ FAILED: No build folder or index.html" && exit 1)
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
