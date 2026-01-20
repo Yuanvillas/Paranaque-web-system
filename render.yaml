@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && echo "=== Starting React build ===" && CI=false npm run build && echo "=== React build complete ===" && ls -la build/ && echo "=== Installing backend deps ===" && cd backend && npm install && echo "=== Build complete ==="
+    buildCommand: npm install && echo "=== Starting React build ===" && CI=false npm run build && echo "=== React build complete ===" && ls -la build/ && echo "=== Moving build to root ===" && mv build ../build 2>/dev/null || echo "Build already at root" && ls -la ../build && echo "=== Installing backend deps ===" && cd backend && npm install && echo "=== Build complete ==="
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
