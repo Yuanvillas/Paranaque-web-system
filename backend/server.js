@@ -40,48 +40,37 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve React build folder as static files
 const fs = require('fs');
 
-// Build path detection
-// Since Procfile runs: cd backend && node server.js
-// __dirname will be: /opt/render/project/backend
-// build folder is at: /opt/render/project/build
-// So we need: ../build
-const buildPathOptions = [
-  path.join(__dirname, '../build'),         // CORRECT: ../build from /backend to /build
-  path.join(__dirname, '../src/build'),     // Fallback: in case src folder exists
-  path.join(__dirname, '../../build'),      // Double fallback
-];
+// React builds to /build at the project root when npm run build is executed
+// __dirname = /opt/render/project/backend, so ../build points to /opt/render/project/build
+const buildPath = path.join(__dirname, '../build');
 
-let buildPath = null;
+console.log(`\n📁 ========== BUILD PATH CONFIGURATION ==========`);
+console.log(`📁 Backend directory (__dirname): ${__dirname}`);
+console.log(`📁 Using buildPath: ${buildPath}`);
 
-console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
-console.log(`📁 Backend __dirname: ${__dirname}`);
-console.log(`📁 Parent directory: ${path.dirname(__dirname)}`);
-console.log(`📁 Looking for React build folder...`);
-
-// Try each path option in order
-let pathFound = false;
-for (const option of buildPathOptions) {
-  const exists = fs.existsSync(option);
-  console.log(`📁   → Checking: ${option} ${exists ? '✅ EXISTS' : '❌ NOT FOUND'}`);
-  if (exists) {
-    // Check if it has index.html
-    const indexPath = path.join(option, 'index.html');
-    const hasIndex = fs.existsSync(indexPath);
-    console.log(`📁      └─ index.html: ${hasIndex ? '✅ EXISTS' : '❌ NOT FOUND'}`);
-    if (hasIndex) {
-      buildPath = option;
-      pathFound = true;
-      break;
-    }
+// Verify build folder exists
+if (fs.existsSync(buildPath)) {
+  const indexPath = path.join(buildPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    console.log(`✅ Build folder found and index.html exists`);
+    const buildContents = fs.readdirSync(buildPath);
+    console.log(`✅ Build folder contents:`, buildContents.slice(0, 5));
+  } else {
+    console.error(`❌ Build folder found but index.html missing at: ${indexPath}`);
+  }
+} else {
+  console.error(`❌ Build folder NOT found at: ${buildPath}`);
+  try {
+    const parentContents = fs.readdirSync(path.join(__dirname, '..'));
+    console.error(`Parent directory contents:`, parentContents);
+  } catch (e) {
+    console.error(`Cannot list parent directory: ${e.message}`);
   }
 }
 
-// If still not found, use first option as default
-if (!buildPath) {
-  console.log(`📁 ⚠️  Build folder not found in any location`);
-  console.log(`📁 Using fallback: ${buildPathOptions[0]}`);
-  buildPath = buildPathOptions[0];
-}
+console.log(`📁 ================================================\n`);
+
+app.use(express.static(buildPath));
 
 console.log(`📁 Selected buildPath: ${buildPath}`);
 
