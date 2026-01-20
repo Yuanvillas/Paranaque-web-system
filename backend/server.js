@@ -40,26 +40,26 @@ const fs = require('fs');
 
 // Build path depends on where backend is located
 // React can output build to different locations depending on structure:
+// - /opt/render/project/src/build (inside src folder) - THIS IS WHERE RENDER PUTS IT
 // - /opt/render/project/build (root level)
-// - /opt/render/project/src/build (inside src folder)
-// We'll check all possibilities
+// We check /src/build FIRST because that's where Render's React build goes
 const buildPathOptions = [
-  path.join(__dirname, '../build'),         // For /backend at root: ../build = /project/build
-  path.join(__dirname, '../src/build'),     // For /backend at root, React builds to /src/build
-  path.join(__dirname, '../../build'),      // For /src/backend: ../../build = /project/build
+  path.join(__dirname, '../src/build'),     // ✅ FIRST: Check /src/build (THIS IS WHERE REACT BUILDS ON RENDER)
+  path.join(__dirname, '../build'),         // Fallback: /project/build (root level)
+  path.join(__dirname, '../../build'),      // Fallback: For /src/backend structure
 ];
 
 let buildPath = null;
 
 console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
 console.log(`📁 Backend __dirname: ${__dirname}`);
-console.log(`📁 Checking for React build folder...`);
+console.log(`📁 Looking for React build folder (checking multiple locations)...`);
 
 // Try each path option
 for (const option of buildPathOptions) {
-  console.log(`📁   Checking: ${option}`);
+  console.log(`📁   → Checking: ${option}`);
   if (fs.existsSync(option)) {
-    console.log(`📁   ✅ FOUND!`);
+    console.log(`📁   ✅ FOUND at: ${option}`);
     buildPath = option;
     break;
   } else {
@@ -69,7 +69,8 @@ for (const option of buildPathOptions) {
 
 // If still not found, use first option as default (will show error later)
 if (!buildPath) {
-  console.log(`📁 Using default fallback: ${buildPathOptions[0]}`);
+  console.log(`📁 ⚠️  Build folder not found in any location`);
+  console.log(`📁 Using fallback: ${buildPathOptions[0]}`);
   buildPath = buildPathOptions[0];
 }
 
