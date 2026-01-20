@@ -175,14 +175,49 @@ app.get('*', (req, res) => {
       path: req.path
     });
   }
+  
   // Serve index.html for all other routes (React Router will handle them)
-  res.sendFile(path.join(buildPath, 'index.html'), (err) => {
+  const indexPath = path.join(buildPath, 'index.html');
+  
+  // Debug logging
+  console.log(`\n📱 ========== SPA REQUEST ==========`);
+  console.log(`📱 Path: ${req.path}`);
+  console.log(`📱 Build Path: ${buildPath}`);
+  console.log(`📱 Looking for index.html at: ${indexPath}`);
+  
+  // Check if build path exists
+  if (!fs.existsSync(buildPath)) {
+    console.error(`📱 ❌ Build folder does NOT exist`);
+    return res.status(500).json({ 
+      message: 'Build folder not found',
+      buildPath: buildPath
+    });
+  }
+  
+  // Check if index.html exists
+  if (!fs.existsSync(indexPath)) {
+    console.error(`📱 ❌ index.html does NOT exist at ${indexPath}`);
+    try {
+      const files = fs.readdirSync(buildPath);
+      console.error(`📱 Files in build folder: ${files.slice(0, 10).join(', ')}`);
+    } catch (e) {
+      console.error(`📱 Cannot read build folder contents`);
+    }
+    return res.status(500).json({ 
+      message: 'index.html not found',
+      buildPath: buildPath,
+      indexPath: indexPath
+    });
+  }
+  
+  // Serve index.html
+  console.log(`📱 ✅ Serving index.html from ${indexPath}`);
+  res.sendFile(indexPath, (err) => {
     if (err) {
-      console.warn(`⚠️  Could not serve index.html from ${buildPath}: ${err.message}`);
-      res.status(404).json({ 
-        message: 'Page not found',
-        path: req.path,
-        buildPath: buildPath
+      console.error(`📱 ❌ Error serving index.html: ${err.message}`);
+      res.status(500).json({ 
+        message: 'Could not serve index.html',
+        error: err.message
       });
     }
   });

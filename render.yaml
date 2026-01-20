@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && echo "=== Starting React build ===" && CI=false npm run build 2>&1 && echo "=== React build complete ===" && echo "=== Checking build folder ===" && pwd && ls -la && ls -la build/ 2>&1 || echo "No build folder found at pwd" && echo "=== Installing backend deps ===" && cd backend && npm install && echo "=== Build complete ==="
+    buildCommand: npm install && echo "========== STARTING REACT BUILD ==========" && pwd && ls -la && npm run build 2>&1 && echo "========== BUILD OUTPUT ==========" && ls -la build/ && echo "========== CHECKING INDEX.HTML ==========" && test -f build/index.html && echo "✅ index.html EXISTS" || echo "❌ index.html NOT FOUND" && echo "========== BACKEND INSTALL ==========" && cd backend && npm install && echo "========== BUILD COMPLETE =========="
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
