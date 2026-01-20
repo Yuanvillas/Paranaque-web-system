@@ -41,21 +41,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const fs = require('fs');
 
 // Build path detection
-// Render's directory structure can be:
-// Option 1: /opt/render/project/backend/ (backend at root level)
-//           → build is at /opt/render/project/src/build
-//           → from backend: ../src/build
-//
-// Option 2: /opt/render/project/src/backend/ (backend inside src folder)
-//           → build is at /opt/render/project/src/build  
-//           → from backend: ../build
-//
-// We check all possible paths and use the one that EXISTS
+// Since Procfile runs: cd backend && node server.js
+// __dirname will be: /opt/render/project/backend
+// build folder is at: /opt/render/project/build
+// So we need: ../build
 const buildPathOptions = [
-  path.join(__dirname, '../build'),         // For /src/backend structure: ../build = /src/build
-  path.join(__dirname, '../src/build'),     // For /backend at root: ../src/build = /src/build
-  path.join(__dirname, '../../build'),      // Other fallback
-  path.join(__dirname, '../../src/build'),  // Other fallback
+  path.join(__dirname, '../build'),         // CORRECT: ../build from /backend to /build
+  path.join(__dirname, '../src/build'),     // Fallback: in case src folder exists
+  path.join(__dirname, '../../build'),      // Double fallback
 ];
 
 let buildPath = null;
