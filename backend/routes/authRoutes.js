@@ -565,7 +565,21 @@ router.put('/archived-users/:id/restore', async (req, res) => {
   }
 });
 
-// POST /forgot-password - Send password reset email
+/**
+ * PASSWORD RESET FLOW
+ * 
+ * Step 1: POST /api/auth/forgot-password - User requests password reset email
+ * Step 2: Email sent with link: https://domain.com/api/auth/reset-password/{token}
+ * Step 3: User clicks email link, backend GET /reset-password/:token verifies token
+ * Step 4: Backend redirects to: https://domain.com/reset-password?token={token}&email={email}
+ * Step 5: Frontend ResetPassword component loads with token and email
+ * Step 6: User enters new password and submits
+ * Step 7: Frontend POST /api/auth/reset-password with token and newPassword
+ * Step 8: Backend updates password and returns success
+ * Step 9: Frontend redirects to login page
+ */
+
+// POST /api/auth/forgot-password - Send password reset email
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -574,12 +588,13 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ message: 'Email is required.' });
     }
 
+    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User with this email not found.' });
     }
 
-    // Generate reset token
+    // Generate reset token (20 random bytes = 40 hex characters)
     const resetToken = crypto.randomBytes(20).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
@@ -588,30 +603,55 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = resetTokenExpiry;
     await user.save();
 
-    // Send email with reset link - point to backend API which will redirect to frontend
-    const resetLink = `${BACKEND_URL}/api/auth/reset-password/${resetToken}`;
+    console.log(`\n📧 ========== PASSWORD RESET EMAIL ==========`);
+    console.log(`📧 Email: ${email}`);
+    console.log(`📧 Token: ${resetToken.substring(0, 10)}... (expires in 1 hour)`);
 
-    console.log(`Attempting to send password reset email to: ${email}`);
-    
+    // Construct reset link
+    const resetLink = `${BACKEND_URL}/api/auth/reset-password/${resetToken}`;
+    console.log(`📧 Reset Link: ${resetLink}`);
+    console.log(`📧 ==========================================\n`);
+
     // Send email using Resend
     try {
       const emailResponse = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
-        subject: 'Password Reset Request - Paranaledge',
+        subject: 'Password Reset Request - Paranaledge Library',
         html: `
-          <h2>Password Reset Request</h2>
-          <p>You requested a password reset for your Paranaledge account. Please click the link below to reset your password:</p>
-          <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reset Password</a>
-          <p>Or copy and paste this link: ${resetLink}</p>
-          <p>This link expires in 1 hour.</p>
-          <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2e7d32;">Password Reset Request</h2>
+            <p>Hi ${user.firstName},</p>
+            <p>You requested a password reset for your Paranaledge Library account. Please click the button below to reset your password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}" style="display: inline-block; padding: 12px 30px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p>Or copy and paste this link:</p>
+            <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;">
+              ${resetLink}
+            </p>
+            
+            <p style="color: #888; font-size: 12px;">
+              This link expires in 1 hour.<br>
+              If you did not request this, please ignore this email and your password will remain unchanged.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            <p style="color: #888; font-size: 12px; text-align: center;">
+              Paranaledge Library System
+            </p>
+          </div>
         `,
       });
-      console.log(`Password reset email sent successfully to: ${email}`, emailResponse);
+      
+      console.log(`✅ Password reset email sent successfully to: ${email}`);
+      console.log(`   Resend Response ID: ${emailResponse.data?.id || 'N/A'}`);
     } catch (emailErr) {
-      console.error("Email send error details:", emailErr.message);
-      console.error("Full email error:", JSON.stringify(emailErr, null, 2));
+      console.error("❌ Email send error:", emailErr.message);
       throw new Error('Failed to send password reset email. Please try again later.');
     }
     
@@ -619,11 +659,14 @@ router.post('/forgot-password', async (req, res) => {
     await new Log({
       userEmail: email,
       action: 'Password reset email sent'
-    }).save();
+    }).save().catch(err => console.error("Log save error:", err));
 
-    res.json({ message: 'Password reset email sent successfully. Check your email for instructions.' });
+    res.json({ 
+      message: 'Password reset email sent successfully. Check your email for instructions.',
+      success: true 
+    });
   } catch (err) {
-    console.error("Error in forgot-password route:", err);
+    console.error("❌ Error in forgot-password route:", err.message);
     
     // Log the error
     await new Log({
@@ -635,45 +678,64 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// GET /api/auth/reset-password/:token - Verify reset token and redirect to frontend
+// GET /api/auth/reset-password/:token - Verify reset token and redirect to frontend reset form
 router.get('/reset-password/:token', async (req, res) => {
   try {
     const { token } = req.params;
 
+    console.log(`\n🔐 ========== PASSWORD RESET TOKEN VERIFICATION ==========`);
+    console.log(`🔐 Token received: ${token.substring(0, 10)}...`);
+
     if (!token) {
+      console.error(`🔐 ❌ No token provided`);
       return res.redirect(`${FRONTEND_URL}/forgot-password?error=missing_token`);
     }
 
     // Find user with valid reset token
     const user = await User.findOne({
       resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() }
+      resetTokenExpiry: { $gt: Date.now() } // Token must not be expired
     });
 
     if (!user) {
+      console.error(`🔐 ❌ Token invalid or expired`);
+      console.log(`🔐 Redirecting to: ${FRONTEND_URL}/forgot-password?error=invalid_token`);
       return res.redirect(`${FRONTEND_URL}/forgot-password?error=invalid_token`);
     }
 
-    // Token is valid, redirect to reset password page with token in query
-    res.redirect(`${FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`);
+    console.log(`🔐 ✅ Token valid for user: ${user.email}`);
+
+    // Token is valid, redirect to reset password page with token and email in query params
+    const redirectUrl = `${FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+    console.log(`🔐 Redirecting to: ${redirectUrl}`);
+    console.log(`🔐 ===========================================================\n`);
+    
+    res.redirect(redirectUrl);
   } catch (err) {
-    console.error("Error in reset-password GET route:", err);
+    console.error("❌ Error in reset-password GET route:", err.message);
     res.redirect(`${FRONTEND_URL}/forgot-password?error=server_error`);
   }
 });
 
-// POST /reset-password - Reset password with token
+// POST /api/auth/reset-password - Reset password with token
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
+    console.log(`\n🔑 ========== PASSWORD RESET SUBMISSION ==========`);
+    console.log(`🔑 Token: ${token ? token.substring(0, 10) + '...' : 'MISSING'}`);
+    console.log(`🔑 New Password Length: ${newPassword ? newPassword.length : 0}`);
+
+    // Validation
     if (!token || !newPassword) {
+      console.error(`🔑 ❌ Missing token or password`);
       return res.status(400).json({ message: 'Token and new password are required.' });
     }
 
     // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
+      console.error(`🔑 ❌ Password does not meet requirements`);
       return res.status(400).json({
         message: "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.",
       });
@@ -686,25 +748,34 @@ router.post('/reset-password', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Reset link is invalid or has expired. Please request a new password reset.' });
+      console.error(`🔑 ❌ Token invalid or expired - no user found`);
+      return res.status(400).json({ 
+        message: 'Reset link is invalid or has expired. Please request a new password reset.' 
+      });
     }
 
-    // Update password
+    console.log(`🔑 ✅ Token verified for user: ${user.email}`);
+
+    // Hash and update password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    user.resetToken = undefined;  // Clear the reset token
+    user.resetTokenExpiry = undefined;  // Clear the expiry
     await user.save();
+
+    console.log(`🔑 ✅ Password updated successfully`);
 
     // Log the action
     await new Log({
       userEmail: user.email,
       action: 'Password reset via email link'
-    }).save();
+    }).save().catch(err => console.error("Log save error:", err));
+
+    console.log(`🔑 ===========================================================\n`);
 
     res.json({ message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (err) {
-    console.error("Error in reset-password route:", err);
+    console.error("❌ Error in reset-password POST route:", err.message);
     res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 });
