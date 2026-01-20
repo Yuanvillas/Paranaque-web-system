@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -116,6 +116,18 @@ if (fs.existsSync(buildPath)) {
 console.log(`📁 ==========================================\n`);
 
 app.use(express.static(buildPath));
+
+// Add detailed logging for debugging build folder detection
+console.log(`\n🔍 Debugging Build Folder Detection`);
+console.log(`🔍 Build Path Options: ${buildPathOptions.join(', ')}`);
+console.log(`🔍 Selected Build Path: ${buildPath}`);
+console.log(`🔍 Does Build Path Exist? ${fs.existsSync(buildPath)}`);
+if (fs.existsSync(buildPath)) {
+  const files = fs.readdirSync(buildPath);
+  console.log(`🔍 Files in Build Path: ${files.join(', ')}`);
+} else {
+  console.log(`🔍 Build Path does not exist. Check deployment process.`);
+}
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI)
