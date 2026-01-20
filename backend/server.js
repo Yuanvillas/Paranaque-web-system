@@ -64,38 +64,51 @@ console.log(`📁 Parent directory: ${path.dirname(__dirname)}`);
 console.log(`📁 Looking for React build folder...`);
 
 // Try each path option in order
+let pathFound = false;
 for (const option of buildPathOptions) {
-  console.log(`📁   → Checking: ${option}`);
-  if (fs.existsSync(option)) {
-    console.log(`📁   ✅ FOUND!`);
-    buildPath = option;
-    break;
-  } else {
-    console.log(`📁   ❌ Not found`);
+  const exists = fs.existsSync(option);
+  console.log(`📁   → Checking: ${option} ${exists ? '✅ EXISTS' : '❌ NOT FOUND'}`);
+  if (exists) {
+    // Check if it has index.html
+    const indexPath = path.join(option, 'index.html');
+    const hasIndex = fs.existsSync(indexPath);
+    console.log(`📁      └─ index.html: ${hasIndex ? '✅ EXISTS' : '❌ NOT FOUND'}`);
+    if (hasIndex) {
+      buildPath = option;
+      pathFound = true;
+      break;
+    }
   }
 }
 
 // If still not found, use first option as default
 if (!buildPath) {
   console.log(`📁 ⚠️  Build folder not found in any location`);
+  console.log(`📁 Using fallback: ${buildPathOptions[0]}`);
   buildPath = buildPathOptions[0];
 }
 
 console.log(`📁 Selected buildPath: ${buildPath}`);
 
 if (fs.existsSync(buildPath)) {
-  console.log(`✅ Build folder EXISTS at ${buildPath}`);
+  console.log(`✅ Build folder EXISTS`);
   const indexPath = path.join(buildPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     console.log(`✅ index.html found - React app will be served!`);
   } else {
-    console.error(`❌ index.html NOT found in build folder`);
-    console.error(`   Expected at: ${indexPath}`);
+    console.error(`❌ index.html NOT found in ${buildPath}`);
+    // List what's actually in the build folder
+    try {
+      const files = fs.readdirSync(buildPath);
+      console.error(`📁 Contents of ${buildPath}:`);
+      files.slice(0, 10).forEach(f => console.error(`   - ${f}`));
+    } catch (err) {
+      console.error(`   (cannot read directory)`);
+    }
   }
 } else {
-  console.error(`❌ Build folder NOT FOUND`);
-  console.error(`   Checked all paths - none exist`);
-  console.error(`   This means React build ('npm run build') hasn't completed successfully`);
+  console.error(`❌ Build folder NOT FOUND at ${buildPath}`);
+  console.error(`   This means React build did not complete successfully or is in wrong location`);
 }
 
 console.log(`📁 ==========================================\n`);
