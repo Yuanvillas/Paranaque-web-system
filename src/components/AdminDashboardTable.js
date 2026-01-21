@@ -146,147 +146,176 @@ const AdminDashboardTable = () => {
 
     return (
       <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '25px',
-        marginTop: '30px',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-        maxHeight: '600px',
-        overflowY: 'auto'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>{title}</h2>
-          <button
-            onClick={() => setSelectedMetric(null)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#999'
-            }}
-          >
-            ✕
-          </button>
-        </div>
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px'
+      }} onClick={() => setSelectedMetric(null)}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '25px',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          width: '100%',
+          maxWidth: '900px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+          animation: 'slideIn 0.3s ease-out'
+        }} onClick={(e) => e.stopPropagation()}>
+          <style>{`
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-50px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `}</style>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>{title}</h2>
+            <button
+              onClick={() => setSelectedMetric(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#999'
+              }}
+            >
+              ✕
+            </button>
+          </div>
 
-        {detailLoading ? (
-          <p>Loading data...</p>
-        ) : detailedData.length === 0 ? (
-          <p style={{ color: '#999' }}>No data available</p>
-        ) : (
-          <>
-            {selectedMetric === 'categories' ? (
-              // Categories view
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                {detailedData.map((category, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: '15px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '8px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#2e7d32', marginBottom: '5px' }}>
-                      {category.count}
+          {detailLoading ? (
+            <p>Loading data...</p>
+          ) : detailedData.length === 0 ? (
+            <p style={{ color: '#999' }}>No data available</p>
+          ) : (
+            <>
+              {selectedMetric === 'categories' ? (
+                // Categories view
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                  {detailedData.map((category, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '15px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '8px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ fontSize: '18px', fontWeight: '600', color: '#2e7d32', marginBottom: '5px' }}>
+                        {category.count}
+                      </div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>
+                        {category.name}
+                      </div>
                     </div>
-                    <div style={{ color: '#666', fontSize: '14px' }}>
-                      {category.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Table view for other metrics
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: '14px'
-                }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                      {selectedMetric === 'books' && (
-                        <>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Author</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Category</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Stock</th>
-                        </>
-                      )}
-                      {selectedMetric === 'issued' && (
-                        <>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Borrowed By</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Borrow Date</th>
-                        </>
-                      )}
-                      {selectedMetric === 'returned' && (
-                        <>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>User</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
-                        </>
-                      )}
-                      {selectedMetric === 'requests' && (
-                        <>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Requested By</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Date</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detailedData.map((item, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  ))}
+                </div>
+              ) : (
+                // Table view for other metrics
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '14px'
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
                         {selectedMetric === 'books' && (
                           <>
-                            <td style={{ padding: '10px' }}>{item.title}</td>
-                            <td style={{ padding: '10px' }}>{item.author}</td>
-                            <td style={{ padding: '10px' }}>{item.category}</td>
-                            <td style={{ padding: '10px', textAlign: 'center' }}>{item.stock || 0}</td>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Author</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Category</th>
+                            <th style={{ padding: '10px', textAlign: 'center' }}>Stock</th>
                           </>
                         )}
                         {selectedMetric === 'issued' && (
                           <>
-                            <td style={{ padding: '10px' }}>{item.title}</td>
-                            <td style={{ padding: '10px' }}>{item.borrowedBy}</td>
-                            <td style={{ padding: '10px' }}>
-                              {item.borrowedAt ? new Date(item.borrowedAt).toLocaleDateString() : '-'}
-                            </td>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Borrowed By</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Borrow Date</th>
                           </>
                         )}
                         {selectedMetric === 'returned' && (
                           <>
-                            <td style={{ padding: '10px' }}>{item.bookTitle}</td>
-                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                            <td style={{ padding: '10px' }}>
-                              {item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}
-                            </td>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>User</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
                           </>
                         )}
                         {selectedMetric === 'requests' && (
                           <>
-                            <td style={{ padding: '10px' }}>{item.bookTitle}</td>
-                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                            <td style={{ padding: '10px', textTransform: 'capitalize' }}>{item.type}</td>
-                            <td style={{ padding: '10px' }}>
-                              {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
-                            </td>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Requested By</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                            <th style={{ padding: '10px', textAlign: 'left' }}>Date</th>
                           </>
                         )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
+                    </thead>
+                    <tbody>
+                      {detailedData.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                          {selectedMetric === 'books' && (
+                            <>
+                              <td style={{ padding: '10px' }}>{item.title}</td>
+                              <td style={{ padding: '10px' }}>{item.author}</td>
+                              <td style={{ padding: '10px' }}>{item.category}</td>
+                              <td style={{ padding: '10px', textAlign: 'center' }}>{item.stock || 0}</td>
+                            </>
+                          )}
+                          {selectedMetric === 'issued' && (
+                            <>
+                              <td style={{ padding: '10px' }}>{item.title}</td>
+                              <td style={{ padding: '10px' }}>{item.borrowedBy}</td>
+                              <td style={{ padding: '10px' }}>
+                                {item.borrowedAt ? new Date(item.borrowedAt).toLocaleDateString() : '-'}
+                              </td>
+                            </>
+                          )}
+                          {selectedMetric === 'returned' && (
+                            <>
+                              <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                              <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                              <td style={{ padding: '10px' }}>
+                                {item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}
+                              </td>
+                            </>
+                          )}
+                          {selectedMetric === 'requests' && (
+                            <>
+                              <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                              <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                              <td style={{ padding: '10px', textTransform: 'capitalize' }}>{item.type}</td>
+                              <td style={{ padding: '10px' }}>
+                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   };
