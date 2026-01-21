@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
   const [isCollapsed] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   const handleSectionClick = (name) => {
     if (name === "User Management") {
@@ -68,6 +69,28 @@ const AdminDashboard = () => {
       });
 
   }, [userEmail]);
+
+  useEffect(() => {
+    const fetchPendingRequestsCount = async () => {
+      try {
+        const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+        const data = await response.json();
+        if (response.ok) {
+          const allRequests = data.transactions || [];
+          const borrowRequests = allRequests.filter(req => req.type === 'borrow');
+          const reserveRequests = allRequests.filter(req => req.type === 'reserve');
+          setPendingRequestsCount(borrowRequests.length + reserveRequests.length);
+        }
+      } catch (err) {
+        console.error('Error fetching pending requests count:', err);
+      }
+    };
+
+    const interval = setInterval(fetchPendingRequestsCount, 5000);
+    fetchPendingRequestsCount();
+
+    return () => clearInterval(interval);
+  }, []);
 
 
   const resourceOptions = [
@@ -299,8 +322,29 @@ const AdminDashboard = () => {
                   key={idx}
                   onClick={() => handleResourceClick(option)}
                   className={`resource-option ${selectedSubResource === option ? "active" : ""}`}
+                  style={{ position: 'relative', display: 'inline-block' }}
                 >
                   {option}
+                  {option === "Pending Requests" && pendingRequestsCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      backgroundColor: '#FF5252',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      animation: 'pulse 1.5s infinite'
+                    }}>
+                      {pendingRequestsCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

@@ -284,26 +284,7 @@ const PendingRequestTable = () => {
   return (
     <div className="pending-container">
       <div className="header-row">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-          <h2 className="page-title">📌 Pending Requests</h2>
-          {(filteredBorrowRequests.length > 0 || filteredReservationRequests.length > 0 || filteredReturnRequests.length > 0) && (
-            <span style={{
-              backgroundColor: '#FF5252',
-              color: 'white',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              animation: 'pulse 1.5s infinite'
-            }}>
-              {filteredBorrowRequests.length + filteredReservationRequests.length + filteredReturnRequests.length}
-            </span>
-          )}
-        </div>
+        <h2 className="page-title">📌 Pending Requests</h2>
 
         <div className="search-container ">
           <input type="text" placeholder="Search requests..." onChange={(e) => setSearchTerm(e.target.value)} />
