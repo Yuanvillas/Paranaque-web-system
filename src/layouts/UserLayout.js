@@ -46,6 +46,31 @@ const UserLayout = () => {
     navigate("/");
   };
 
+  // Track logout when user closes browser/tab
+  React.useEffect(() => {
+    const handleBeforeUnload = async () => {
+      const userEmail = localStorage.getItem("userEmail");
+      if (userEmail) {
+        try {
+          // Use sendBeacon for reliable delivery even if page is closing
+          navigator.sendBeacon(
+            'https://paranaque-web-system.onrender.com/api/auth/logout',
+            JSON.stringify({ email: userEmail }),
+            { type: 'application/json' }
+          );
+        } catch (err) {
+          console.error('Error logging logout on page close:', err);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   return (
     <SearchContext.Provider value={searchTerm}>
       <div className="dashboard">

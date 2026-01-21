@@ -98,36 +98,55 @@ const AdminDashboard = () => {
             userRoles[user.email] = user.role;
           });
           
-          // Count unique regular users (not admin/librarian) online today
+          // Count unique regular users who are STILL logged in
+          // by finding their LAST action - only count if it's login (not logout)
+          const userLastActions = {};
+          todayLogs.forEach(log => {
+            if (log.action && userRoles[log.userEmail] === 'user' &&
+                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+              if (!userLastActions[log.userEmail] || new Date(log.timestamp) > new Date(userLastActions[log.userEmail].timestamp)) {
+                userLastActions[log.userEmail] = log;
+              }
+            }
+          });
+          
           const uniqueUsersToday = new Set(
-            todayLogs
-              .filter(log => 
-                log.action && 
-                log.action.toLowerCase().includes('login') &&
-                userRoles[log.userEmail] === 'user'
-              )
+            Object.values(userLastActions)
+              .filter(log => log.action && log.action.toLowerCase().includes('login'))
               .map(log => log.userEmail)
           );
           
-          // Count unique admins online today
+          // Count unique admins who are STILL logged in
+          const adminLastActions = {};
+          todayLogs.forEach(log => {
+            if (log.action && userRoles[log.userEmail] === 'admin' &&
+                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+              if (!adminLastActions[log.userEmail] || new Date(log.timestamp) > new Date(adminLastActions[log.userEmail].timestamp)) {
+                adminLastActions[log.userEmail] = log;
+              }
+            }
+          });
+          
           const uniqueAdminsToday = new Set(
-            todayLogs
-              .filter(log => 
-                log.action && 
-                log.action.toLowerCase().includes('login') &&
-                userRoles[log.userEmail] === 'admin'
-              )
+            Object.values(adminLastActions)
+              .filter(log => log.action && log.action.toLowerCase().includes('login'))
               .map(log => log.userEmail)
           );
           
-          // Count unique librarians online today
+          // Count unique librarians who are STILL logged in
+          const librarianLastActions = {};
+          todayLogs.forEach(log => {
+            if (log.action && userRoles[log.userEmail] === 'librarian' &&
+                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+              if (!librarianLastActions[log.userEmail] || new Date(log.timestamp) > new Date(librarianLastActions[log.userEmail].timestamp)) {
+                librarianLastActions[log.userEmail] = log;
+              }
+            }
+          });
+          
           const uniqueLibrariansToday = new Set(
-            todayLogs
-              .filter(log => 
-                log.action && 
-                log.action.toLowerCase().includes('login') &&
-                userRoles[log.userEmail] === 'librarian'
-              )
+            Object.values(librarianLastActions)
+              .filter(log => log.action && log.action.toLowerCase().includes('login'))
               .map(log => log.userEmail)
           );
           
@@ -193,26 +212,32 @@ const AdminDashboard = () => {
           userRoles[user.email] = user.role;
         });
         
-        // Get unique users who logged in today (excluding admin and librarian)
-        const activeUsers = {};
-        todayLogs
-          .filter(log => 
-            log.action && 
-            log.action.toLowerCase().includes('login') &&
-            userRoles[log.userEmail] === 'user' // Only include regular users
-          )
-          .forEach(log => {
-            if (!activeUsers[log.userEmail]) {
-              activeUsers[log.userEmail] = {
-                email: log.userEmail,
-                lastLogin: log.timestamp,
-                loginCount: 1
-              };
-            } else {
-              activeUsers[log.userEmail].loginCount += 1;
-              activeUsers[log.userEmail].lastLogin = log.timestamp;
+        // Get users who are STILL logged in (last action is login)
+        const userActions = {};
+        todayLogs.forEach(log => {
+          if (log.action && userRoles[log.userEmail] === 'user' &&
+              (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+            if (!userActions[log.userEmail]) {
+              userActions[log.userEmail] = [];
             }
-          });
+            userActions[log.userEmail].push(log);
+          }
+        });
+        
+        const activeUsers = {};
+        Object.entries(userActions).forEach(([email, actions]) => {
+          // Find the most recent action
+          const lastAction = actions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+          // Only include if last action is login (still logged in)
+          if (lastAction && lastAction.action.toLowerCase().includes('login')) {
+            const loginCount = actions.filter(a => a.action.toLowerCase().includes('login')).length;
+            activeUsers[email] = {
+              email: email,
+              lastLogin: lastAction.timestamp,
+              loginCount: loginCount
+            };
+          }
+        });
         
         setActiveUsersData(Object.values(activeUsers));
         setShowActiveUsersModal(true);
@@ -247,26 +272,30 @@ const AdminDashboard = () => {
           userRoles[user.email] = user.role;
         });
         
-        // Get unique admins who logged in today
-        const activeAdmins = {};
-        todayLogs
-          .filter(log => 
-            log.action && 
-            log.action.toLowerCase().includes('login') &&
-            userRoles[log.userEmail] === 'admin'
-          )
-          .forEach(log => {
-            if (!activeAdmins[log.userEmail]) {
-              activeAdmins[log.userEmail] = {
-                email: log.userEmail,
-                lastLogin: log.timestamp,
-                loginCount: 1
-              };
-            } else {
-              activeAdmins[log.userEmail].loginCount += 1;
-              activeAdmins[log.userEmail].lastLogin = log.timestamp;
+        // Get admins who are STILL logged in (last action is login)
+        const adminActions = {};
+        todayLogs.forEach(log => {
+          if (log.action && userRoles[log.userEmail] === 'admin' &&
+              (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+            if (!adminActions[log.userEmail]) {
+              adminActions[log.userEmail] = [];
             }
-          });
+            adminActions[log.userEmail].push(log);
+          }
+        });
+        
+        const activeAdmins = {};
+        Object.entries(adminActions).forEach(([email, actions]) => {
+          const lastAction = actions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+          if (lastAction && lastAction.action.toLowerCase().includes('login')) {
+            const loginCount = actions.filter(a => a.action.toLowerCase().includes('login')).length;
+            activeAdmins[email] = {
+              email: email,
+              lastLogin: lastAction.timestamp,
+              loginCount: loginCount
+            };
+          }
+        });
         
         setActiveAdminsData(Object.values(activeAdmins));
         setShowActiveAdminsModal(true);
@@ -301,24 +330,30 @@ const AdminDashboard = () => {
           userRoles[user.email] = user.role;
         });
         
-        // Get unique librarians who logged in today
+        // Get librarians who are STILL logged in (last action is login)
+        const librarianActions = {};
+        todayLogs.forEach(log => {
+          if (log.action && userRoles[log.userEmail] === 'librarian' &&
+              (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
+            if (!librarianActions[log.userEmail]) {
+              librarianActions[log.userEmail] = [];
+            }
+            librarianActions[log.userEmail].push(log);
+          }
+        });
+        
         const activeLibrarians = {};
-        todayLogs
-          .filter(log => 
-            log.action && 
-            log.action.toLowerCase().includes('login') &&
-            userRoles[log.userEmail] === 'librarian'
-          )
-          .forEach(log => {
-            if (!activeLibrarians[log.userEmail]) {
-              activeLibrarians[log.userEmail] = {
-                email: log.userEmail,
-                lastLogin: log.timestamp,
-                loginCount: 1
-              };
-            } else {
-              activeLibrarians[log.userEmail].loginCount += 1;
-              activeLibrarians[log.userEmail].lastLogin = log.timestamp;
+        Object.entries(librarianActions).forEach(([email, actions]) => {
+          const lastAction = actions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+          if (lastAction && lastAction.action.toLowerCase().includes('login')) {
+            const loginCount = actions.filter(a => a.action.toLowerCase().includes('login')).length;
+            activeLibrarians[email] = {
+              email: email,
+              lastLogin: lastAction.timestamp,
+              loginCount: loginCount
+            };
+          }
+        });
             }
           });
         
@@ -406,12 +441,53 @@ const AdminDashboard = () => {
     });
   }, [navigate]);
 
-  const handleLogout = () => {
-    // Clear any stored tokens or session data if used
-    localStorage.removeItem('token'); // If you use a token
-    // Redirect to login page
+  const handleLogout = async () => {
+    const userEmail = localStorage.getItem('userEmail');
+    
+    // Log the logout to the backend
+    if (userEmail) {
+      try {
+        await fetch('https://paranaque-web-system.onrender.com/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail })
+        });
+      } catch (err) {
+        console.error('Error logging logout:', err);
+      }
+    }
+    
+    // Clear local storage and navigate
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
     navigate('/');
   };
+
+  // Track logout when admin closes browser/tab
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      const userEmail = localStorage.getItem('userEmail');
+      if (userEmail) {
+        try {
+          // Use sendBeacon for reliable delivery even if page is closing
+          navigator.sendBeacon(
+            'https://paranaque-web-system.onrender.com/api/auth/logout',
+            JSON.stringify({ email: userEmail }),
+            { type: 'application/json' }
+          );
+        } catch (err) {
+          console.error('Error logging logout on page close:', err);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const [selectedSubResource, setSelectedSubResource] = useState("");
 
