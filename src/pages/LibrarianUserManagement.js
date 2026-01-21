@@ -245,13 +245,69 @@ const LibrarianUserManagement = () => {
         </section>
       </main>
 
-      {/* User History Modal */}
+      {/* User History Modal Popup */}
       {viewUserLogs && (
-        <div className="um-modal-overlay" onClick={closeHistoryModal}>
-          <div className="um-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', borderRadius: '15px' }}>
-            <div className="um-modal-header" style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>User Borrowed & Reserved Books History</h2>
-              <button className="um-modal-close" onClick={closeHistoryModal} style={{ fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>×</button>
+        <div 
+          className="um-modal-overlay" 
+          onClick={closeHistoryModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999
+          }}
+        >
+          <div 
+            className="um-modal" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '550px',
+              width: '90%',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '12px',
+              backgroundColor: '#fff',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+              zIndex: 10000
+            }}
+          >
+            <div 
+              className="um-modal-header" 
+              style={{ 
+                padding: '20px', 
+                borderBottom: '1px solid #eee', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center'
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#333' }}>User Borrowed & Reserved Books History</h2>
+              <button 
+                className="um-modal-close" 
+                onClick={closeHistoryModal} 
+                style={{ 
+                  fontSize: '28px', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  color: '#999',
+                  padding: 0,
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
             </div>
             
             {/* Search bar inside modal */}
@@ -277,21 +333,21 @@ const LibrarianUserManagement = () => {
               {userLogs.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No book borrow or return history found for this user.</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {userLogs.map((log, idx) => (
                     <div 
                       key={idx}
                       style={{
-                        padding: '16px',
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: '8px',
+                        padding: '14px',
+                        backgroundColor: '#f9f9f9',
+                        borderRadius: '6px',
                         borderLeft: '4px solid #4CAF50'
                       }}
                     >
-                      <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '600', color: '#333' }}>
+                      <p style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>
                         {log.action}
                       </p>
-                      <p style={{ margin: 0, fontSize: '13px', color: '#999' }}>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
                         {new Date(log.timestamp).toLocaleString()}
                       </p>
                     </div>
