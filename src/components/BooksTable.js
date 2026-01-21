@@ -57,7 +57,11 @@ const BooksTable = () => {
 
   const exportToExcel = () => {
     const data = filteredBooks
-      .sort((a, b) => (b.title || '').localeCompare(a.title || ''))
+      .sort((a, b) => {
+        const aNum = parseInt(a.accessionNumber?.split('-')[1] || '0');
+        const bNum = parseInt(b.accessionNumber?.split('-')[1] || '0');
+        return bNum - aNum;
+      })
       .map(book => ({
         'Book Title': book.title,
         'Author': book.author,
@@ -80,7 +84,11 @@ const BooksTable = () => {
 
   const exportToPDF = () => {
     const data = filteredBooks
-      .sort((a, b) => (b.title || '').localeCompare(a.title || ''))
+      .sort((a, b) => {
+        const aNum = parseInt(a.accessionNumber?.split('-')[1] || '0');
+        const bNum = parseInt(b.accessionNumber?.split('-')[1] || '0');
+        return bNum - aNum;
+      })
       .map(book => [
         book.title,
         book.author,
@@ -615,7 +623,7 @@ const BooksTable = () => {
             <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>📥 Choose Export Format</h2>
             
             <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>
-              Data will be sorted in descending order by book title
+              Data will be sorted in descending order by accession number
             </p>
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
