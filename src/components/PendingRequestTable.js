@@ -284,7 +284,26 @@ const PendingRequestTable = () => {
   return (
     <div className="pending-container">
       <div className="header-row">
-        <h2 className="page-title">📌 Pending Requests</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+          <h2 className="page-title">📌 Pending Requests</h2>
+          {(filteredBorrowRequests.length > 0 || filteredReservationRequests.length > 0 || filteredReturnRequests.length > 0) && (
+            <span style={{
+              backgroundColor: '#FF5252',
+              color: 'white',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              animation: 'pulse 1.5s infinite'
+            }}>
+              {filteredBorrowRequests.length + filteredReservationRequests.length + filteredReturnRequests.length}
+            </span>
+          )}
+        </div>
 
         <div className="search-container ">
           <input type="text" placeholder="Search requests..." onChange={(e) => setSearchTerm(e.target.value)} />
@@ -302,10 +321,30 @@ const PendingRequestTable = () => {
             border: 'none',
             cursor: 'pointer',
             fontWeight: activeTab === 'borrow' ? 'bold' : 'normal',
-            color: activeTab === 'borrow' ? '#4CAF50' : '#666'
+            color: activeTab === 'borrow' ? '#4CAF50' : '#666',
+            position: 'relative'
           }}
         >
           Borrow Requests ({filteredBorrowRequests.length})
+          {filteredBorrowRequests.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '5px',
+              backgroundColor: '#FF5252',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {filteredBorrowRequests.length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('reserve')}
@@ -316,10 +355,30 @@ const PendingRequestTable = () => {
             border: 'none',
             cursor: 'pointer',
             fontWeight: activeTab === 'reserve' ? 'bold' : 'normal',
-            color: activeTab === 'reserve' ? '#2196F3' : '#666'
+            color: activeTab === 'reserve' ? '#2196F3' : '#666',
+            position: 'relative'
           }}
         >
           Reserve Requests ({filteredReservationRequests.length})
+          {filteredReservationRequests.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '5px',
+              backgroundColor: '#FF5252',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {filteredReservationRequests.length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('return')}
@@ -330,10 +389,30 @@ const PendingRequestTable = () => {
             border: 'none',
             cursor: 'pointer',
             fontWeight: activeTab === 'return' ? 'bold' : 'normal',
-            color: activeTab === 'return' ? '#FF9800' : '#666'
+            color: activeTab === 'return' ? '#FF9800' : '#666',
+            position: 'relative'
           }}
         >
           Return Requests ({filteredReturnRequests.length})
+          {filteredReturnRequests.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '5px',
+              backgroundColor: '#FF5252',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {filteredReturnRequests.length}
+            </span>
+          )}
         </button>
       </div>
 
