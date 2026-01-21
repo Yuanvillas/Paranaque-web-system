@@ -322,7 +322,6 @@ const AdminDashboardTable = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1 style={{ fontWeight: '600', fontSize: '25px', marginBottom: '30px' }}>Dashboard Overview</h1>
       
       {error && (
         <div style={{

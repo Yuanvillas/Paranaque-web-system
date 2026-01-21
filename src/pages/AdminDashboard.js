@@ -36,6 +36,11 @@ const AdminDashboard = () => {
     activeUsers: 0
   });
   const [showEntryModal, setShowEntryModal] = useState(false);
+  const [showTodayEntriesModal, setShowTodayEntriesModal] = useState(false);
+  const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
+  const [todayEntriesData, setTodayEntriesData] = useState([]);
+  const [activeUsersData, setActiveUsersData] = useState([]);
+  const [loadingModals, setLoadingModals] = useState(false);
 
   const handleSectionClick = (name) => {
     if (name === "User Management") {
@@ -98,6 +103,66 @@ const AdminDashboard = () => {
     const interval = setInterval(fetchEntryStats, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleTodayEntriesClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
+      const data = await response.json();
+      
+      if (response.ok && data.logs) {
+        const today = new Date().toDateString();
+        const todayLogs = data.logs.filter(log => 
+          new Date(log.timestamp).toDateString() === today
+        );
+        setTodayEntriesData(todayLogs);
+        setShowTodayEntriesModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching today entries:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleActiveUsersClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
+      const data = await response.json();
+      
+      if (response.ok && data.logs) {
+        const today = new Date().toDateString();
+        const todayLogs = data.logs.filter(log => 
+          new Date(log.timestamp).toDateString() === today
+        );
+        
+        // Get unique users who logged in today
+        const activeUsers = {};
+        todayLogs
+          .filter(log => log.action && log.action.toLowerCase().includes('login'))
+          .forEach(log => {
+            if (!activeUsers[log.userEmail]) {
+              activeUsers[log.userEmail] = {
+                email: log.userEmail,
+                lastLogin: log.timestamp,
+                loginCount: 1
+              };
+            } else {
+              activeUsers[log.userEmail].loginCount += 1;
+              activeUsers[log.userEmail].lastLogin = log.timestamp;
+            }
+          });
+        
+        setActiveUsersData(Object.values(activeUsers));
+        setShowActiveUsersModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching active users:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
 
   useEffect(() => {
     const fetchPendingRequestsCount = async () => {
@@ -340,7 +405,7 @@ const AdminDashboard = () => {
         </header>
 
         <section className="content">
-          <h1 style={{ fontWeight: '600', fontSize: '25px', marginTop: "-5px" }}>Admin Dashboard</h1>
+          <h1 style={{ fontWeight: '600', fontSize: '25px', marginTop: "-5px" }}>Dashboard Overview</h1>
 
           {!selectedResource && (
             <>
@@ -393,14 +458,27 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '25px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center'
-                }}>
+                <div 
+                  onClick={handleTodayEntriesClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '25px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{
                     fontSize: '12px',
                     color: '#999',
@@ -421,14 +499,27 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '25px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center'
-                }}>
+                <div 
+                  onClick={handleActiveUsersClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '25px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{
                     fontSize: '12px',
                     color: '#999',
@@ -551,6 +642,156 @@ const AdminDashboard = () => {
                   </button>
                 </div>
                 <UserEntryMonitor />
+              </div>
+            </div>
+          )}
+
+          {/* Today's Entries Modal */}
+          {showTodayEntriesModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowTodayEntriesModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Today's Entries</h2>
+                  <button
+                    onClick={() => setShowTodayEntriesModal(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      color: '#999'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : todayEntriesData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No entries found for today.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Action</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Date & Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {todayEntriesData.map((entry, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{entry.userEmail}</td>
+                            <td style={{ padding: '10px', color: '#00BFA5' }}>{entry.action}</td>
+                            <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Active Users Modal */}
+          {showActiveUsersModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowActiveUsersModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Active Users Online Today</h2>
+                  <button
+                    onClick={() => setShowActiveUsersModal(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      color: '#999'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : activeUsersData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No active users found for today.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeUsersData.map((user, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{user.email}</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
