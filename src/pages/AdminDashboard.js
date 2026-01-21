@@ -50,7 +50,12 @@ const AdminDashboard = () => {
 
   const handleSectionClick = (name) => {
     if (name === "User Management") {
-      navigate("/admin/user-management");
+      // Redirect librarians to read-only user management
+      if (user.role === "librarian") {
+        navigate("/librarian/user-management");
+      } else {
+        navigate("/admin/user-management");
+      }
     } else if (name === "Analytics") {
       navigate("/admin/analytics");
     } else if (name === "Log Activities") {

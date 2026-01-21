@@ -24,6 +24,7 @@ import ChatPopup from "./pages/ChatPopup";
 import "./components/App.css";
 import AdminLogs from "./pages/AdminLogs";
 import UserManagement from "./pages/UserManagement";
+import LibrarianUserManagement from "./pages/LibrarianUserManagement";
 
 function AppContent() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function AppContent() {
         <Route path="/verify-notice" element={<VerifyNotice />} />
         <Route path="/admin/logs" element={<AdminLogs />} />
         <Route path="/admin/user-management" element={<UserManagement />} />
+        <Route path="/librarian/user-management" element={<LibrarianUserManagement />} />
 
         <Route path="/user-home" element={<UserLayout />}>
           <Route index element={<UserHome />} />
