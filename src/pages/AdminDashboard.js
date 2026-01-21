@@ -1092,14 +1092,16 @@ const AdminDashboard = () => {
                       <thead>
                         <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
                           <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Status</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
                         </tr>
                       </thead>
                       <tbody>
                         {activeUsersData.map((user, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                             <td style={{ padding: '10px' }}>{user.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>🟢 Online</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1164,14 +1166,16 @@ const AdminDashboard = () => {
                       <thead>
                         <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
                           <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Status</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
                         </tr>
                       </thead>
                       <tbody>
                         {activeAdminsData.map((user, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                             <td style={{ padding: '10px' }}>{user.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#FF6F00' }}>🟢 Online</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#FF6F00' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1236,14 +1240,16 @@ const AdminDashboard = () => {
                       <thead>
                         <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
                           <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Status</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
                         </tr>
                       </thead>
                       <tbody>
                         {activeLibrariansData.map((user, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                             <td style={{ padding: '10px' }}>{user.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#8B5CF6' }}>🟢 Online</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#8B5CF6' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
