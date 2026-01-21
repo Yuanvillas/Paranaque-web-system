@@ -248,10 +248,10 @@ const LibrarianUserManagement = () => {
       {/* User History Modal */}
       {viewUserLogs && (
         <div className="um-modal-overlay" onClick={closeHistoryModal}>
-          <div className="um-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="um-modal-header">
-              <h2>User History - {viewUserLogs}</h2>
-              <button className="um-modal-close" onClick={closeHistoryModal}>×</button>
+          <div className="um-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', borderRadius: '15px' }}>
+            <div className="um-modal-header" style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>User Borrowed & Reserved Books History</h2>
+              <button className="um-modal-close" onClick={closeHistoryModal} style={{ fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>×</button>
             </div>
             
             {/* Search bar inside modal */}
@@ -273,26 +273,30 @@ const LibrarianUserManagement = () => {
               />
             </div>
 
-            <div className="um-modal-content" style={{ overflowY: 'auto', flex: 1 }}>
+            <div className="um-modal-content" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
               {userLogs.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No book borrow or return history found for this user.</p>
               ) : (
-                <table className="um-history-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th>Date & Time</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {userLogs.map((log, idx) => (
-                      <tr key={idx}>
-                        <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                        <td>{log.action}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {userLogs.map((log, idx) => (
+                    <div 
+                      key={idx}
+                      style={{
+                        padding: '16px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '8px',
+                        borderLeft: '4px solid #4CAF50'
+                      }}
+                    >
+                      <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '600', color: '#333' }}>
+                        {log.action}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#999' }}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
