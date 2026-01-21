@@ -33,13 +33,19 @@ const AdminDashboard = () => {
   const [entryStats, setEntryStats] = useState({
     totalEntries: 0,
     todayEntries: 0,
-    activeUsers: 0
+    activeUsers: 0,
+    activeAdmins: 0,
+    activeLibrarians: 0
   });
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showTodayEntriesModal, setShowTodayEntriesModal] = useState(false);
   const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
+  const [showActiveAdminsModal, setShowActiveAdminsModal] = useState(false);
+  const [showActiveLibrariansModal, setShowActiveLibrariansModal] = useState(false);
   const [todayEntriesData, setTodayEntriesData] = useState([]);
   const [activeUsersData, setActiveUsersData] = useState([]);
+  const [activeAdminsData, setActiveAdminsData] = useState([]);
+  const [activeLibrariansData, setActiveLibrariansData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
 
   const handleSectionClick = (name) => {
@@ -70,28 +76,67 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchEntryStats = async () => {
       try {
-        const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
-        const data = await response.json();
+        const [logsResponse, usersResponse] = await Promise.all([
+          fetch('https://paranaque-web-system.onrender.com/api/logs'),
+          fetch('https://paranaque-web-system.onrender.com/api/auth/users')
+        ]);
         
-        if (response.ok && data.logs) {
-          const logs = data.logs;
+        const logsData = await logsResponse.json();
+        const usersData = await usersResponse.json();
+        
+        if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
+          const logs = logsData.logs;
           const today = new Date().toDateString();
           
           const todayLogs = logs.filter(log => 
             new Date(log.timestamp).toDateString() === today
           );
           
-          // Count unique users online today
+          // Create a map of user roles
+          const userRoles = {};
+          usersData.users.forEach(user => {
+            userRoles[user.email] = user.role;
+          });
+          
+          // Count unique regular users (not admin/librarian) online today
           const uniqueUsersToday = new Set(
             todayLogs
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
+              .filter(log => 
+                log.action && 
+                log.action.toLowerCase().includes('login') &&
+                userRoles[log.userEmail] === 'user'
+              )
+              .map(log => log.userEmail)
+          );
+          
+          // Count unique admins online today
+          const uniqueAdminsToday = new Set(
+            todayLogs
+              .filter(log => 
+                log.action && 
+                log.action.toLowerCase().includes('login') &&
+                userRoles[log.userEmail] === 'admin'
+              )
+              .map(log => log.userEmail)
+          );
+          
+          // Count unique librarians online today
+          const uniqueLibrariansToday = new Set(
+            todayLogs
+              .filter(log => 
+                log.action && 
+                log.action.toLowerCase().includes('login') &&
+                userRoles[log.userEmail] === 'librarian'
+              )
               .map(log => log.userEmail)
           );
           
           setEntryStats({
             totalEntries: logs.length,
             todayEntries: todayLogs.length,
-            activeUsers: uniqueUsersToday.size
+            activeUsers: uniqueUsersToday.size,
+            activeAdmins: uniqueAdminsToday.size,
+            activeLibrarians: uniqueLibrariansToday.size
           });
         }
       } catch (err) {
@@ -128,19 +173,34 @@ const AdminDashboard = () => {
   const handleActiveUsersClick = async () => {
     setLoadingModals(true);
     try {
-      const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
-      const data = await response.json();
+      const [logsResponse, usersResponse] = await Promise.all([
+        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        fetch('https://paranaque-web-system.onrender.com/api/auth/users')
+      ]);
       
-      if (response.ok && data.logs) {
+      const logsData = await logsResponse.json();
+      const usersData = await usersResponse.json();
+      
+      if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
         const today = new Date().toDateString();
-        const todayLogs = data.logs.filter(log => 
+        const todayLogs = logsData.logs.filter(log => 
           new Date(log.timestamp).toDateString() === today
         );
         
-        // Get unique users who logged in today
+        // Create a map of user roles
+        const userRoles = {};
+        usersData.users.forEach(user => {
+          userRoles[user.email] = user.role;
+        });
+        
+        // Get unique users who logged in today (excluding admin and librarian)
         const activeUsers = {};
         todayLogs
-          .filter(log => log.action && log.action.toLowerCase().includes('login'))
+          .filter(log => 
+            log.action && 
+            log.action.toLowerCase().includes('login') &&
+            userRoles[log.userEmail] === 'user' // Only include regular users
+          )
           .forEach(log => {
             if (!activeUsers[log.userEmail]) {
               activeUsers[log.userEmail] = {
@@ -159,6 +219,114 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       console.error('Error fetching active users:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleActiveAdminsClick = async () => {
+    setLoadingModals(true);
+    try {
+      const [logsResponse, usersResponse] = await Promise.all([
+        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        fetch('https://paranaque-web-system.onrender.com/api/auth/users')
+      ]);
+      
+      const logsData = await logsResponse.json();
+      const usersData = await usersResponse.json();
+      
+      if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
+        const today = new Date().toDateString();
+        const todayLogs = logsData.logs.filter(log => 
+          new Date(log.timestamp).toDateString() === today
+        );
+        
+        // Create a map of user roles
+        const userRoles = {};
+        usersData.users.forEach(user => {
+          userRoles[user.email] = user.role;
+        });
+        
+        // Get unique admins who logged in today
+        const activeAdmins = {};
+        todayLogs
+          .filter(log => 
+            log.action && 
+            log.action.toLowerCase().includes('login') &&
+            userRoles[log.userEmail] === 'admin'
+          )
+          .forEach(log => {
+            if (!activeAdmins[log.userEmail]) {
+              activeAdmins[log.userEmail] = {
+                email: log.userEmail,
+                lastLogin: log.timestamp,
+                loginCount: 1
+              };
+            } else {
+              activeAdmins[log.userEmail].loginCount += 1;
+              activeAdmins[log.userEmail].lastLogin = log.timestamp;
+            }
+          });
+        
+        setActiveAdminsData(Object.values(activeAdmins));
+        setShowActiveAdminsModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching active admins:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleActiveLibrariansClick = async () => {
+    setLoadingModals(true);
+    try {
+      const [logsResponse, usersResponse] = await Promise.all([
+        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        fetch('https://paranaque-web-system.onrender.com/api/auth/users')
+      ]);
+      
+      const logsData = await logsResponse.json();
+      const usersData = await usersResponse.json();
+      
+      if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
+        const today = new Date().toDateString();
+        const todayLogs = logsData.logs.filter(log => 
+          new Date(log.timestamp).toDateString() === today
+        );
+        
+        // Create a map of user roles
+        const userRoles = {};
+        usersData.users.forEach(user => {
+          userRoles[user.email] = user.role;
+        });
+        
+        // Get unique librarians who logged in today
+        const activeLibrarians = {};
+        todayLogs
+          .filter(log => 
+            log.action && 
+            log.action.toLowerCase().includes('login') &&
+            userRoles[log.userEmail] === 'librarian'
+          )
+          .forEach(log => {
+            if (!activeLibrarians[log.userEmail]) {
+              activeLibrarians[log.userEmail] = {
+                email: log.userEmail,
+                lastLogin: log.timestamp,
+                loginCount: 1
+              };
+            } else {
+              activeLibrarians[log.userEmail].loginCount += 1;
+              activeLibrarians[log.userEmail].lastLogin = log.timestamp;
+            }
+          });
+        
+        setActiveLibrariansData(Object.values(activeLibrarians));
+        setShowActiveLibrariansModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching active librarians:', err);
     } finally {
       setLoadingModals(false);
     }
@@ -539,10 +707,85 @@ const AdminDashboard = () => {
                     {entryStats.activeUsers}
                   </div>
                 </div>
-              </div>
 
-            </>
-          )}
+                <div
+                  onClick={handleActiveAdminsClick}
+                  style={{
+                    backgroundColor: '#fff',
+                    padding: '25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
+                    Active Admins Online
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#FF6F00',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.activeAdmins}
+                  </div>
+                </div>
+
+                <div
+                  onClick={handleActiveLibrariansClick}
+                  style={{
+                    backgroundColor: '#fff',
+                    padding: '25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
+                    Active Librarians Online
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#8B5CF6',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.activeLibrarians}
+                  </div>
+                </div>
+              </div>
 
           {selectedResource === "Resource Management" ? (
             <div className="resource-submenu">
@@ -785,6 +1028,154 @@ const AdminDashboard = () => {
                           <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                             <td style={{ padding: '10px' }}>{user.email}</td>
                             <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {showActiveAdminsModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowActiveAdminsModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Active Admins Online Today</h2>
+                  <button
+                    onClick={() => setShowActiveAdminsModal(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      color: '#999'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : activeAdminsData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No active admins found for today.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeAdminsData.map((user, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{user.email}</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#FF6F00' }}>{user.loginCount}</td>
+                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {showActiveLibrariansModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowActiveLibrariansModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Active Librarians Online Today</h2>
+                  <button
+                    onClick={() => setShowActiveLibrariansModal(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      color: '#999'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : activeLibrariansData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No active librarians found for today.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeLibrariansData.map((user, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{user.email}</td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#8B5CF6' }}>{user.loginCount}</td>
                             <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
                           </tr>
                         ))}
