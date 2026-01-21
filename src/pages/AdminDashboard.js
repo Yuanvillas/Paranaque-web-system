@@ -450,11 +450,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <UserEntryMonitor />
             </>
           )}
-
-          {!selectedResource && false && <UserEntryMonitor />}
 
           {selectedResource === "Resource Management" ? (
             <div className="resource-submenu">
