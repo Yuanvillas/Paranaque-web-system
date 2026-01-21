@@ -357,6 +357,7 @@ const AdminDashboardTable = () => {
               flexDirection: 'column',
               alignItems: 'center',
               textAlign: 'center',
+              position: 'relative',
               ':hover': {
                 transform: 'translateY(-5px)',
                 boxShadow: '0 8px 16px rgba(0,0,0,0.12)'
@@ -371,6 +372,27 @@ const AdminDashboardTable = () => {
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
             }}
           >
+            {/* Notification badge for Ongoing Requests */}
+            {card.id === 'requests' && card.value > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                backgroundColor: '#FF5252',
+                color: 'white',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                animation: 'pulse 1.5s infinite'
+              }}>
+                {card.value}
+              </div>
+            )}
             <div style={{
               fontSize: '40px',
               marginBottom: '15px'
