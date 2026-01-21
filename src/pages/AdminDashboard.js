@@ -786,6 +786,8 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+            </>
+          )}
 
           {selectedResource === "Resource Management" ? (
             <div className="resource-submenu">
