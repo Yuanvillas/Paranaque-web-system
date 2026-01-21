@@ -498,7 +498,7 @@ const AdminDashboard = () => {
           <img style={{ width: '50px' }} src={logo} alt="School" />
         </div>
         <nav className="nav-links">
-          {user.role === "admin" && (
+          {(user.role === "admin" || user.role === "librarian") && (
             <button onClick={() => handleSectionClick("User Management")}>
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faUsers} />
               {!isCollapsed && <span style={{ marginLeft: 8 }}>User Management</span>}
