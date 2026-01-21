@@ -31,6 +31,11 @@ const AdminDashboard = () => {
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
   const [isCollapsed] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [entryStats, setEntryStats] = useState({
+    totalEntries: 0,
+    todayEntries: 0,
+    activeUsers: 0
+  });
 
   const handleSectionClick = (name) => {
     if (name === "User Management") {
@@ -58,17 +63,41 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    fetch("https://paranaque-web-system.onrender.com/api/logs")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('Fetched logs:', data);
-        // Data fetched but not currently used in component
-      })
-      .catch((err) => {
-        console.error('Error fetching logs:', err); // Debug log
-      });
+    const fetchEntryStats = async () => {
+      try {
+        const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
+        const data = await response.json();
+        
+        if (response.ok && data.logs) {
+          const logs = data.logs;
+          const today = new Date().toDateString();
+          
+          const todayLogs = logs.filter(log => 
+            new Date(log.timestamp).toDateString() === today
+          );
+          
+          // Count unique users online today
+          const uniqueUsersToday = new Set(
+            todayLogs
+              .filter(log => log.action && log.action.toLowerCase().includes('login'))
+              .map(log => log.userEmail)
+          );
+          
+          setEntryStats({
+            totalEntries: logs.length,
+            todayEntries: todayLogs.length,
+            activeUsers: uniqueUsersToday.size
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching entry stats:', err);
+      }
+    };
 
-  }, [userEmail]);
+    fetchEntryStats();
+    const interval = setInterval(fetchEntryStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchPendingRequestsCount = async () => {
@@ -313,7 +342,106 @@ const AdminDashboard = () => {
         <section className="content">
           <h1 style={{ fontWeight: '600', fontSize: '25px', marginTop: "-5px" }}>Admin Dashboard</h1>
 
-          {!selectedResource && <UserEntryMonitor />}
+          {!selectedResource && (
+            <>
+              {/* Entry Statistics Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '20px',
+                marginBottom: '30px',
+                marginTop: '20px'
+              }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '25px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
+                    Total Entries
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#00BFA5',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.totalEntries}
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '25px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
+                    Today's Entries
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#00BFA5',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.todayEntries}
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '25px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
+                    Active Users Online
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#00BFA5',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.activeUsers}
+                  </div>
+                </div>
+              </div>
+
+              <UserEntryMonitor />
+            </>
+          )}
+
+          {!selectedResource && false && <UserEntryMonitor />}
 
           {selectedResource === "Resource Management" ? (
             <div className="resource-submenu">

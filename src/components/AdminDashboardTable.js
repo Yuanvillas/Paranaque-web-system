@@ -12,6 +12,9 @@ const AdminDashboardTable = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedMetric, setSelectedMetric] = useState(null);
+  const [detailedData, setDetailedData] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -63,18 +66,230 @@ const AdminDashboardTable = () => {
     }
   };
 
+  const handleCardClick = async (metric) => {
+    setSelectedMetric(metric);
+    setDetailLoading(true);
+
+    try {
+      switch(metric) {
+        case 'books':
+          const booksRes = await fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000');
+          const booksData = await booksRes.json();
+          setDetailedData(booksData.books || []);
+          break;
+
+        case 'issued':
+          const borrowedRes = await fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000');
+          const borrowedData = await borrowedRes.json();
+          setDetailedData(borrowedData.books || []);
+          break;
+
+        case 'returned':
+          const transRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000');
+          const transData = await transRes.json();
+          const completedTrans = transData.transactions ? transData.transactions.filter(t => t.status === 'completed') : [];
+          setDetailedData(completedTrans);
+          break;
+
+        case 'requests':
+          const requestsRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+          const requestsData = await requestsRes.json();
+          const pendingReqs = requestsData.transactions ? requestsData.transactions.filter(t => t.status === 'pending') : [];
+          setDetailedData(pendingReqs);
+          break;
+
+        case 'categories':
+          const booksRes2 = await fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000');
+          const booksData2 = await booksRes2.json();
+          const books = booksData2.books || [];
+          const categoryMap = {};
+          books.forEach(book => {
+            if (book.category) {
+              categoryMap[book.category] = (categoryMap[book.category] || 0) + 1;
+            }
+          });
+          const categories = Object.entries(categoryMap).map(([name, count]) => ({
+            name,
+            count,
+            _id: name
+          }));
+          setDetailedData(categories);
+          break;
+
+        default:
+          setDetailedData([]);
+      }
+    } catch (err) {
+      console.error('Error fetching detailed data:', err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: '20px' }}><p>Loading dashboard...</p></div>;
   }
 
   const metricCards = [
-    { label: 'Books Listed', value: stats.totalBooks, icon: '📚' },
-    { label: 'Times Book Issued', value: stats.borrowedBooks, icon: '📤' },
-    { label: 'Times Books Returned', value: stats.returnedBooks, icon: '♻️' },
-    { label: 'Ongoing Requests', value: stats.ongoingRequests, icon: '⏳' },
-    { label: 'Authors Listed', value: stats.authorsListed, icon: '✍️' },
-    { label: 'Listed Categories', value: stats.categoriesListed, icon: '📂' }
+    { label: 'Books Listed', value: stats.totalBooks, icon: '📚', id: 'books' },
+    { label: 'Times Book Issued', value: stats.borrowedBooks, icon: '📤', id: 'issued' },
+    { label: 'Times Books Returned', value: stats.returnedBooks, icon: '♻️', id: 'returned' },
+    { label: 'Ongoing Requests', value: stats.ongoingRequests, icon: '⏳', id: 'requests' },
+    { label: 'Listed Categories', value: stats.categoriesListed, icon: '📂', id: 'categories' }
   ];
+
+  // Detail view components
+  const renderDetailView = () => {
+    if (!selectedMetric) return null;
+
+    const title = metricCards.find(c => c.id === selectedMetric)?.label;
+
+    return (
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '25px',
+        marginTop: '30px',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+        maxHeight: '600px',
+        overflowY: 'auto'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>{title}</h2>
+          <button
+            onClick={() => setSelectedMetric(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: '#999'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {detailLoading ? (
+          <p>Loading data...</p>
+        ) : detailedData.length === 0 ? (
+          <p style={{ color: '#999' }}>No data available</p>
+        ) : (
+          <>
+            {selectedMetric === 'categories' ? (
+              // Categories view
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+                {detailedData.map((category, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '15px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#2e7d32', marginBottom: '5px' }}>
+                      {category.count}
+                    </div>
+                    <div style={{ color: '#666', fontSize: '14px' }}>
+                      {category.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Table view for other metrics
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '14px'
+                }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                      {selectedMetric === 'books' && (
+                        <>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Author</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Category</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Stock</th>
+                        </>
+                      )}
+                      {selectedMetric === 'issued' && (
+                        <>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Borrowed By</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Borrow Date</th>
+                        </>
+                      )}
+                      {selectedMetric === 'returned' && (
+                        <>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>User</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
+                        </>
+                      )}
+                      {selectedMetric === 'requests' && (
+                        <>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Requested By</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Date</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailedData.map((item, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                        {selectedMetric === 'books' && (
+                          <>
+                            <td style={{ padding: '10px' }}>{item.title}</td>
+                            <td style={{ padding: '10px' }}>{item.author}</td>
+                            <td style={{ padding: '10px' }}>{item.category}</td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>{item.stock || 0}</td>
+                          </>
+                        )}
+                        {selectedMetric === 'issued' && (
+                          <>
+                            <td style={{ padding: '10px' }}>{item.title}</td>
+                            <td style={{ padding: '10px' }}>{item.borrowedBy}</td>
+                            <td style={{ padding: '10px' }}>
+                              {item.borrowedAt ? new Date(item.borrowedAt).toLocaleDateString() : '-'}
+                            </td>
+                          </>
+                        )}
+                        {selectedMetric === 'returned' && (
+                          <>
+                            <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                            <td style={{ padding: '10px' }}>
+                              {item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}
+                            </td>
+                          </>
+                        )}
+                        {selectedMetric === 'requests' && (
+                          <>
+                            <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                            <td style={{ padding: '10px', textTransform: 'capitalize' }}>{item.type}</td>
+                            <td style={{ padding: '10px' }}>
+                              {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -101,6 +316,7 @@ const AdminDashboardTable = () => {
         {metricCards.map((card, idx) => (
           <div
             key={idx}
+            onClick={() => handleCardClick(card.id)}
             style={{
               backgroundColor: 'white',
               border: '1px solid #e0e0e0',
@@ -151,6 +367,8 @@ const AdminDashboardTable = () => {
           </div>
         ))}
       </div>
+
+      {renderDetailView()}
     </div>
   );
 };
