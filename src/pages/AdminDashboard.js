@@ -24,7 +24,6 @@ import UserEntryMonitor from "../components/UserEntryMonitor";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const userEmail = localStorage.getItem("userEmail");
 
   const [selectedResource, setSelectedResource] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
