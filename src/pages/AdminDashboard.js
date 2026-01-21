@@ -354,8 +354,6 @@ const AdminDashboard = () => {
             };
           }
         });
-            }
-          });
         
         setActiveLibrariansData(Object.values(activeLibrarians));
         setShowActiveLibrariansModal(true);
