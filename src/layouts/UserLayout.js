@@ -51,10 +51,12 @@ const UserLayout = () => {
     const handleBeforeUnload = () => {
       const userEmail = localStorage.getItem("userEmail");
       if (userEmail) {
-        // Use sendBeacon for reliable delivery even if page is closing
+        // Use sendBeacon with FormData for reliable delivery even if page is closing
+        const formData = new FormData();
+        formData.append('email', userEmail);
         navigator.sendBeacon(
           'https://paranaque-web-system.onrender.com/api/auth/logout',
-          JSON.stringify({ email: userEmail })
+          formData
         );
       }
     };
