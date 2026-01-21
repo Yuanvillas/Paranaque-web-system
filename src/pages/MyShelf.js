@@ -243,79 +243,201 @@ const MyShelf = () => {
         </button>
       </div>
 
-      {/* Cards Container */}
-      <div className="shelf-cards-container">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item) => (
-            <div key={item._id} className="shelf-card">
-              <h3>{item.bookTitle}</h3>
-              
-              <div className="shelf-card-badge">
-                {item.status === 'pending' ? (
-                  <span className="badge pending">⏱ Pending</span>
-                ) : item.type === 'borrow' ? (
-                  <span className="badge borrowed">📖 Borrowed</span>
-                ) : (
-                  <span className="badge reserved">♦ Reserved</span>
-                )}
-              </div>
+      {/* Cards Container for non-all/non-completed tabs */}
+      {activeTab !== 'all' && activeTab !== 'completed' ? (
+        <div className="shelf-cards-container">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
+              <div key={item._id} className="shelf-card">
+                <h3>{item.bookTitle}</h3>
+                
+                <div className="shelf-card-badge">
+                  {item.status === 'pending' ? (
+                    <span className="badge pending">⏱ Pending</span>
+                  ) : item.type === 'borrow' ? (
+                    <span className="badge borrowed">📖 Borrowed</span>
+                  ) : (
+                    <span className="badge reserved">♦ Reserved</span>
+                  )}
+                </div>
 
-              <div className="shelf-card-info">
-                <p className="info-label">REQUEST DATE:</p>
-                <p className="info-value">
-                  {new Date(item.startDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}, {new Date(item.startDate).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-
-              {item.endDate && item.status !== 'pending' && (
                 <div className="shelf-card-info">
-                  <p className="info-label">DUE DATE:</p>
+                  <p className="info-label">REQUEST DATE:</p>
                   <p className="info-value">
-                    {new Date(item.endDate).toLocaleDateString('en-US', {
+                    {new Date(item.startDate).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric'
+                    })}, {new Date(item.startDate).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </p>
                 </div>
-              )}
 
-              {item.type === 'borrow' && item.status === 'active' && (
-                <div className="shelf-card-actions">
-                  <button 
-                    className="shelf-card-btn return-btn"
-                    onClick={() => handleReturn(item._id)}
-                  >
-                    Return
-                  </button>
-                </div>
-              )}
+                {item.endDate && item.status !== 'pending' && (
+                  <div className="shelf-card-info">
+                    <p className="info-label">DUE DATE:</p>
+                    <p className="info-value">
+                      {new Date(item.endDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                )}
 
-              {(item.status === 'pending' || item.type === 'reserve') && (
-                <div className="shelf-card-actions">
-                  <button 
-                    className="shelf-card-btn cancel-btn"
-                    onClick={() => handleCancel(item._id, item.type)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+                {item.type === 'borrow' && item.status === 'active' && (
+                  <div className="shelf-card-actions">
+                    <button 
+                      className="shelf-card-btn return-btn"
+                      onClick={() => handleReturn(item._id)}
+                    >
+                      Return
+                    </button>
+                  </div>
+                )}
+
+                {(item.status === 'pending' || item.type === 'reserve') && (
+                  <div className="shelf-card-actions">
+                    <button 
+                      className="shelf-card-btn cancel-btn"
+                      onClick={() => handleCancel(item._id, item.type)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="empty-shelf">
+              <p>No books in this category</p>
             </div>
-          ))
-        ) : (
-          <div className="empty-shelf">
-            <p>No books in this category</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : (
+        /* Table view for All tab */
+        <div className="shelf-table-container" style={{ overflowX: 'auto', marginTop: '20px' }}>
+          {filteredItems.length > 0 ? (
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              backgroundColor: '#fff',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: '#2e7d32', color: 'white' }}>
+                  <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Book Title</th>
+                  <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Type</th>
+                  <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
+                  <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Request Date</th>
+                  <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Due Date</th>
+                  <th style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item, index) => (
+                  <tr key={item._id} style={{
+                    backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff',
+                    borderBottom: '1px solid #e0e0e0'
+                  }}>
+                    <td style={{ padding: '12px 15px' }}>{item.bookTitle}</td>
+                    <td style={{ padding: '12px 15px', textTransform: 'capitalize' }}>
+                      {item.type === 'borrow' ? '📖 Borrow' : '♦ Reserve'}
+                    </td>
+                    <td style={{ padding: '12px 15px' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        backgroundColor: 
+                          item.status === 'active' ? '#c8e6c9' :
+                          item.status === 'pending' ? '#fff9c4' :
+                          item.status === 'completed' ? '#b2dfdb' : '#f8bbd0',
+                        color:
+                          item.status === 'active' ? '#1b5e20' :
+                          item.status === 'pending' ? '#f57f17' :
+                          item.status === 'completed' ? '#00695c' : '#c2185b'
+                      }}>
+                        {item.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 15px' }}>
+                      {new Date(item.startDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}, {new Date(item.startDate).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </td>
+                    <td style={{ padding: '12px 15px' }}>
+                      {item.endDate && item.status !== 'pending' ? (
+                        new Date(item.endDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td style={{ padding: '12px 15px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        {item.type === 'borrow' && item.status === 'active' && (
+                          <button 
+                            onClick={() => handleReturn(item._id)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#4CAF50',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Return
+                          </button>
+                        )}
+                        {(item.status === 'pending' || item.type === 'reserve') && (
+                          <button 
+                            onClick={() => handleCancel(item._id, item.type)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#f44336',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="empty-shelf" style={{ textAlign: 'center', padding: '40px' }}>
+              <p>No books in this category</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
