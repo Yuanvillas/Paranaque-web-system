@@ -60,7 +60,7 @@ const BooksTable = () => {
       .sort((a, b) => {
         const aNum = parseInt(a.accessionNumber?.split('-')[1] || '0');
         const bNum = parseInt(b.accessionNumber?.split('-')[1] || '0');
-        return bNum - aNum;
+        return aNum - bNum;
       })
       .map(book => ({
         'Book Title': book.title,
@@ -87,7 +87,7 @@ const BooksTable = () => {
       .sort((a, b) => {
         const aNum = parseInt(a.accessionNumber?.split('-')[1] || '0');
         const bNum = parseInt(b.accessionNumber?.split('-')[1] || '0');
-        return bNum - aNum;
+        return aNum - bNum;
       })
       .map(book => [
         book.title,
@@ -623,7 +623,7 @@ const BooksTable = () => {
             <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>📥 Choose Export Format</h2>
             
             <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>
-              Data will be sorted in descending order by accession number
+              Data will be sorted in ascending order by accession number
             </p>
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
