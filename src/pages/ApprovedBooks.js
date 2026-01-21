@@ -74,9 +74,28 @@ const ApprovedBooks = () => {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validate stock - only positive integers allowed
+    if (name === 'stock') {
+      // Only allow digits and prevent negative numbers
+      if (value === '') {
+        setEditForm(prev => ({ ...prev, [name]: '' }));
+        return;
+      }
+      
+      const numValue = parseInt(value);
+      // Reject if not a valid number or if negative
+      if (isNaN(numValue) || numValue < 0) {
+        return; // Don't update state
+      }
+      
+      setEditForm(prev => ({ ...prev, [name]: numValue }));
+      return;
+    }
+    
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'year' || name === 'stock' ? parseInt(value) : value
+      [name]: name === 'year' ? parseInt(value) : value
     }));
   };
 
@@ -369,6 +388,9 @@ const ApprovedBooks = () => {
                   name="stock"
                   value={editForm.stock}
                   onChange={handleEditChange}
+                  min="0"
+                  step="1"
+                  placeholder="Enter positive number only"
                   style={{
                     width: '100%',
                     padding: '10px',

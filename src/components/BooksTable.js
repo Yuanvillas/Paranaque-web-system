@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import './App.css';
 import AddBook from '../pages/AddBook';
 
@@ -11,6 +13,7 @@ const BooksTable = () => {
   const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     console.log("🔍 BooksTable state - showAddBookModal:", showAddBookModal);
@@ -53,23 +56,64 @@ const BooksTable = () => {
   };
 
   const exportToExcel = () => {
-    const data = filteredBooks.map(book => ({
-      'Book Title': book.title,
-      'Author': book.author,
-      'Year': book.year,
-      'Category': book.category,
-      'Accession Number': book.accessionNumber,
-      'Call Number': book.callNumber,
-      'Stock': book.stock,
-      'Available Stock': book.availableStock,
-      'Location': book.location ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}` : 'N/A',
-      'Status': book.status || 'Available'
-    }));
+    const data = filteredBooks
+      .sort((a, b) => (b.title || '').localeCompare(a.title || ''))
+      .map(book => ({
+        'Book Title': book.title,
+        'Author': book.author,
+        'Year': book.year,
+        'Category': book.category,
+        'Accession Number': book.accessionNumber,
+        'Call Number': book.callNumber,
+        'Stock': book.stock,
+        'Available Stock': book.availableStock,
+        'Location': book.location ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}` : 'N/A',
+        'Status': book.status || 'Available'
+      }));
     
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Books");
     XLSX.writeFile(wb, `Books_Report_${new Date().toLocaleDateString()}.xlsx`);
+    setShowExportModal(false);
+  };
+
+  const exportToPDF = () => {
+    const data = filteredBooks
+      .sort((a, b) => (b.title || '').localeCompare(a.title || ''))
+      .map(book => [
+        book.title,
+        book.author,
+        book.year,
+        book.category,
+        book.accessionNumber,
+        book.callNumber,
+        book.stock,
+        book.availableStock,
+        book.location ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}` : 'N/A',
+        book.status || 'Available'
+      ]);
+
+    const pdf = new jsPDF('l', 'mm', 'a4'); // landscape
+    pdf.autoTable({
+      head: [['Title', 'Author', 'Year', 'Category', 'Accession #', 'Call #', 'Stock', 'Available', 'Location', 'Status']],
+      body: data,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      headStyles: {
+        fillColor: [46, 125, 50],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      }
+    });
+
+    pdf.save(`Books_Report_${new Date().toLocaleDateString()}.pdf`);
+    setShowExportModal(false);
   };
 
 
@@ -130,9 +174,28 @@ const BooksTable = () => {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validate stock - only positive integers allowed
+    if (name === 'stock') {
+      // Only allow digits and prevent negative numbers
+      if (value === '') {
+        setEditForm(prev => ({ ...prev, [name]: '' }));
+        return;
+      }
+      
+      const numValue = parseInt(value);
+      // Reject if not a valid number or if negative
+      if (isNaN(numValue) || numValue < 0) {
+        return; // Don't update state
+      }
+      
+      setEditForm(prev => ({ ...prev, [name]: numValue }));
+      return;
+    }
+    
     setEditForm(prev => ({
       ...prev,
-      [name]: name === 'year' || name === 'stock' ? parseInt(value) : value
+      [name]: name === 'year' ? parseInt(value) : value
     }));
   };
 
@@ -181,7 +244,7 @@ const BooksTable = () => {
           >
             Add Books
           </button>
-          <button onClick={exportToExcel} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="Export to Excel" type="button">
+          <button onClick={() => setShowExportModal(true)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="Export to Excel or PDF" type="button">
             📥 Export
           </button>
           <button onClick={fetchAllBooks} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="Refresh" type="button">
@@ -408,6 +471,9 @@ const BooksTable = () => {
                       name="stock"
                       value={editForm.stock}
                       onChange={handleEditChange}
+                      min="0"
+                      step="1"
+                      placeholder="Enter positive number only"
                       style={{
                         width: '100%',
                         padding: '10px',
@@ -533,6 +599,83 @@ const BooksTable = () => {
               </div>
             </div>
           )}
+
+      {/* Export Format Modal */}
+      {showExportModal && (
+        <div 
+          className="add-book-modal-overlay" 
+          onClick={() => setShowExportModal(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}
+        >
+          <div 
+            className="add-book-modal" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', maxWidth: '500px', width: '90%' }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>📥 Choose Export Format</h2>
+            
+            <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>
+              Data will be sorted in descending order by book title
+            </p>
+
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              <button
+                onClick={exportToPDF}
+                style={{
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 30px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                📄 Export as PDF
+              </button>
+              <button
+                onClick={exportToExcel}
+                style={{
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 30px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                📊 Export as Excel
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowExportModal(false)}
+              style={{
+                width: '100%',
+                marginTop: '20px',
+                backgroundColor: '#95a5a6',
+                color: 'white',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
