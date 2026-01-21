@@ -10,6 +10,7 @@ const LibrarianUserManagement = () => {
   const [error, setError] = useState("");
   const [filterRole, setFilterRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
   const navigate = useNavigate();
 
   const fetchUsers = async () => {
@@ -45,13 +46,33 @@ const LibrarianUserManagement = () => {
 
   const handleViewHistory = (email) => {
     setViewUserLogs(email);
+    setHistorySearchQuery('');
   };
 
   const closeHistoryModal = () => {
     setViewUserLogs(null);
+    setHistorySearchQuery('');
   };
 
-  const userLogs = logs.filter(log => log.userEmail === viewUserLogs);
+  // Filter logs to only show borrow and returned books
+  const isBorrowRelatedAction = (action) => {
+    if (!action) return false;
+    const lowerAction = action.toLowerCase();
+    return lowerAction.includes('borrow') || 
+           lowerAction.includes('returned') || 
+           lowerAction.includes('return') ||
+           lowerAction.includes('reserve') ||
+           lowerAction.includes('reservation');
+  };
+
+  const userLogs = logs
+    .filter(log => log.userEmail === viewUserLogs)
+    .filter(log => isBorrowRelatedAction(log.action))
+    .filter(log => {
+      if (!historySearchQuery) return true;
+      const searchLower = historySearchQuery.toLowerCase();
+      return log.action.toLowerCase().includes(searchLower);
+    });
 
   return (
     <div className="dashboard">
@@ -227,16 +248,36 @@ const LibrarianUserManagement = () => {
       {/* User History Modal */}
       {viewUserLogs && (
         <div className="um-modal-overlay" onClick={closeHistoryModal}>
-          <div className="um-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="um-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div className="um-modal-header">
               <h2>User History - {viewUserLogs}</h2>
               <button className="um-modal-close" onClick={closeHistoryModal}>×</button>
             </div>
-            <div className="um-modal-content">
+            
+            {/* Search bar inside modal */}
+            <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee' }}>
+              <input
+                type="text"
+                placeholder="Search book activities..."
+                value={historySearchQuery}
+                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '5px',
+                  border: '2px solid #ddd',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.3s'
+                }}
+              />
+            </div>
+
+            <div className="um-modal-content" style={{ overflowY: 'auto', flex: 1 }}>
               {userLogs.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#999' }}>No activity history found for this user.</p>
+                <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No book borrow or return history found for this user.</p>
               ) : (
-                <table className="um-history-table">
+                <table className="um-history-table" style={{ width: '100%' }}>
                   <thead>
                     <tr>
                       <th>Date & Time</th>
@@ -246,7 +287,7 @@ const LibrarianUserManagement = () => {
                   <tbody>
                     {userLogs.map((log, idx) => (
                       <tr key={idx}>
-                        <td>{new Date(log.timestamp).toLocaleString()}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString()}</td>
                         <td>{log.action}</td>
                       </tr>
                     ))}
