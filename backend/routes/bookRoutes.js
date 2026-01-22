@@ -9,6 +9,7 @@ const Log = require('../models/Log');
 const ReservedBook = require('../models/ReservedBook');
 const Counter = require('../models/Counter');
 const { uploadBase64ToSupabase, getFullImageUrl } = require('../utils/upload');
+const { generateCallNumber } = require('../utils/ddc');
 
 const router = express.Router();
 
@@ -140,6 +141,25 @@ router.post('/', async (req, res) => {
       console.log("🚨 FINAL FALLBACK accession:", generatedAccessionNumber);
     }
 
+    // Auto-generate call number using DDC if not provided
+    let generatedCallNumber = callNumber;
+    if (!generatedCallNumber || generatedCallNumber.trim() === '') {
+      try {
+        // Get a sequence number based on total books in this category
+        const categoryBooks = await Book.find({ category }).countDocuments();
+        const sequenceNum = categoryBooks + 1;
+        
+        generatedCallNumber = generateCallNumber(category, author, sequenceNum);
+        console.log(`📚 Generated DDC call number: ${generatedCallNumber}`);
+      } catch (ddcErr) {
+        console.warn('⚠️  Could not generate DDC call number:', ddcErr.message);
+        // Fallback to simple format if DDC generation fails
+        generatedCallNumber = `${category || 'GEN'}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-0001`;
+      }
+    } else {
+      console.log(`📚 Using provided call number: ${generatedCallNumber}`);
+    }
+
     const newBook = new Book({
       title,
       year,
@@ -150,7 +170,7 @@ router.post('/', async (req, res) => {
       author,
       publisher,
       accessionNumber: generatedAccessionNumber,
-      callNumber,
+      callNumber: generatedCallNumber,
       category,
       stock: parseInt(stock) || 1,
       availableStock: parseInt(stock) || 1,

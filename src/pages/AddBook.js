@@ -1,6 +1,31 @@
 import React, { useState, useEffect } from "react";
 import logo from "../imgs/liblogo.png";
 
+// DDC Classification Utility (mirrored from backend)
+const generateCallNumber = (category, author, sequenceNumber = 1) => {
+  const DDC_MAPPING = {
+    'Science': '500', 'Math': '510', 'Filipino': '820', 'English': '820',
+    'Fiction': '800', 'History': '900', 'Biography': '920', 'Technology': '600',
+    'Medicine': '610', 'Philosophy': '100', 'Psychology': '150',
+    'Social Sciences': '300', 'Religion': '200', 'Art': '700', 'Music': '780',
+    'Sports': '790'
+  };
+  
+  const ddcCode = DDC_MAPPING[category] || '000';
+  
+  if (!author) {
+    return `${ddcCode}-ANON-${String(sequenceNumber).padStart(4, '0')}`;
+  }
+  
+  const names = author.trim().split(/\s+/);
+  const firstInitial = names[0].charAt(0).toUpperCase();
+  const lastInitial = names[names.length - 1].charAt(0).toUpperCase();
+  const authorInitials = `${firstInitial}${lastInitial}`;
+  const sequence = String(sequenceNumber).padStart(4, '0');
+  
+  return `${ddcCode}-${authorInitials}-${sequence}`;
+};
+
 const AddBook = ({ onBookAdded }) => {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -8,6 +33,7 @@ const AddBook = ({ onBookAdded }) => {
   const [newCategory, setNewCategory] = useState("");
   const [categories, setCategories] = useState(["Science", "Math", "Filipino", "English", "Fiction"]);
   const [nextAccessionNumber, setNextAccessionNumber] = useState("Calculating...");
+  const [nextCallNumber, setNextCallNumber] = useState("Will be auto-generated...");
 
   const [book, setBook] = useState({
     title: "",
@@ -115,7 +141,14 @@ const AddBook = ({ onBookAdded }) => {
       return;
     }
 
-    setBook({ ...book, [name]: value });
+    const updatedBook = { ...book, [name]: value };
+    setBook(updatedBook);
+    
+    // Auto-update call number preview when category or author changes
+    if (name === "category" || name === "author") {
+      const previewCallNumber = generateCallNumber(updatedBook.category, updatedBook.author, 1);
+      setNextCallNumber(previewCallNumber);
+    }
   };
 
   const handleAddCategory = () => {
@@ -270,7 +303,17 @@ const AddBook = ({ onBookAdded }) => {
           <small style={{color: '#999', marginTop: '5px', display: 'block'}}>This book will automatically get this accession number</small>
         </div>
 
-        <Input label="Call Number (Optional)" name="callNumber" value={book.callNumber} onChange={handleChange} placeholder="e.g., FIC-ALI or leave blank" />
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Call Number (Auto-Generated - DDC Format)</label>
+          <input 
+            type="text" 
+            value={nextCallNumber} 
+            disabled 
+            style={{...styles.input, backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed'}}
+            aria-label="Auto-generated call number"
+          />
+          <small style={{color: '#999', marginTop: '5px', display: 'block'}}>Based on category and author name (Format: DDD-II-SSSS)</small>
+        </div>
 
         <Input label="Author" name="author" value={book.author} onChange={handleChange} required />
 

@@ -546,13 +546,13 @@ const BooksTable = () => {
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Call Number (Optional)</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Call Number (Auto-Generated - DDC Format)</label>
                   <input
                     type="text"
                     name="callNumber"
                     value={editForm.callNumber}
-                    onChange={handleEditChange}
-                    placeholder="e.g., FIC-ALI"
+                    disabled
+                    placeholder="Auto-generated"
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -561,10 +561,11 @@ const BooksTable = () => {
                       boxSizing: 'border-box',
                       fontSize: '14px',
                       backgroundColor: '#f5f5f5',
-                      color: '#999',
+                      color: '#666',
                       cursor: 'not-allowed'
                     }}
                   />
+                  <small style={{ color: '#999', marginTop: '3px', display: 'block' }}>Call numbers are automatically generated based on category and author</small>
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
