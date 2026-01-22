@@ -67,6 +67,9 @@ const BooksTable = () => {
         'Author': book.author,
         'Year': book.year,
         'Category': book.category,
+        'Subject': book.subject || book.category,
+        'Collection Type': book.collectionType || 'Circulation',
+        'Source of Funds': book.sourceOfFunds || 'Not specified',
         'Accession Number': book.accessionNumber,
         'Call Number': book.callNumber,
         'Stock': book.stock,
@@ -330,6 +333,9 @@ const BooksTable = () => {
                 <th>Book Title</th>
                 <th>Year</th>
                 <th>Category</th>
+                <th>Subject</th>
+                <th>Collection Type</th>
+                <th>Source of Funds</th>
                 <th>Author</th>
                 <th>Accession Number</th>
                 <th>Call Number</th>
@@ -379,6 +385,9 @@ const BooksTable = () => {
                   <td>{book.title}</td>
                   <td>{book.year}</td>
                   <td>{book.category}</td>
+                  <td>{book.subject || book.category || '-'}</td>
+                  <td>{book.collectionType || 'Circulation'}</td>
+                  <td>{book.sourceOfFunds || 'Not specified'}</td>
                   <td>{book.author}</td>
                   <td>{book.accessionNumber}</td>
                   <td>{book.callNumber}</td>
