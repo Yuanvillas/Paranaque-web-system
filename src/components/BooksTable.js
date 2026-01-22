@@ -129,12 +129,26 @@ const BooksTable = () => {
     return <div className="pending-container"><h2>Books</h2><p>Loading books...</p></div>;
   }
 
-  const filteredBooks = books.filter(
-    (book) =>
-      (book.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (book.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (book.accessionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-  );
+  const filteredBooks = books.filter((book) => {
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Search across all fields
+    return (
+      (book.title?.toLowerCase().includes(searchLower) || false) ||
+      (book.author?.toLowerCase().includes(searchLower) || false) ||
+      (book.accessionNumber?.toLowerCase().includes(searchLower) || false) ||
+      (book.callNumber?.toLowerCase().includes(searchLower) || false) ||
+      (book.category?.toLowerCase().includes(searchLower) || false) ||
+      (book.publisher?.toLowerCase().includes(searchLower) || false) ||
+      (book.year?.toString().includes(searchLower) || false) ||
+      (book.stock?.toString().includes(searchLower) || false) ||
+      (book.availableStock?.toString().includes(searchLower) || false) ||
+      (book.status?.toLowerCase().includes(searchLower) || false) ||
+      (book.location?.genreCode?.toLowerCase().includes(searchLower) || false) ||
+      (book.location?.shelf?.toString().includes(searchLower) || false) ||
+      (book.location?.level?.toString().includes(searchLower) || false)
+    );
+  });
 
   const archiveBook = async (bookId) => {
     if (window.confirm("Are you sure you want to archive this book?")) {
@@ -240,7 +254,7 @@ const BooksTable = () => {
         <h2 className="page-title">📗 Books</h2>
 
         <div className="search-container ">
-          <input type="text" placeholder="Search analytics..." onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Search by title, author, accession #, call #, category, year, stock..." onChange={(e) => setSearchTerm(e.target.value)} />
           <button 
             onClick={() => {
               console.log("🔘 Add Books button clicked");
