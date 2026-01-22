@@ -40,7 +40,10 @@ const AddBook = ({ onBookAdded }) => {
     year: "",
     genre: "",
     category: "",
+    subject: "",
     stock: "1",
+    collectionType: "Circulation",
+    sourceOfFunds: "",
     location: {
       shelf: "",
       level: ""
@@ -193,8 +196,13 @@ const AddBook = ({ onBookAdded }) => {
       return;
     }
     
-    if (!book.category) {
-      alert("Please select a category");
+    if (!book.subject) {
+      alert("Please select a subject");
+      return;
+    }
+    
+    if (!book.collectionType) {
+      alert("Please select a collection type");
       return;
     }
     
@@ -222,10 +230,13 @@ const AddBook = ({ onBookAdded }) => {
       author: book.author,
       publisher: book.publisher || "Unknown",
       category: book.category,
+      subject: book.subject,
+      collectionType: book.collectionType,
+      sourceOfFunds: book.sourceOfFunds || null,
       stock: parseInt(book.stock) || 1,
       callNumber: book.callNumber,
       location: {
-        genreCode: book.category.slice(0, 3).toUpperCase(),
+        genreCode: book.subject.slice(0, 3).toUpperCase(),
         shelf: parseInt(book.location.shelf),
         level: parseInt(book.location.level)
       },
@@ -289,7 +300,17 @@ const AddBook = ({ onBookAdded }) => {
 
       <form onSubmit={handleSubmit} style={styles.form} aria-label="Add Book Form">
 
-        <Input label="Book Title" name="title" value={book.title} onChange={handleChange} required />
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Call Number (Auto-Generated - DDC Format)</label>
+          <input 
+            type="text" 
+            value={nextCallNumber} 
+            disabled 
+            style={{...styles.input, backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed'}}
+            aria-label="Auto-generated call number"
+          />
+          <small style={{color: '#999', marginTop: '5px', display: 'block'}}>Based on category and author name (Format: DDD-II-SSSS)</small>
+        </div>
 
         <div style={styles.inputGroup}>
           <label style={styles.label}>Accession Number (Auto-Generated)</label>
@@ -303,17 +324,7 @@ const AddBook = ({ onBookAdded }) => {
           <small style={{color: '#999', marginTop: '5px', display: 'block'}}>This book will automatically get this accession number</small>
         </div>
 
-        <div style={styles.inputGroup}>
-          <label style={styles.label}>Call Number (Auto-Generated - DDC Format)</label>
-          <input 
-            type="text" 
-            value={nextCallNumber} 
-            disabled 
-            style={{...styles.input, backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed'}}
-            aria-label="Auto-generated call number"
-          />
-          <small style={{color: '#999', marginTop: '5px', display: 'block'}}>Based on category and author name (Format: DDD-II-SSSS)</small>
-        </div>
+        <Input label="Book Title" name="title" value={book.title} onChange={handleChange} required />
 
         <Input label="Author" name="author" value={book.author} onChange={handleChange} required />
 
@@ -321,18 +332,35 @@ const AddBook = ({ onBookAdded }) => {
 
         <Input label="Year Published" type="number" name="year" value={book.year} onChange={handleChange} required />
 
-        <Input label="Number of Stocks" type="number" name="stock" min="1" value={book.stock} onChange={(e) => {
+        <Input label="Number of Copies" type="number" name="stock" min="1" value={book.stock} onChange={(e) => {
           const value = e.target.value;
           if (value === '' || parseInt(value) > 0) {
             setBook({ ...book, stock: value });
           }
         }} required />
 
-        <Select label="Category" name="category" value={book.category} onChange={handleChange} options={categories} required />
+        <Select label="Subject" name="subject" value={book.subject} onChange={handleChange} options={categories} required />
 
         <button type="button" onClick={() => setShowCategoryModal(true)} style={styles.addCategoryBtn}>
-          + Add New Category
+          + Add New Subject
         </button>
+
+        <Select 
+          label="Collection Type" 
+          name="collectionType" 
+          value={book.collectionType} 
+          onChange={handleChange} 
+          options={['Filipiniana', 'Reference', 'Circulation']} 
+          required 
+        />
+
+        <Select 
+          label="Source of Funds" 
+          name="sourceOfFunds" 
+          value={book.sourceOfFunds} 
+          onChange={handleChange} 
+          options={['', 'Donation', 'Locally funded', 'National Library of the Philippines']}
+        />
 
         <div style={styles.row}>
           <Input small label="Shelf Number" name="shelf" type="number" min="0" value={book.location.shelf} onChange={(e) => {
@@ -363,7 +391,7 @@ const AddBook = ({ onBookAdded }) => {
       {showCategoryModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
-            <h3>Add New Category</h3>
+            <h3>Add New Subject</h3>
             <input
               type="text"
               placeholder="Enter category name"

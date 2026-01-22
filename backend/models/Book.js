@@ -78,6 +78,22 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  subject: {
+    type: String,
+    required: false,
+  },
+  collectionType: {
+    type: String,
+    required: false,
+    enum: ['Filipiniana', 'Reference', 'Circulation'],
+    default: 'Circulation'
+  },
+  sourceOfFunds: {
+    type: String,
+    required: false,
+    enum: ['Donation', 'Locally funded', 'National Library of the Philippines'],
+    default: null
+  },
   status: {
     type: String,
     required: false,

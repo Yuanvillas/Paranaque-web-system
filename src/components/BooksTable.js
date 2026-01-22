@@ -188,6 +188,9 @@ const BooksTable = () => {
       year: book.year,
       stock: book.stock,
       category: book.category || '',
+      subject: book.subject || '',
+      collectionType: book.collectionType || 'Circulation',
+      sourceOfFunds: book.sourceOfFunds || '',
       accessionNumber: book.accessionNumber || '',
       callNumber: book.callNumber || '',
       status: book.status || 'Available'
@@ -565,7 +568,68 @@ const BooksTable = () => {
                       cursor: 'not-allowed'
                     }}
                   />
-                  <small style={{ color: '#999', marginTop: '3px', display: 'block' }}>Call numbers are automatically generated based on category and author</small>
+                  <small style={{ color: '#999', marginTop: '3px', display: 'block' }}>Call numbers are automatically generated based on subject and author</small>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Subject</label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={editForm.subject}
+                    onChange={handleEditChange}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Collection Type</label>
+                  <select
+                    name="collectionType"
+                    value={editForm.collectionType}
+                    onChange={handleEditChange}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="Filipiniana">Filipiniana</option>
+                    <option value="Reference">Reference</option>
+                    <option value="Circulation">Circulation</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Source of Funds</label>
+                  <select
+                    name="sourceOfFunds"
+                    value={editForm.sourceOfFunds}
+                    onChange={handleEditChange}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="">Not specified</option>
+                    <option value="Donation">Donation</option>
+                    <option value="Locally funded">Locally funded</option>
+                    <option value="National Library of the Philippines">National Library of the Philippines</option>
+                  </select>
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>

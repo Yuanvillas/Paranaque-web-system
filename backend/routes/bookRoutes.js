@@ -69,7 +69,7 @@ router.post('/', async (req, res) => {
   try {
     console.log("🔵 POST /api/books called");
     console.log("📝 Request body:", req.body);
-    const { title, year, image, userEmail, location, author, publisher, callNumber, category, stock } = req.body;
+    const { title, year, image, userEmail, location, author, publisher, callNumber, category, subject, collectionType, sourceOfFunds, stock } = req.body;
     
     // Validate required fields
     console.log("🔍 Validating required fields...");
@@ -147,12 +147,14 @@ router.post('/', async (req, res) => {
       try {
         // Use timestamp-based sequence to avoid database query during deployment
         const sequenceNum = Math.floor(Math.random() * 9000) + 1000; // Random 1000-9999
-        generatedCallNumber = generateCallNumber(category, author, sequenceNum);
+        const categoryForDDC = subject || category;
+        generatedCallNumber = generateCallNumber(categoryForDDC, author, sequenceNum);
         console.log(`📚 Generated DDC call number: ${generatedCallNumber}`);
       } catch (ddcErr) {
         console.warn('⚠️  Could not generate DDC call number:', ddcErr.message);
         // Fallback to simple format if DDC generation fails
-        generatedCallNumber = `${category || 'GEN'}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-${String(Date.now()).slice(-4)}`;
+        const categoryForFallback = subject || category || 'GEN';
+        generatedCallNumber = `${categoryForFallback}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-${String(Date.now()).slice(-4)}`;
       }
     } else {
       console.log(`📚 Using provided call number: ${generatedCallNumber}`);
@@ -170,6 +172,9 @@ router.post('/', async (req, res) => {
       accessionNumber: generatedAccessionNumber,
       callNumber: generatedCallNumber,
       category,
+      subject: subject || category,
+      collectionType: collectionType || 'Circulation',
+      sourceOfFunds: sourceOfFunds || null,
       stock: parseInt(stock) || 1,
       availableStock: parseInt(stock) || 1,
       status: 'available'
