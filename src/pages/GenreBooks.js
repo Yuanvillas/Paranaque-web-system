@@ -191,6 +191,9 @@ const GenreBooks = () => {
                     <p className="book-info"><strong>Accession No.:</strong> {selectedBook.accessionNumber || "-"}</p>
                     <p className="book-info"><strong>Call Number:</strong> {selectedBook.callNumber || "-"}</p>
                     <p className="book-info"><strong>Category:</strong> {selectedBook.category || "-"}</p>
+                    <p className="book-info"><strong>Subject:</strong> {selectedBook.subject || "-"}</p>
+                    <p className="book-info"><strong>Collection Type:</strong> {selectedBook.collectionType || "-"}</p>
+                    <p className="book-info"><strong>Source of Funds:</strong> {selectedBook.sourceOfFunds || "-"}</p>
                     <p className="book-info"><strong>Stock:</strong> {selectedBook.stock ?? selectedBook.copies ?? "-"}</p>
                     <p className="book-info"><strong>Available:</strong> {selectedBook.availableStock ?? selectedBook.available ?? "-"}</p>
                     {selectedBook.borrowedBy && <p><strong>Borrowed By:</strong> {selectedBook.borrowedBy}</p>}
