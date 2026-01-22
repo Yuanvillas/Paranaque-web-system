@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import logo from "../imgs/liblogo.png";
 
-// DDC Classification Utility (mirrored from backend)
-const generateCallNumber = (category, author, sequenceNumber = 1) => {
+// Library Call Number Utility (mirrored from backend)
+// Format: PREFIX.DDC-CUTTER-YEAR
+const generateLibraryCallNumber = (collectionType, subject, author, year) => {
   const DDC_MAPPING = {
     'Science': '500', 'Math': '510', 'Filipino': '820', 'English': '820',
     'Fiction': '800', 'History': '900', 'Biography': '920', 'Technology': '600',
@@ -11,19 +12,28 @@ const generateCallNumber = (category, author, sequenceNumber = 1) => {
     'Sports': '790'
   };
   
-  const ddcCode = DDC_MAPPING[category] || '000';
+  // Get DDC code
+  const ddcCode = DDC_MAPPING[subject] || '000';
   
+  // Get collection type prefix
+  const prefixMap = {
+    'Filipiniana': 'F',
+    'Reference': 'REF',
+    'Circulation': 'CIR'
+  };
+  const prefix = prefixMap[collectionType] || 'CIR';
+  
+  // Get author's last name (cutter)
   if (!author) {
-    return `${ddcCode}-ANON-${String(sequenceNumber).padStart(4, '0')}`;
+    return `${prefix}.${ddcCode}-UNK-${year || new Date().getFullYear()}`;
   }
   
   const names = author.trim().split(/\s+/);
-  const firstInitial = names[0].charAt(0).toUpperCase();
-  const lastInitial = names[names.length - 1].charAt(0).toUpperCase();
-  const authorInitials = `${firstInitial}${lastInitial}`;
-  const sequence = String(sequenceNumber).padStart(4, '0');
+  const lastName = names[names.length - 1];
+  const cutter = lastName.substring(0, 3).toUpperCase();
+  const publishYear = year || new Date().getFullYear();
   
-  return `${ddcCode}-${authorInitials}-${sequence}`;
+  return `${prefix}.${ddcCode}-${cutter}-${publishYear}`;
 };
 
 const AddBook = ({ onBookAdded }) => {
@@ -33,7 +43,7 @@ const AddBook = ({ onBookAdded }) => {
   const [newCategory, setNewCategory] = useState("");
   const [categories, setCategories] = useState(["Science", "Math", "Filipino", "English", "Fiction"]);
   const [nextAccessionNumber, setNextAccessionNumber] = useState("Calculating...");
-  const [nextCallNumber, setNextCallNumber] = useState("Will be auto-generated...");
+  const [nextCallNumber, setNextCallNumber] = useState("PREFIX.DDD-CCC-YYYY");
 
   const [book, setBook] = useState({
     title: "",
@@ -147,9 +157,14 @@ const AddBook = ({ onBookAdded }) => {
     const updatedBook = { ...book, [name]: value };
     setBook(updatedBook);
     
-    // Auto-update call number preview when category or author changes
-    if (name === "category" || name === "author") {
-      const previewCallNumber = generateCallNumber(updatedBook.category, updatedBook.author, 1);
+    // Auto-update call number preview when subject, author, collectionType, or year changes
+    if (name === "subject" || name === "author" || name === "collectionType" || name === "year") {
+      const previewCallNumber = generateLibraryCallNumber(
+        updatedBook.collectionType || 'Circulation',
+        updatedBook.subject,
+        updatedBook.author,
+        updatedBook.year ? parseInt(updatedBook.year) : new Date().getFullYear()
+      );
       setNextCallNumber(previewCallNumber);
     }
   };
@@ -301,7 +316,7 @@ const AddBook = ({ onBookAdded }) => {
       <form onSubmit={handleSubmit} style={styles.form} aria-label="Add Book Form">
 
         <div style={styles.inputGroup}>
-          <label style={styles.label}>Call Number (Auto-Generated - DDC Format)</label>
+          <label style={styles.label}>Call Number (Auto-Generated)</label>
           <input 
             type="text" 
             value={nextCallNumber} 
@@ -309,7 +324,7 @@ const AddBook = ({ onBookAdded }) => {
             style={{...styles.input, backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed'}}
             aria-label="Auto-generated call number"
           />
-          <small style={{color: '#999', marginTop: '5px', display: 'block'}}>Based on category and author name (Format: DDD-II-SSSS)</small>
+          <small style={{color: '#999', marginTop: '5px', display: 'block'}}>Format: PREFIX.DDC-CUTTER-YEAR (e.g., F.500-SMI-2020)</small>
         </div>
 
         <div style={styles.inputGroup}>

@@ -9,7 +9,7 @@ const Log = require('../models/Log');
 const ReservedBook = require('../models/ReservedBook');
 const Counter = require('../models/Counter');
 const { uploadBase64ToSupabase, getFullImageUrl } = require('../utils/upload');
-const { generateCallNumber } = require('../utils/ddc');
+const { generateLibraryCallNumber } = require('../utils/ddc');
 
 const router = express.Router();
 
@@ -141,20 +141,26 @@ router.post('/', async (req, res) => {
       console.log("🚨 FINAL FALLBACK accession:", generatedAccessionNumber);
     }
 
-    // Auto-generate call number using DDC if not provided
+    // Auto-generate call number using new library format if not provided
     let generatedCallNumber = callNumber;
     if (!generatedCallNumber || generatedCallNumber.trim() === '') {
       try {
-        // Use timestamp-based sequence to avoid database query during deployment
-        const sequenceNum = Math.floor(Math.random() * 9000) + 1000; // Random 1000-9999
-        const categoryForDDC = subject || category;
-        generatedCallNumber = generateCallNumber(categoryForDDC, author, sequenceNum);
-        console.log(`📚 Generated DDC call number: ${generatedCallNumber}`);
+        // New format: PREFIX.DDC-CUTTER-YEAR
+        // Example: F.500-SMI-2020 (Filipiniana, Science, Smith, 2020)
+        generatedCallNumber = generateLibraryCallNumber(
+          collectionType || 'Circulation',
+          subject || category,
+          author,
+          parseInt(year)
+        );
+        console.log(`📚 Generated library call number: ${generatedCallNumber}`);
       } catch (ddcErr) {
-        console.warn('⚠️  Could not generate DDC call number:', ddcErr.message);
-        // Fallback to simple format if DDC generation fails
-        const categoryForFallback = subject || category || 'GEN';
-        generatedCallNumber = `${categoryForFallback}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-${String(Date.now()).slice(-4)}`;
+        console.warn('⚠️  Could not generate library call number:', ddcErr.message);
+        // Fallback to simple format if generation fails
+        const prefix = collectionType === 'Filipiniana' ? 'F' : collectionType === 'Reference' ? 'REF' : 'CIR';
+        const cutter = author ? author.substring(0, 3).toUpperCase() : 'UNK';
+        const yr = year || new Date().getFullYear();
+        generatedCallNumber = `${prefix}.000-${cutter}-${yr}`;
       }
     } else {
       console.log(`📚 Using provided call number: ${generatedCallNumber}`);

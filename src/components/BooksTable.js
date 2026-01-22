@@ -558,7 +558,7 @@ const BooksTable = () => {
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Call Number (Auto-Generated - DDC Format)</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Call Number (Auto-Generated)</label>
                   <input
                     type="text"
                     name="callNumber"
@@ -577,7 +577,7 @@ const BooksTable = () => {
                       cursor: 'not-allowed'
                     }}
                   />
-                  <small style={{ color: '#999', marginTop: '3px', display: 'block' }}>Call numbers are automatically generated based on subject and author</small>
+                  <small style={{ color: '#999', marginTop: '3px', display: 'block' }}>Format: PREFIX.DDC-CUTTER-YEAR (e.g., F.500-SMI-2020). Regenerated from subject and author.</small>
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>

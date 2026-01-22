@@ -90,34 +90,66 @@ const generateCallNumber = (category, author, sequenceNumber = 1) => {
 };
 
 /**
- * Generate a simplified DDC call number
- * Format: DDD-AAAA
- * - DDD: Dewey Decimal Classification code
- * - AAAA: First 4 letters of author's last name (or first name if last not available)
- * 
- * Simpler version if you prefer shorter call numbers
- * @param {string} category - The book category
+ * Get author's last name (Cutter number)
  * @param {string} author - The author name
- * @returns {string} - The generated call number (e.g., '500-ROWL')
+ * @returns {string} - Author's last name first 3 letters uppercase
  */
-const generateSimplifiedCallNumber = (category, author) => {
-  const ddcCode = getDDCCode(category);
-  
-  if (!author) {
-    return `${ddcCode}-ANON`;
-  }
+const getAuthorCutter = (author) => {
+  if (!author) return 'UNK';
   
   const names = author.trim().split(/\s+/);
-  const lastNameOrFirst = names[names.length - 1];
-  const lastNameCode = lastNameOrFirst.substring(0, 4).toUpperCase();
+  if (names.length === 0) return 'UNK';
   
-  return `${ddcCode}-${lastNameCode}`;
+  const lastName = names[names.length - 1];
+  const cutter = lastName.substring(0, 3).toUpperCase();
+  return cutter;
+};
+
+/**
+ * Get collection type prefix
+ * @param {string} collectionType - The collection type
+ * @returns {string} - The prefix (F, REF, CIR)
+ */
+const getCollectionTypePrefix = (collectionType) => {
+  const prefixMap = {
+    'Filipiniana': 'F',
+    'Reference': 'REF',
+    'Circulation': 'CIR'
+  };
+  
+  return prefixMap[collectionType] || 'CIR';
+};
+
+/**
+ * Generate a library call number in the format: PREFIX.DDC-CUTTER-YEAR
+ * Format: Prefix.DDD-CCC-YYYY
+ * - Prefix: Collection type (F=Filipiniana, REF=Reference, CIR=Circulation)
+ * - DDD: Dewey Decimal Classification code (e.g., 500 for Science)
+ * - CCC: Author's last name first 3 letters (Cutter number)
+ * - YYYY: Publication year
+ * 
+ * @param {string} collectionType - The collection type (Filipiniana, Reference, Circulation)
+ * @param {string} subject - The book subject/category
+ * @param {string} author - The author name
+ * @param {number} year - The publication year
+ * @returns {string} - The generated call number (e.g., 'F.500-SMI-2020')
+ */
+const generateLibraryCallNumber = (collectionType, subject, author, year) => {
+  const prefix = getCollectionTypePrefix(collectionType);
+  const ddcCode = getDDCCode(subject);
+  const cutter = getAuthorCutter(author);
+  const publishYear = year || new Date().getFullYear();
+  
+  return `${prefix}.${ddcCode}-${cutter}-${publishYear}`;
 };
 
 module.exports = {
   DDC_MAPPING,
   getDDCCode,
   getAuthorInitials,
+  getAuthorCutter,
+  getCollectionTypePrefix,
   generateCallNumber,
-  generateSimplifiedCallNumber
+  generateSimplifiedCallNumber,
+  generateLibraryCallNumber
 };
