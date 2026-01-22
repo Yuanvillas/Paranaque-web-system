@@ -90,9 +90,25 @@ const generateCallNumber = (category, author, sequenceNumber = 1) => {
 };
 
 /**
- * Get author's last name (Cutter number)
+ * Simplified Cutter Table
+ * Maps second and subsequent letters to numbers for alphabetical ordering
+ */
+const CUTTER_TABLE = {
+  'a': '1', 'b': '2', 'c': '3', 'd': '4', 'e': '5',
+  'f': '6', 'g': '7', 'h': '8', 'i': '9', 'j': '1',
+  'k': '2', 'l': '3', 'm': '4', 'n': '5', 'o': '6',
+  'p': '7', 'q': '8', 'r': '9', 's': '1', 't': '2',
+  'u': '3', 'v': '4', 'w': '5', 'x': '6', 'y': '7',
+  'z': '8'
+};
+
+/**
+ * Get author's last name as Cutter number
+ * Format: First letter + numeric codes for remaining letters
+ * Example: Reyes → R33 (R + e[5] + y[7], simplified)
+ * 
  * @param {string} author - The author name
- * @returns {string} - Author's last name first 3 letters uppercase
+ * @returns {string} - Cutter number (e.g., 'R33' for Reyes)
  */
 const getAuthorCutter = (author) => {
   if (!author) return 'UNK';
@@ -100,9 +116,33 @@ const getAuthorCutter = (author) => {
   const names = author.trim().split(/\s+/);
   if (names.length === 0) return 'UNK';
   
-  const lastName = names[names.length - 1];
-  const cutter = lastName.substring(0, 3).toUpperCase();
-  return cutter;
+  const lastName = names[names.length - 1].toLowerCase();
+  if (lastName.length === 0) return 'UNK';
+  
+  // First letter uppercase
+  const firstLetter = lastName.charAt(0).toUpperCase();
+  
+  // Get cutter numbers from second and third letters (if they exist)
+  let cutterNumbers = '';
+  
+  // Second letter
+  if (lastName.length > 1) {
+    const secondLetter = lastName.charAt(1);
+    cutterNumbers += CUTTER_TABLE[secondLetter] || '0';
+  }
+  
+  // Third letter (optional)
+  if (lastName.length > 2) {
+    const thirdLetter = lastName.charAt(2);
+    cutterNumbers += CUTTER_TABLE[thirdLetter] || '0';
+  }
+  
+  // If we only have 1 letter, add default number
+  if (cutterNumbers === '') {
+    cutterNumbers = '1';
+  }
+  
+  return `${firstLetter}${cutterNumbers}`;
 };
 
 /**
@@ -125,14 +165,14 @@ const getCollectionTypePrefix = (collectionType) => {
  * Format: Prefix.DDD-CCC-YYYY
  * - Prefix: Collection type (F=Filipiniana, REF=Reference, CIR=Circulation)
  * - DDD: Dewey Decimal Classification code (e.g., 500 for Science)
- * - CCC: Author's last name first 3 letters (Cutter number)
+ * - CCC: Cutter number (e.g., R33 for Reyes - first letter + numeric codes)
  * - YYYY: Publication year
  * 
  * @param {string} collectionType - The collection type (Filipiniana, Reference, Circulation)
  * @param {string} subject - The book subject/category
  * @param {string} author - The author name
  * @param {number} year - The publication year
- * @returns {string} - The generated call number (e.g., 'F.500-SMI-2020')
+ * @returns {string} - The generated call number (e.g., 'F.500-R33-2020')
  */
 const generateLibraryCallNumber = (collectionType, subject, author, year) => {
   const prefix = getCollectionTypePrefix(collectionType);

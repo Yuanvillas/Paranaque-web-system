@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
         console.warn('⚠️  Could not generate library call number:', ddcErr.message);
         // Fallback to simple format if generation fails
         const prefix = collectionType === 'Filipiniana' ? 'F' : collectionType === 'Reference' ? 'REF' : 'CIR';
-        const cutter = author ? author.substring(0, 3).toUpperCase() : 'UNK';
+        const cutter = author ? author.substring(0, 1).toUpperCase() + '1' : 'UNK';
         const yr = year || new Date().getFullYear();
         generatedCallNumber = `${prefix}.000-${cutter}-${yr}`;
       }

@@ -3,6 +3,53 @@ import logo from "../imgs/liblogo.png";
 
 // Library Call Number Utility (mirrored from backend)
 // Format: PREFIX.DDC-CUTTER-YEAR
+
+// Simplified Cutter Table for generating alphabetical numbers
+const CUTTER_TABLE = {
+  'a': '1', 'b': '2', 'c': '3', 'd': '4', 'e': '5',
+  'f': '6', 'g': '7', 'h': '8', 'i': '9', 'j': '1',
+  'k': '2', 'l': '3', 'm': '4', 'n': '5', 'o': '6',
+  'p': '7', 'q': '8', 'r': '9', 's': '1', 't': '2',
+  'u': '3', 'v': '4', 'w': '5', 'x': '6', 'y': '7',
+  'z': '8'
+};
+
+// Get cutter number from author's last name
+const getAuthorCutter = (author) => {
+  if (!author) return 'UNK';
+  
+  const names = author.trim().split(/\s+/);
+  if (names.length === 0) return 'UNK';
+  
+  const lastName = names[names.length - 1].toLowerCase();
+  if (lastName.length === 0) return 'UNK';
+  
+  // First letter uppercase
+  const firstLetter = lastName.charAt(0).toUpperCase();
+  
+  // Get cutter numbers from second and third letters
+  let cutterNumbers = '';
+  
+  // Second letter
+  if (lastName.length > 1) {
+    const secondLetter = lastName.charAt(1);
+    cutterNumbers += CUTTER_TABLE[secondLetter] || '0';
+  }
+  
+  // Third letter (optional)
+  if (lastName.length > 2) {
+    const thirdLetter = lastName.charAt(2);
+    cutterNumbers += CUTTER_TABLE[thirdLetter] || '0';
+  }
+  
+  // If we only have 1 letter, add default number
+  if (cutterNumbers === '') {
+    cutterNumbers = '1';
+  }
+  
+  return `${firstLetter}${cutterNumbers}`;
+};
+
 const generateLibraryCallNumber = (collectionType, subject, author, year) => {
   const DDC_MAPPING = {
     'Science': '500', 'Math': '510', 'Filipino': '820', 'English': '820',
@@ -23,14 +70,8 @@ const generateLibraryCallNumber = (collectionType, subject, author, year) => {
   };
   const prefix = prefixMap[collectionType] || 'CIR';
   
-  // Get author's last name (cutter)
-  if (!author) {
-    return `${prefix}.${ddcCode}-UNK-${year || new Date().getFullYear()}`;
-  }
-  
-  const names = author.trim().split(/\s+/);
-  const lastName = names[names.length - 1];
-  const cutter = lastName.substring(0, 3).toUpperCase();
+  // Get cutter number from author
+  const cutter = getAuthorCutter(author);
   const publishYear = year || new Date().getFullYear();
   
   return `${prefix}.${ddcCode}-${cutter}-${publishYear}`;
