@@ -145,16 +145,14 @@ router.post('/', async (req, res) => {
     let generatedCallNumber = callNumber;
     if (!generatedCallNumber || generatedCallNumber.trim() === '') {
       try {
-        // Get a sequence number based on total books in this category
-        const categoryBooks = await Book.find({ category }).countDocuments();
-        const sequenceNum = categoryBooks + 1;
-        
+        // Use timestamp-based sequence to avoid database query during deployment
+        const sequenceNum = Math.floor(Math.random() * 9000) + 1000; // Random 1000-9999
         generatedCallNumber = generateCallNumber(category, author, sequenceNum);
         console.log(`📚 Generated DDC call number: ${generatedCallNumber}`);
       } catch (ddcErr) {
         console.warn('⚠️  Could not generate DDC call number:', ddcErr.message);
         // Fallback to simple format if DDC generation fails
-        generatedCallNumber = `${category || 'GEN'}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-0001`;
+        generatedCallNumber = `${category || 'GEN'}-${author ? author.substring(0, 3).toUpperCase() : 'UNK'}-${String(Date.now()).slice(-4)}`;
       }
     } else {
       console.log(`📚 Using provided call number: ${generatedCallNumber}`);
