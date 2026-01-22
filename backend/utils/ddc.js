@@ -150,6 +150,5 @@ module.exports = {
   getAuthorCutter,
   getCollectionTypePrefix,
   generateCallNumber,
-  generateSimplifiedCallNumber,
   generateLibraryCallNumber
 };
