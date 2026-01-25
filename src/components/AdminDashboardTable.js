@@ -315,6 +315,32 @@ const AdminDashboardTable = () => {
               )}
             </>
           )}
+
+          {selectedMetric === 'issued' && (
+            <div style={{ marginTop: '30px', textAlign: 'center' }}>
+              <button
+                onClick={() => {
+                  setSelectedMetric(null);
+                  window.location.href = '/admin-dashboard';
+                }}
+                style={{
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 30px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1565c0'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1976d2'}
+              >
+                📚 View Resources
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
