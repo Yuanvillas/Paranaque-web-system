@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 
-const AdminDashboardTable = () => {
+const AdminDashboardTable = ({ onViewResources }) => {
   const [stats, setStats] = useState({
     totalBooks: 0,
     borrowedBooks: 0,
@@ -187,7 +187,10 @@ const AdminDashboardTable = () => {
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               {selectedMetric === 'issued' && (
                 <button
-                  onClick={() => window.location.href = '/admin-dashboard'}
+                  onClick={() => {
+                    setSelectedMetric(null);
+                    onViewResources();
+                  }}
                   style={{
                     backgroundColor: '#1976d2',
                     color: 'white',

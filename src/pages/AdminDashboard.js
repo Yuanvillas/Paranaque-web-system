@@ -900,7 +900,10 @@ const AdminDashboard = () => {
             </div>
           ) : null}
 
-          {!selectedResource && <AdminDashboardTable />}
+          {!selectedResource && <AdminDashboardTable onViewResources={() => {
+            setSelectedResource("Resource Management");
+            setSelectedSubResource("All Books");
+          }} />}
 
           {selectedSubResource === "Borrowed Books" && (
             <BorrowedBooksTable />
