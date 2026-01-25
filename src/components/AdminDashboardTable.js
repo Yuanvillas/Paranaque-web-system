@@ -208,6 +208,29 @@ const AdminDashboardTable = ({ onViewResources }) => {
                   📚 Resources
                 </button>
               )}
+              {selectedMetric === 'books' && (
+                <button
+                  onClick={() => {
+                    setSelectedMetric(null);
+                    onViewResources();
+                  }}
+                  style={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1565c0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1976d2'}
+                >
+                  📚 Resources
+                </button>
+              )}
               <button
                 onClick={() => setSelectedMetric(null)}
                 style={{
