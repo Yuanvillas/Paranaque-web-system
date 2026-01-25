@@ -278,9 +278,6 @@ const BooksTable = () => {
           <button onClick={fetchAllBooks} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="Refresh" type="button">
             🔄 Refresh
           </button>
-          <button onClick={() => window.location.href = '/admin-dashboard'} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="View Resources" type="button">
-            📚 Resources
-          </button>
         </div>
 
       </div>

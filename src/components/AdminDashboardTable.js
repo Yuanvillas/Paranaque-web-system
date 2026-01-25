@@ -184,18 +184,40 @@ const AdminDashboardTable = () => {
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>{title}</h2>
-            <button
-              onClick={() => setSelectedMetric(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#999'
-              }}
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              {selectedMetric === 'issued' && (
+                <button
+                  onClick={() => window.location.href = '/admin-dashboard'}
+                  style={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1565c0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1976d2'}
+                >
+                  📚 Resources
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedMetric(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#999'
+                }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {detailLoading ? (
