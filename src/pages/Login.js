@@ -10,6 +10,7 @@ import PasswordInput from "../ui/PasswordInput";
 function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,11 +18,35 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
+      // Show loading indicator
+      await Swal.fire({
+        title: "Logging in...",
+        html: `<div style="display: flex; justify-content: center; align-items: center;">
+          <div style="
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2e7d32;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+          "></div>
+        </div>`,
+        icon: undefined,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: async (modal) => {
+          Swal.showLoading();
+        }
+      });
+
       const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/login", form);
       const user = res.data.user;
 
+      Swal.hideLoading();
+      
       await Swal.fire({
         title: "Parañaledge",
         text: res.data.message,
@@ -38,6 +63,8 @@ function Login() {
         navigate("/user-home");
       }
     } catch (err) {
+      Swal.hideLoading();
+      setLoading(false);
       console.log(err)
       const message = err.response?.data?.message;
       if (message === "Please verify your email before logging in.") {
@@ -55,6 +82,8 @@ function Login() {
           confirmButtonText: "OK"
         });
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,7 +114,9 @@ function Login() {
               onChange={handleChange}
               required
             />
-            <button type="submit">Log In</button>
+            <button type="submit" disabled={loading} style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
+              {loading ? "Logging in..." : "Log In"}
+            </button>
           </form>
           <div style={{ textAlign: "center", marginTop: "15px" }}>
             Don’t have an account?{" "}
