@@ -26,7 +26,7 @@ const AdminLogs = () => {
     if (action.includes("Successful login")) return { icon: faCheckCircle, color: "#2e7d32", bg: "#e8f5e9" };
     if (action.includes("Failed login")) return { icon: faTimesCircle, color: "#d32f2f", bg: "#ffebee" };
     if (action.includes("logged out")) return { icon: faShieldAlt, color: "#1976d2", bg: "#e3f2fd" };
-    return { icon: faLog, color: "#666", bg: "#f5f5f5" };
+    return { icon: faHistory, color: "#666", bg: "#f5f5f5" };
   };
 
   const filteredLogs = filterAction === "all" 
