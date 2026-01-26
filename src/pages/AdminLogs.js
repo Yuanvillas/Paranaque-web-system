@@ -333,5 +333,3 @@ const styles = {
 };
 
 export default AdminLogs;
-
-export default AdminLogs;
