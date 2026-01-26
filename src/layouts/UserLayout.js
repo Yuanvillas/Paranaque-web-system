@@ -2,6 +2,7 @@
 import React, { useState, createContext } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Swal from "sweetalert2";
 import {
   faHouse,
   faBookOpen,
@@ -25,6 +26,24 @@ const UserLayout = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleLogout = async () => {
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: "Are you sure you want to log out?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#0d47a1",
+      cancelButtonColor: "#757575",
+      confirmButtonText: "Log out",
+      cancelButtonText: "Cancel",
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    });
+
+    // If user clicked cancel, return
+    if (!result.isConfirmed) {
+      return;
+    }
+
     const userEmail = localStorage.getItem("userEmail");
     
     // Log the logout to the backend
