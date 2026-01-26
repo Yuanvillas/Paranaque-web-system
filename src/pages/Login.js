@@ -22,22 +22,11 @@ function Login() {
 
     try {
       // Show loading indicator
-      await Swal.fire({
+      Swal.fire({
         title: "Logging in...",
-        html: `<div style="display: flex; justify-content: center; align-items: center;">
-          <div style="
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2e7d32;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-          "></div>
-        </div>`,
-        icon: undefined,
         allowOutsideClick: false,
         allowEscapeKey: false,
-        didOpen: async (modal) => {
+        didOpen: () => {
           Swal.showLoading();
         }
       });
