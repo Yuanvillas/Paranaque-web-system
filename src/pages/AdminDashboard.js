@@ -14,7 +14,8 @@ import {
   faBook,
   faFileAlt,
   faSignOutAlt,
-  faUser
+  faUser,
+  faHome
 } from "@fortawesome/free-solid-svg-icons";
 import BooksTable from "../components/BooksTable";
 import AdminDashboardTable from "../components/AdminDashboardTable";
@@ -49,7 +50,10 @@ const AdminDashboard = () => {
   const [loadingModals, setLoadingModals] = useState(false);
 
   const handleSectionClick = (name) => {
-    if (name === "User Management") {
+    if (name === "Home") {
+      setSelectedResource(null);
+      setSelectedSubResource(null);
+    } else if (name === "User Management") {
       // Redirect librarians to read-only user management
       if (user.role === "librarian") {
         navigate("/librarian/user-management");
@@ -498,6 +502,10 @@ const AdminDashboard = () => {
           <img style={{ width: '50px' }} src={logo} alt="School" />
         </div>
         <nav className="nav-links">
+          <button onClick={() => handleSectionClick("Home")}>
+            <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHome} />
+            {!isCollapsed && <span style={{ marginLeft: 8 }}>Home</span>}
+          </button>
           {(user.role === "admin" || user.role === "librarian") && (
             <button onClick={() => handleSectionClick("User Management")}>
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faUsers} />
