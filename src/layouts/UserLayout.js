@@ -59,10 +59,14 @@ const UserLayout = () => {
       }
     }
 
-    // Clear local storage and navigate
+    // Clear ALL authentication data from local storage
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userRole");
-    navigate("/");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    
+    // Navigate to login page with replace to prevent back button access
+    navigate("/", { replace: true });
   };
 
   // Track logout when user closes browser/tab
@@ -70,6 +74,12 @@ const UserLayout = () => {
     const handleBeforeUnload = () => {
       const userEmail = localStorage.getItem("userEmail");
       if (userEmail) {
+        // Clear all auth data before closing
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        
         // Use sendBeacon with FormData for reliable delivery even if page is closing
         const formData = new FormData();
         formData.append('email', userEmail);

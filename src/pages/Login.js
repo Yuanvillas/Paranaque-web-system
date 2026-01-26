@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -11,6 +11,26 @@ function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userEmail");
+    const user = localStorage.getItem("user");
+    
+    // If user is logged in, redirect to appropriate dashboard
+    if (userEmail && user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData.role === "admin" || userData.role === "librarian") {
+          navigate("/admin-dashboard", { replace: true });
+        } else {
+          navigate("/user-home", { replace: true });
+        }
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
