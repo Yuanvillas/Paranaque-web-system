@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faLog, faCheckCircle, faTimesCircle, faShieldAlt } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faHistory, faCheckCircle, faTimesCircle, faShieldAlt } from "@fortawesome/free-solid-svg-icons";
 import "../components/App.css";
 
 const AdminLogs = () => {
@@ -46,7 +46,7 @@ const AdminLogs = () => {
           Back
         </button>
         <h2 style={styles.title}>
-          <FontAwesomeIcon icon={faLog} style={{ marginRight: '12px', color: '#2e7d32' }} />
+          <FontAwesomeIcon icon={faHistory} style={{ marginRight: '12px', color: '#2e7d32' }} />
           Log Activities
         </h2>
         <div style={styles.logCount}>
@@ -116,7 +116,7 @@ const AdminLogs = () => {
             {filteredLogs.length === 0 ? (
               <tr>
                 <td colSpan="3" style={styles.emptyCell}>
-                  <FontAwesomeIcon icon={faLog} style={{ fontSize: '32px', color: '#ccc', marginBottom: '12px', display: 'block' }} />
+                  <FontAwesomeIcon icon={faHistory} style={{ fontSize: '32px', color: '#ccc', marginBottom: '12px', display: 'block' }} />
                   No activity logs found.
                 </td>
               </tr>
