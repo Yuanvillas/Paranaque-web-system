@@ -33,6 +33,17 @@ const corsOptions = {
 // Allow CORS and handle preflight
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
+// Cache prevention middleware - prevents back button access to authenticated pages
+app.use((req, res, next) => {
+  // Prevent caching for all responses
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

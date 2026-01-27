@@ -25,6 +25,7 @@ import "./components/App.css";
 import AdminLogs from "./pages/AdminLogs";
 import UserManagement from "./pages/UserManagement";
 import LibrarianUserManagement from "./pages/LibrarianUserManagement";
+import ProtectedRoute from "./utils/ProtectedRoute";
 
 function AppContent() {
   const location = useLocation();
@@ -40,17 +41,17 @@ function AppContent() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-success" element={<VerificationSuccess />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/add-book" element={<AddBook />} />
-        <Route path="/admin/archived-books" element={<ArchivedBooks />} />
-        <Route path="/admin/archived-users" element={<ArchivedUsers />} />
-        <Route path="/admin/analytics" element={<Analytics />} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
+        <Route path="/admin/add-book" element={<ProtectedRoute element={<AddBook />} />} />
+        <Route path="/admin/archived-books" element={<ProtectedRoute element={<ArchivedBooks />} />} />
+        <Route path="/admin/archived-users" element={<ProtectedRoute element={<ArchivedUsers />} />} />
+        <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
         <Route path="/verify-notice" element={<VerifyNotice />} />
-        <Route path="/admin/logs" element={<AdminLogs />} />
-        <Route path="/admin/user-management" element={<UserManagement />} />
-        <Route path="/librarian/user-management" element={<LibrarianUserManagement />} />
+        <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
+        <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
+        <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
 
-        <Route path="/user-home" element={<UserLayout />}>
+        <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
           <Route index element={<UserHome />} />
           <Route path="genres" element={<Genres />} />
           <Route path="genres/:genre" element={<GenreBooks />} />

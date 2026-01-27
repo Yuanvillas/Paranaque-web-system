@@ -449,6 +449,24 @@ const AdminDashboard = () => {
   }, [navigate]);
 
   const handleLogout = async () => {
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: "Are you sure you want to log out?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#0d47a1",
+      cancelButtonColor: "#757575",
+      confirmButtonText: "Log out",
+      cancelButtonText: "Cancel",
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    });
+
+    // If user clicked cancel, return
+    if (!result.isConfirmed) {
+      return;
+    }
+
     const userEmail = localStorage.getItem('userEmail');
     
     // Log the logout to the backend
@@ -464,11 +482,14 @@ const AdminDashboard = () => {
       }
     }
     
-    // Clear local storage and navigate
+    // Clear ALL authentication data from local storage
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('user');
     localStorage.removeItem('token');
-    navigate('/');
+    
+    // Navigate to login page with replace to prevent back button access
+    navigate('/', { replace: true });
   };
 
   // Track logout when admin closes browser/tab
@@ -476,6 +497,12 @@ const AdminDashboard = () => {
     const handleBeforeUnload = () => {
       const userEmail = localStorage.getItem('userEmail');
       if (userEmail) {
+        // Clear all auth data before closing
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        
         // Use sendBeacon with FormData for reliable delivery even if page is closing
         const formData = new FormData();
         formData.append('email', userEmail);
