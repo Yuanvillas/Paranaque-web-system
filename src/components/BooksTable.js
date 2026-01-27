@@ -380,7 +380,7 @@ const BooksTable = () => {
                       >
                         📖
                       </div>
-                    )}                    )}
+                    )}
                   </td>
                   <td>{book.title}</td>
                   <td>{book.year}</td>
