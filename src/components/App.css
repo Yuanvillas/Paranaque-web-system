@@ -30,7 +30,7 @@ body {
   border-radius: 0 20px 20px 0;
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
+  padding: 20px;
   position: relative;
   transition: width 0.3s ease;
   overflow: hidden;
@@ -44,40 +44,37 @@ body {
 .sidebar .logo2 {
   font-size: 28px;
   font-weight: bold;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   text-align: center;
-  padding: 0;
 }
 
 .nav-links {
   display: flex;
   flex-direction: column;
-  margin-left: 0;
-  gap: 12px;
-  flex: 1;
+  margin-left: 10px;
+  gap: 15px;
 }
 
 .nav-links a,
 .nav-links button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
   background: none;
   border: none;
   color: white;
   font-size: 16px;
   text-align: left;
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.3s;
   text-decoration: none;
 }
 
 .nav-links a span,
 .nav-links button span {
-  opacity: 1;
+  opacity: 0;
   transition: opacity 0.3s ease;
 }
 
