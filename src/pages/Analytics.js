@@ -30,6 +30,7 @@ const Analytics = () => {
   const [dayBorrowedBooks, setDayBorrowedBooks] = useState([]);
   const [monthBorrowedBooks, setMonthBorrowedBooks] = useState([]);
   const [searchBorrowedBooks, setSearchBorrowedBooks] = useState("");
+  const [monthlyUsers, setMonthlyUsers] = useState([]);
 
   const exportToExcel = (data, filename) => {
     const ws = XLSX.utils.json_to_sheet(data);
@@ -149,6 +150,22 @@ const Analytics = () => {
       }
     };
 
+    const fetchMonthlyUsers = async () => {
+      try {
+        const res = await fetch(
+          "https://paranaque-web-system.onrender.com/api/users/monthly-stats"
+        );
+        const data = await res.json();
+        if (res.ok) {
+          setMonthlyUsers(data.monthlyStats || []);
+        } else {
+          console.error("Failed to fetch monthly users:", data.error);
+        }
+      } catch (err) {
+        console.error("Error fetching monthly users:", err);
+      }
+    };
+
     fetchBooks();
     fetchTodayCount();
     fetchBorrowedWeekCount();
@@ -156,6 +173,7 @@ const Analytics = () => {
     fetchBorrowedMonthBooks();
     fetchMostBorrowedBooks();
     fetchBorrowedBooks();
+    fetchMonthlyUsers();
   }, []);
 
   return (
@@ -184,7 +202,7 @@ const Analytics = () => {
               <BooksListedChart books={books} />
             </div>
             <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
-              <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
+              <BooksAddedTodayChart monthlyUsers={monthlyUsers} />
             </div>
             <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
               <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />

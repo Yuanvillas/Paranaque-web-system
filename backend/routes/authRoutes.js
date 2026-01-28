@@ -804,4 +804,46 @@ router.get('/diagnostics', async (req, res) => {
   }
 });
 
+// Monthly user statistics
+router.get('/monthly-stats', async (req, res) => {
+  try {
+    const months = [];
+    const monthlyStats = [];
+
+    // Get last 12 months
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      
+      const monthName = date.toLocaleString('default', { month: 'long' });
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+
+      months.push({ monthName, startDate, endDate });
+    }
+
+    // Count users registered in each month
+    for (const { monthName, startDate, endDate } of months) {
+      const count = await User.countDocuments({
+        createdAt: { $gte: startDate, $lte: endDate }
+      });
+
+      monthlyStats.push({
+        month: monthName,
+        count: count
+      });
+    }
+
+    res.status(200).json({
+      monthlyStats: monthlyStats,
+      total: monthlyStats.reduce((sum, stat) => sum + stat.count, 0)
+    });
+  } catch (err) {
+    console.error("Error fetching monthly stats:", err);
+    res.status(500).json({ error: 'Server error while fetching monthly stats' });
+  }
+});
+
 module.exports = router;

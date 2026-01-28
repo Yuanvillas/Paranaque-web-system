@@ -20,22 +20,17 @@ ChartJS.register(
   Legend
 );
 
-const BooksAddedTodayChart = ({ todayCount, todayBooks = [] }) => {
-  // Get categories of books added today
-  const categoryCount = {};
-  todayBooks.forEach(book => {
-    const category = book.category || "Uncategorized";
-    categoryCount[category] = (categoryCount[category] || 0) + 1;
-  });
-
-  const labels = Object.keys(categoryCount).length > 0 ? Object.keys(categoryCount) : ["No Books Added Today"];
-  const counts = Object.keys(categoryCount).length > 0 ? Object.values(categoryCount) : [0];
+const BooksAddedTodayChart = ({ monthlyUsers = [] }) => {
+  // Get monthly users data
+  const labels = monthlyUsers.length > 0 ? monthlyUsers.map(u => u.month || u.name) : ["No Data"];
+  const counts = monthlyUsers.length > 0 ? monthlyUsers.map(u => u.count || 0) : [0];
+  const totalUsers = monthlyUsers.length > 0 ? monthlyUsers.reduce((sum, u) => sum + (u.count || 0), 0) : 0;
 
   const data = {
     labels: labels,
     datasets: [
       {
-        label: "Books Added Today",
+        label: "Users",
         data: counts,
         backgroundColor: "rgba(54, 162, 235, 0.7)",
         borderColor: "rgba(54, 162, 235, 1)",
@@ -54,7 +49,7 @@ const BooksAddedTodayChart = ({ todayCount, todayBooks = [] }) => {
       },
       title: {
         display: true,
-        text: `Books Added Today (Total: ${todayCount})`,
+        text: `Users Monthly (Total: ${totalUsers})`,
         font: {
           size: 16,
           weight: 'bold'
