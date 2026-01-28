@@ -6,7 +6,10 @@ import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faTimes } from "@fortawesome/free-solid-svg-icons";
 import logo from "../imgs/liblogo.png";
-import BorrowedReturnedChart from "../components/BorrowedReturnedChart";
+import BooksListedChart from "../components/BooksListedChart";
+import BooksAddedTodayChart from "../components/BooksAddedTodayChart";
+import BorrowReturnChart from "../components/BorrowReturnChart";
+import MostBorrowedBooksChart from "../components/MostBorrowedBooksChart";
 
 const Analytics = () => {
   const reportRef = useRef();
@@ -176,13 +179,22 @@ const Analytics = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <div className="pending-container" style={{padding: "20px", marginBottom: "40px"}}>
+          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", marginBottom: "40px", padding: "20px"}}>
             <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
-              <BorrowedReturnedChart borrowedBooks={borrowedBooks} allBooks={books} />
+              <BooksListedChart books={books} />
+            </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
+              <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
+            </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
+              <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
+            </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
+              <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
             </div>
           </div>
 
-          <div className="dashboard-summary">
+          <div className="dashboard-summary" style={{display: "none"}}>
             <div className="summary-box" onClick={() => setSelectedModal('stored')} style={{ cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
               <h3>Total Active Stored Books</h3>
               <p>{books.length}</p>
