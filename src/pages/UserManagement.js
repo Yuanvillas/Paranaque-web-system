@@ -285,6 +285,50 @@ const UserManagement = () => {
     setCreateErrors({});
   };
 
+  const exportUsersToCSV = () => {
+    if (users.length === 0) {
+      Swal.fire({
+        title: "Parañaledge",
+        text: "No users to export.",
+        icon: "info",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
+    const headers = ["First Name", "Last Name", "Email", "Contact Number", "Address", "Role"];
+    const rows = users.map(user => [
+      user.firstName,
+      user.lastName,
+      user.email,
+      user.contactNumber,
+      user.address,
+      user.role
+    ]);
+
+    let csvContent = headers.join(",") + "\n";
+    rows.forEach(row => {
+      csvContent += row.map(cell => `"${cell}"`).join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    Swal.fire({
+      title: "Parañaledge",
+      text: `Successfully exported ${users.length} users.`,
+      icon: "success",
+      confirmButtonText: "OK"
+    });
+  };
+
   useEffect(() => {
     fetchUsers();
     fetch("https://paranaque-web-system.onrender.com/api/logs")
@@ -311,6 +355,9 @@ const UserManagement = () => {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button className="um-btn um-create" onClick={() => navigate('/admin/archived-users')}>
                   📦 Archived Users
+                </button>
+                <button className="um-btn um-create" onClick={exportUsersToCSV}>
+                  📥 Export Users
                 </button>
                 <button className="um-btn um-create" onClick={() => {
                   setShowCreateModal(true);
