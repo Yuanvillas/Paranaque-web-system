@@ -179,26 +179,18 @@ const Analytics = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px"}}>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
-              <div style={{height: "250px"}}>
-                <BooksListedChart books={books} />
-              </div>
+          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px", maxWidth: "1200px"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+              <BooksListedChart books={books} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
-              <div style={{height: "250px"}}>
-                <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
-              </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+              <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
-              <div style={{height: "250px"}}>
-                <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
-              </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+              <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
-              <div style={{height: "250px"}}>
-                <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
-              </div>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+              <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
             </div>
           </div>
 
