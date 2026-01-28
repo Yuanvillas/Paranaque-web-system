@@ -103,10 +103,6 @@ const TransactionsTable = () => {
     setShowExportModal(false);
   };
 
-  const filteredBooks = transactions.filter((transaction) =>
-    transaction.bookTitle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (loading) return <div>Loading transactions...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
