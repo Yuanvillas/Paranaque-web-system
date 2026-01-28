@@ -53,7 +53,7 @@ const BooksListedChart = ({ books }) => {
     },
   };
 
-  return <div style={{ width: "100%", height: "300px" }}><Pie data={data} options={options} /></div>;
+  return <div style={{ width: "100%", height: "100%" }}><Pie data={data} options={options} /></div>;
 };
 
 export default BooksListedChart;

@@ -179,22 +179,30 @@ const Analytics = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", marginBottom: "40px", padding: "20px"}}>
-            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
-              <BooksListedChart books={books} />
+          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
+              <div style={{height: "250px"}}>
+                <BooksListedChart books={books} />
+              </div>
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
-              <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
+              <div style={{height: "250px"}}>
+                <BooksAddedTodayChart todayCount={todayCount} todayBooks={todayBooks} />
+              </div>
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
-              <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
+              <div style={{height: "250px"}}>
+                <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
+              </div>
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", width: "100%"}}>
-              <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", width: "100%"}}>
+              <div style={{height: "250px"}}>
+                <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
+              </div>
             </div>
           </div>
 
-          <div className="dashboard-summary" style={{display: "none"}}>
+          <div className="dashboard-summary">
             <div className="summary-box" onClick={() => setSelectedModal('stored')} style={{ cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
               <h3>Total Active Stored Books</h3>
               <p>{books.length}</p>

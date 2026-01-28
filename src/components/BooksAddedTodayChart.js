@@ -71,7 +71,7 @@ const BooksAddedTodayChart = ({ todayCount, todayBooks = [] }) => {
     },
   };
 
-  return <div style={{ width: "100%", height: "300px" }}><Bar data={data} options={options} /></div>;
+  return <div style={{ width: "100%", height: "100%" }}><Bar data={data} options={options} /></div>;
 };
 
 export default BooksAddedTodayChart;
