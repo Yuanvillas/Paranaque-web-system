@@ -88,11 +88,11 @@ const AdminLogs = () => {
             Failed ({logs.filter(l => l.action.includes("Failed")).length})
           </button>
           <button 
-            onClick={() => setFilterAction("logout")}
+            onClick={() => setFilterAction("logged out")}
             style={{
               ...styles.filterButton,
-              background: filterAction === "logout" ? "#2e7d32" : "#f0f0f0",
-              color: filterAction === "logout" ? "white" : "#333"
+              background: filterAction === "logged out" ? "#2e7d32" : "#f0f0f0",
+              color: filterAction === "logged out" ? "white" : "#333"
             }}
           >
             Logout ({logs.filter(l => l.action.includes("logged out")).length})
