@@ -1265,12 +1265,36 @@ router.put('/:id', async (req, res) => {
   try {
     const { title, author, publisher, year, stock, category, status, genre, image } = req.body;
 
+    // First, get the current book to calculate borrowed count
+    const currentBook = await Book.findById(req.params.id);
+    if (!currentBook) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
     const updateData = {};
     if (title !== undefined) updateData.title = title;
     if (author !== undefined) updateData.author = author;
     if (publisher !== undefined) updateData.publisher = publisher;
     if (year !== undefined) updateData.year = year;
-    if (stock !== undefined) updateData.stock = stock;
+    
+    // Handle stock update with recalculation of availableStock
+    if (stock !== undefined) {
+      updateData.stock = stock;
+      
+      // Calculate how many books are currently borrowed
+      const oldStock = currentBook.stock || 1;
+      const oldAvailableStock = currentBook.availableStock !== undefined ? currentBook.availableStock : oldStock;
+      const borrowedCount = oldStock - oldAvailableStock;
+      
+      // New available stock = new stock - borrowed count
+      const newAvailableStock = Math.max(0, stock - borrowedCount);
+      updateData.availableStock = newAvailableStock;
+      
+      console.log(`📚 Stock update for book "${currentBook.title}":
+        Old: stock=${oldStock}, availableStock=${oldAvailableStock}, borrowed=${borrowedCount}
+        New: stock=${stock}, availableStock=${newAvailableStock}`);
+    }
+    
     if (category !== undefined) updateData.category = category;
     if (status !== undefined) updateData.status = status;
     if (genre !== undefined) updateData.genre = genre;
