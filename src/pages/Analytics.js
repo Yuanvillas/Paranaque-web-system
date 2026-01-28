@@ -179,7 +179,7 @@ const Analytics = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px", maxWidth: "1200px"}}>
+          <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px", width: "100%"}}>
             <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
               <BooksListedChart books={books} />
             </div>
