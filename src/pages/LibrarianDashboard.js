@@ -1134,33 +1134,35 @@ const LibrarianDashboard = () => {
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 width: '100%',
-                maxWidth: '1000px',
+                maxWidth: '1200px',
                 boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
               }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Books Listed</h2>
-                  <div>
+                  <h2 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Books Listed</h2>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button
-                      onClick={() => exportToCSV(booksData, 'books.csv')}
                       style={{
-                        backgroundColor: '#00BFA5',
+                        backgroundColor: '#1976d2',
                         color: 'white',
                         border: 'none',
-                        padding: '8px 16px',
+                        padding: '10px 20px',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        marginRight: '10px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                       }}
                     >
-                      📥 Export CSV
+                      🎨 Resources
                     </button>
                     <button
                       onClick={() => setShowBooksModal(false)}
                       style={{
                         background: 'none',
                         border: 'none',
-                        fontSize: '24px',
+                        fontSize: '28px',
                         cursor: 'pointer',
                         color: '#999'
                       }}
@@ -1183,19 +1185,19 @@ const LibrarianDashboard = () => {
                     }}>
                       <thead>
                         <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Author</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>ISBN</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Quantity</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Title</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Author</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Category</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#333' }}>Stock</th>
                         </tr>
                       </thead>
                       <tbody>
                         {booksData.map((book, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{book.title}</td>
-                            <td style={{ padding: '10px' }}>{book.author}</td>
-                            <td style={{ padding: '10px' }}>{book.isbn || '-'}</td>
-                            <td style={{ padding: '10px', textAlign: 'center' }}>{book.quantity || 0}</td>
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee', hover: { backgroundColor: '#f9f9f9' } }}>
+                            <td style={{ padding: '12px' }}>{book.title}</td>
+                            <td style={{ padding: '12px' }}>{book.author}</td>
+                            <td style={{ padding: '12px' }}>{book.category || '-'}</td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>{book.quantity || 0}</td>
                           </tr>
                         ))}
                       </tbody>
