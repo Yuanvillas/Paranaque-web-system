@@ -27,6 +27,13 @@ const LibrarianDashboard = () => {
     todayEntries: 0,
     activeUsers: 0
   });
+  const [systemStats, setSystemStats] = useState({
+    booksListed: 0,
+    timesIssued: 0,
+    timesReturned: 0,
+    ongoingRequests: 0,
+    listedCategories: 0
+  });
   const [showTodayEntriesModal, setShowTodayEntriesModal] = useState(false);
   const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
   const [todayEntriesData, setTodayEntriesData] = useState([]);
@@ -109,9 +116,51 @@ const LibrarianDashboard = () => {
       }
     };
 
+    const fetchSystemStats = async () => {
+      try {
+        const [booksResponse, transactionsResponse, categoriesResponse] = await Promise.all([
+          fetch('https://paranaque-web-system.onrender.com/api/books'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions'),
+          fetch('https://paranaque-web-system.onrender.com/api/categories')
+        ]);
+
+        const booksData = await booksResponse.json();
+        const transactionsData = await transactionsResponse.json();
+        const categoriesData = await categoriesResponse.json();
+
+        if (booksResponse.ok && transactionsResponse.ok && categoriesResponse.ok) {
+          const books = booksData.books || [];
+          const transactions = transactionsData.transactions || [];
+          const categories = categoriesData.categories || [];
+
+          // Count issued and returned books from transactions
+          const issuedCount = transactions.filter(t => t.status === 'issued' || t.status === 'borrowed').length;
+          const returnedCount = transactions.filter(t => t.status === 'returned').length;
+          const pendingRequests = transactions.filter(t => 
+            (t.type === 'borrow' || t.type === 'reserve') && 
+            (t.status === 'pending' || t.status === 'requested')
+          ).length;
+
+          setSystemStats({
+            booksListed: books.length,
+            timesIssued: issuedCount,
+            timesReturned: returnedCount,
+            ongoingRequests: pendingRequests,
+            listedCategories: categories.length
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching system stats:', err);
+      }
+    };
+
     fetchEntryStats();
+    fetchSystemStats();
     // Refresh stats every 30 seconds
-    const interval = setInterval(fetchEntryStats, 30000);
+    const interval = setInterval(() => {
+      fetchEntryStats();
+      fetchSystemStats();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -484,6 +533,47 @@ const LibrarianDashboard = () => {
                     letterSpacing: '0.5px',
                     marginBottom: '15px'
                   }}>
+                    Total Entries
+                  </div>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#00BFA5',
+                    marginBottom: '5px'
+                  }}>
+                    {entryStats.totalEntries}
+                  </div>
+                </div>
+
+                <div 
+                  onClick={handleTodayEntriesClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '25px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '15px'
+                  }}>
                     Today's Entries
                   </div>
                   <div style={{
@@ -535,6 +625,140 @@ const LibrarianDashboard = () => {
                   }}>
                     {entryStats.activeUsers}
                   </div>
+                </div>
+              </div>
+
+              {/* System Statistics Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '20px',
+                marginBottom: '30px',
+                marginTop: '20px'
+              }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📚</div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#2e7d32',
+                    marginBottom: '8px'
+                  }}>
+                    {systemStats.booksListed}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>Books Listed</div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📤</div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#1976d2',
+                    marginBottom: '8px'
+                  }}>
+                    {systemStats.timesIssued}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>Times Book Issued</div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>♻️</div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#00897b',
+                    marginBottom: '8px'
+                  }}>
+                    {systemStats.timesReturned}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>Times Books Returned</div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}>
+                  {systemStats.ongoingRequests > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      right: '-10px',
+                      backgroundColor: '#f44336',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>
+                      {systemStats.ongoingRequests}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⏳</div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#f57c00',
+                    marginBottom: '8px'
+                  }}>
+                    {systemStats.ongoingRequests}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>Ongoing Requests</div>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📁</div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: '#f9a825',
+                    marginBottom: '8px'
+                  }}>
+                    {systemStats.listedCategories}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>Listed Categories</div>
                 </div>
               </div>
 
