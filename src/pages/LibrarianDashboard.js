@@ -36,8 +36,18 @@ const LibrarianDashboard = () => {
   });
   const [showTodayEntriesModal, setShowTodayEntriesModal] = useState(false);
   const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
+  const [showBooksModal, setShowBooksModal] = useState(false);
+  const [showIssuedModal, setShowIssuedModal] = useState(false);
+  const [showReturnedModal, setShowReturnedModal] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
+  const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [todayEntriesData, setTodayEntriesData] = useState([]);
   const [activeUsersData, setActiveUsersData] = useState([]);
+  const [booksData, setBooksData] = useState([]);
+  const [issuedData, setIssuedData] = useState([]);
+  const [returnedData, setReturnedData] = useState([]);
+  const [requestsData, setRequestsData] = useState([]);
+  const [categoriesData, setCategoriesData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
 
   const handleSectionClick = (name) => {
@@ -258,6 +268,123 @@ const LibrarianDashboard = () => {
     } finally {
       setLoadingModals(false);
     }
+  };
+
+  const handleBooksClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/books');
+      const data = await response.json();
+      if (response.ok) {
+        setBooksData(data.books || []);
+        setShowBooksModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching books:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleIssuedClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions');
+      const data = await response.json();
+      if (response.ok) {
+        const issued = (data.transactions || []).filter(t => t.status === 'issued' || t.status === 'borrowed');
+        setIssuedData(issued);
+        setShowIssuedModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching issued books:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleReturnedClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions');
+      const data = await response.json();
+      if (response.ok) {
+        const returned = (data.transactions || []).filter(t => t.status === 'returned');
+        setReturnedData(returned);
+        setShowReturnedModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching returned books:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleRequestsClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+      const data = await response.json();
+      if (response.ok) {
+        const requests = (data.transactions || []).filter(t => 
+          (t.type === 'borrow' || t.type === 'reserve') && 
+          (t.status === 'pending' || t.status === 'requested')
+        );
+        setRequestsData(requests);
+        setShowRequestsModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const handleCategoriesClick = async () => {
+    setLoadingModals(true);
+    try {
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/categories');
+      const data = await response.json();
+      if (response.ok) {
+        setCategoriesData(data.categories || []);
+        setShowCategoriesModal(true);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    } finally {
+      setLoadingModals(false);
+    }
+  };
+
+  const exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) {
+      Swal.fire('No data', 'Nothing to export', 'info');
+      return;
+    }
+
+    const headers = Object.keys(data[0]);
+    const csv = [
+      headers.join(','),
+      ...data.map(item => 
+        headers.map(header => {
+          const value = item[header];
+          if (typeof value === 'string' && value.includes(',')) {
+            return `"${value}"`;
+          }
+          return value;
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
   useEffect(() => {
@@ -636,15 +763,27 @@ const LibrarianDashboard = () => {
                 marginBottom: '30px',
                 marginTop: '20px'
               }}>
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}>
+                <div 
+                  onClick={handleBooksClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📚</div>
                   <div style={{
                     fontSize: '28px',
@@ -657,15 +796,27 @@ const LibrarianDashboard = () => {
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>Books Listed</div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}>
+                <div 
+                  onClick={handleIssuedClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📤</div>
                   <div style={{
                     fontSize: '28px',
@@ -678,15 +829,27 @@ const LibrarianDashboard = () => {
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>Times Book Issued</div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}>
+                <div 
+                  onClick={handleReturnedClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>♻️</div>
                   <div style={{
                     fontSize: '28px',
@@ -699,16 +862,28 @@ const LibrarianDashboard = () => {
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>Times Books Returned</div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease',
-                  position: 'relative'
-                }}>
+                <div 
+                  onClick={handleRequestsClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   {systemStats.ongoingRequests > 0 && (
                     <div style={{
                       position: 'absolute',
@@ -740,15 +915,27 @@ const LibrarianDashboard = () => {
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>Ongoing Requests</div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}>
+                <div 
+                  onClick={handleCategoriesClick}
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                  }}
+                >
                   <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📁</div>
                   <div style={{
                     fontSize: '28px',
@@ -915,6 +1102,472 @@ const LibrarianDashboard = () => {
                             <td style={{ padding: '10px' }}>{user.email}</td>
                             <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
                             <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Books Modal */}
+          {showBooksModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowBooksModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Books Listed</h2>
+                  <div>
+                    <button
+                      onClick={() => exportToCSV(booksData, 'books.csv')}
+                      style={{
+                        backgroundColor: '#00BFA5',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📥 Export CSV
+                    </button>
+                    <button
+                      onClick={() => setShowBooksModal(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: '#999'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : booksData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No books found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Author</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>ISBN</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {booksData.map((book, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{book.title}</td>
+                            <td style={{ padding: '10px' }}>{book.author}</td>
+                            <td style={{ padding: '10px' }}>{book.isbn || '-'}</td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>{book.quantity || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Issued Books Modal */}
+          {showIssuedModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowIssuedModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Books Issued</h2>
+                  <div>
+                    <button
+                      onClick={() => exportToCSV(issuedData, 'issued_books.csv')}
+                      style={{
+                        backgroundColor: '#00BFA5',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📥 Export CSV
+                    </button>
+                    <button
+                      onClick={() => setShowIssuedModal(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: '#999'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : issuedData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No issued books found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Issue Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {issuedData.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                            <td style={{ padding: '10px' }}>{item.type}</td>
+                            <td style={{ padding: '10px' }}>{new Date(item.issuedDate || item.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Returned Books Modal */}
+          {showReturnedModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowReturnedModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Books Returned</h2>
+                  <div>
+                    <button
+                      onClick={() => exportToCSV(returnedData, 'returned_books.csv')}
+                      style={{
+                        backgroundColor: '#00BFA5',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📥 Export CSV
+                    </button>
+                    <button
+                      onClick={() => setShowReturnedModal(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: '#999'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : returnedData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No returned books found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>Fine</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {returnedData.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                            <td style={{ padding: '10px' }}>{new Date(item.returnedDate || item.updatedAt).toLocaleDateString()}</td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>₱{item.fine || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Pending Requests Modal */}
+          {showRequestsModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowRequestsModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Pending Requests</h2>
+                  <div>
+                    <button
+                      onClick={() => exportToCSV(requestsData, 'pending_requests.csv')}
+                      style={{
+                        backgroundColor: '#00BFA5',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📥 Export CSV
+                    </button>
+                    <button
+                      onClick={() => setShowRequestsModal(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: '#999'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : requestsData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No pending requests found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Request Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {requestsData.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                            <td style={{ padding: '10px' }}>{item.type}</td>
+                            <td style={{ padding: '10px' }}>{new Date(item.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Categories Modal */}
+          {showCategoriesModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowCategoriesModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Listed Categories</h2>
+                  <div>
+                    <button
+                      onClick={() => exportToCSV(categoriesData, 'categories.csv')}
+                      style={{
+                        backgroundColor: '#00BFA5',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📥 Export CSV
+                    </button>
+                    <button
+                      onClick={() => setShowCategoriesModal(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: '#999'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                {loadingModals ? (
+                  <p>Loading...</p>
+                ) : categoriesData.length === 0 ? (
+                  <p style={{ color: '#999' }}>No categories found.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Category Name</th>
+                          <th style={{ padding: '10px', textAlign: 'left' }}>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categoriesData.map((category, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '10px' }}>{category.name}</td>
+                            <td style={{ padding: '10px' }}>{category.description || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
