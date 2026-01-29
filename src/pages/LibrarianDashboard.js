@@ -51,6 +51,14 @@ const LibrarianDashboard = () => {
   const [requestsData, setRequestsData] = useState([]);
   const [categoriesData, setCategoriesData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  const resourceOptions = [
+    "All Books",
+    "Issued Books",
+    "Returned Books",
+    "Pending Requests"
+  ];
 
   const handleSectionClick = (name) => {
     if (name === "Home") {
@@ -990,29 +998,59 @@ const LibrarianDashboard = () => {
             </>
           )}
 
-          {selectedResource === "Resources" && (
+          {selectedResource === "Resources" ? (
             <div className="resource-submenu">
-              {['All Books', 'Issued Books', 'Returned Books', 'Pending Requests'].map((option, idx) => (
+              {resourceOptions.map((option, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleResourceClick(option)}
                   className={`resource-option ${selectedSubResource === option ? "active" : ""}`}
-                  style={{
-                    padding: '12px 24px',
-                    margin: '5px 10px 5px 0',
-                    borderRadius: '6px',
-                    border: selectedSubResource === option ? '2px solid #1976d2' : '2px solid #ddd',
-                    backgroundColor: selectedSubResource === option ? '#e3f2fd' : 'white',
-                    color: selectedSubResource === option ? '#1976d2' : '#333',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    transition: 'all 0.3s ease'
-                  }}
+                  style={{ position: 'relative', display: 'inline-block' }}
                 >
                   {option}
+                  {option === "Pending Requests" && pendingRequestsCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      backgroundColor: '#FF5252',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      animation: 'pulse 1.5s infinite'
+                    }}>
+                      {pendingRequestsCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
+          ) : null}
+
+          {selectedSubResource === "Issued Books" && (
+            // Issued Books table will be handled by modal
+            <div></div>
+          )}
+
+          {selectedSubResource === "Returned Books" && (
+            // Returned Books table will be handled by modal
+            <div></div>
+          )}
+
+          {selectedSubResource === "Pending Requests" && (
+            // Pending Requests table will be handled by modal
+            <div></div>
+          )}
+
+          {selectedSubResource === "All Books" && (
+            // All Books table will be handled by modal
+            <div></div>
           )}
           {/* Today's Entries Modal */}
           {showTodayEntriesModal && (
