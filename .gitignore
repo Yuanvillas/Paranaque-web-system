@@ -9,7 +9,7 @@
 /coverage
 
 # production
-/build
+# /build  ← Commented out so we can commit the build folder for Render deployment
 
 # misc
 .DS_Store

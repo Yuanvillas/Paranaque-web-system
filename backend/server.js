@@ -51,45 +51,60 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve React build folder as static files
 const fs = require('fs');
 
-// The build folder location depends on where __dirname points
-// On Render, __dirname might be /opt/render/project/backend or /opt/render/project/src/backend
-// So we need to go up appropriately to find the build folder
+// Determine the build folder location
+// The build folder should be created by "npm run build" at the project root
+// __dirname is /backend, so we go up one level to get to the project root
 
 // Try these paths in order of preference
 const possibleBuildPaths = [
-  path.join(__dirname, '../build'),        // If backend is at /backend → go to /build
-  path.join(__dirname, '../../build'),     // If backend is at /src/backend → go to /build
-  path.join(__dirname, '../src/build'),    // Alternative: if build is at /src/build
+  path.join(__dirname, '../build'),           // Most likely: /backend/../build = /build ✅
+  path.join(__dirname, '../src/build'),       // Alternative: /backend/../src/build = /src/build
+  path.join(__dirname, '../../build'),        // Fallback: /backend/../../build = /build
+  path.resolve(__dirname, '../build'),        // Absolute path resolution
 ];
 
 let buildPath = null;
 
 console.log(`\n📁 ========== BUILD PATH DETECTION ==========`);
 console.log(`📁 Backend __dirname: ${__dirname}`);
+console.log(`📁 Project root: ${path.join(__dirname, '..')}`);
+console.log(`📁 Checking possible build paths:\n`);
 
 // Find the first path that has a build folder with index.html
 for (const testPath of possibleBuildPaths) {
-  if (fs.existsSync(testPath)) {
-    const indexPath = path.join(testPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      buildPath = testPath;
-      console.log(`✅ Found build at: ${buildPath}`);
-      break;
-    }
+  const folderExists = fs.existsSync(testPath);
+  const indexPath = path.join(testPath, 'index.html');
+  const indexExists = folderExists && fs.existsSync(indexPath);
+  
+  console.log(`📁   [${folderExists ? '✅' : '❌'} folder] [${indexExists ? '✅' : '❌'} index.html] ${testPath}`);
+  
+  if (indexExists) {
+    buildPath = testPath;
+    console.log(`\n✅ Build folder found at: ${buildPath}\n`);
+    break;
   }
 }
 
-// Fallback to first option if nothing found
+// If still not found, try to list the project root to debug
 if (!buildPath) {
-  buildPath = possibleBuildPaths[0];
-  console.error(`⚠️  Build folder not found. Using fallback: ${buildPath}`);
-  console.error(`Tried locations:`);
-  possibleBuildPaths.forEach(p => {
-    console.error(`  - ${p}`);
-  });
+  console.log(`\n⚠️  Build folder not found. Listing project root contents:`);
+  const projectRoot = path.join(__dirname, '..');
+  try {
+    const files = fs.readdirSync(projectRoot);
+    files.slice(0, 15).forEach(f => {
+      const fullPath = path.join(projectRoot, f);
+      const isDir = fs.statSync(fullPath).isDirectory();
+      console.log(`   ${isDir ? '📁' : '📄'} ${f}`);
+    });
+  } catch (e) {
+    console.error(`   Cannot read project root: ${e.message}`);
+  }
+  
+  buildPath = possibleBuildPaths[0]; // Use first path as fallback
+  console.error(`\n⚠️  Using fallback buildPath: ${buildPath}`);
 }
 
-console.log(`📁 Using buildPath: ${buildPath}`);
+console.log(`📁 Final buildPath: ${buildPath}`);
 console.log(`📁 ========================================\n`);
 
 app.use(express.static(buildPath));
