@@ -440,6 +440,11 @@ const AdminDashboard = () => {
     if (!storedUser || (storedUser.role !== "admin" && storedUser.role !== "librarian")) {
       navigate("/"); // redirect to homepage
     }
+    // If librarian, redirect to librarian dashboard
+    if (storedUser && storedUser.role === "librarian") {
+      navigate("/librarian-dashboard", { replace: true });
+      return;
+    }
     setUser({
       name: `${storedUser.firstName || ''} ${storedUser.lastName || ''}`.trim(),
       email: storedUser.email,

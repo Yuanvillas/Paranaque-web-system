@@ -25,6 +25,7 @@ import "./components/App.css";
 import AdminLogs from "./pages/AdminLogs";
 import UserManagement from "./pages/UserManagement";
 import LibrarianUserManagement from "./pages/LibrarianUserManagement";
+import LibrarianDashboard from "./pages/LibrarianDashboard";
 import ProtectedRoute from "./utils/ProtectedRoute";
 
 function AppContent() {
@@ -50,6 +51,7 @@ function AppContent() {
         <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
         <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
         <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
+        <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
 
         <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
           <Route index element={<UserHome />} />
