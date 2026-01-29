@@ -10,7 +10,8 @@ import {
   faChartBar,
   faSignOutAlt,
   faUser,
-  faHome
+  faHome,
+  faBook
 } from "@fortawesome/free-solid-svg-icons";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
@@ -19,6 +20,7 @@ const LibrarianDashboard = () => {
   const navigate = useNavigate();
 
   const [selectedResource, setSelectedResource] = useState(null);
+  const [selectedSubResource, setSelectedSubResource] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState({ name: '', email: '', role: '', profilePicture: '' });
   const [isCollapsed] = useState(false);
@@ -53,10 +55,19 @@ const LibrarianDashboard = () => {
   const handleSectionClick = (name) => {
     if (name === "Home") {
       setSelectedResource(null);
+      setSelectedSubResource(null);
     } else if (name === "User Management") {
       navigate("/librarian/user-management");
     } else if (name === "Analytics") {
       navigate("/librarian/analytics");
+    } else if (name === "Resources") {
+      if (selectedResource === "Resources") {
+        setSelectedResource(null);
+        setSelectedSubResource(null);
+      } else {
+        setSelectedResource("Resources");
+        setSelectedSubResource("All Books");
+      }
     } else {
       Swal.fire({
         title: "Parañaledge",
@@ -64,6 +75,19 @@ const LibrarianDashboard = () => {
         icon: "info",
         confirmButtonText: "OK"
       });
+    }
+  };
+
+  const handleResourceClick = (option) => {
+    setSelectedSubResource(option);
+    if (option === "All Books") {
+      handleBooksClick();
+    } else if (option === "Issued Books") {
+      handleIssuedClick();
+    } else if (option === "Returned Books") {
+      handleReturnedClick();
+    } else if (option === "Pending Requests") {
+      handleRequestsClick();
     }
   };
 
@@ -487,6 +511,10 @@ const LibrarianDashboard = () => {
           <button onClick={() => handleSectionClick("Analytics")}>
             <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faChartBar} />
             {!isCollapsed && <span style={{ marginLeft: 8 }}>Analytics</span>}
+          </button>
+          <button onClick={() => handleSectionClick("Resources")}>
+            <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faBook} />
+            {!isCollapsed && <span style={{ marginLeft: 8 }}>Resources</span>}
           </button>
           <button onClick={handleLogout}>
             <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faSignOutAlt} />
@@ -962,6 +990,30 @@ const LibrarianDashboard = () => {
             </>
           )}
 
+          {selectedResource === "Resources" && (
+            <div className="resource-submenu">
+              {['All Books', 'Issued Books', 'Returned Books', 'Pending Requests'].map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleResourceClick(option)}
+                  className={`resource-option ${selectedSubResource === option ? "active" : ""}`}
+                  style={{
+                    padding: '12px 24px',
+                    margin: '5px 10px 5px 0',
+                    borderRadius: '6px',
+                    border: selectedSubResource === option ? '2px solid #1976d2' : '2px solid #ddd',
+                    backgroundColor: selectedSubResource === option ? '#e3f2fd' : 'white',
+                    color: selectedSubResource === option ? '#1976d2' : '#333',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
           {/* Today's Entries Modal */}
           {showTodayEntriesModal && (
             <div style={{
