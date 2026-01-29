@@ -51,7 +51,7 @@ const LibrarianDashboard = () => {
   const [requestsData, setRequestsData] = useState([]);
   const [categoriesData, setCategoriesData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
-  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [pendingRequestsCount] = useState(0);
 
   const resourceOptions = [
     "All Books",
