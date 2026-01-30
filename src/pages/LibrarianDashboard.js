@@ -210,6 +210,12 @@ const LibrarianDashboard = () => {
         const requestsData = await requestsRes.json();
         const categoriesData = await categoriesRes.json();
 
+        console.log('Books Data:', booksData);
+        console.log('Borrowed Data:', borrowedData);
+        console.log('Transactions Data:', transData);
+        console.log('Requests Data:', requestsData);
+        console.log('Categories Data:', categoriesData);
+
         if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok && categoriesRes.ok) {
           const books = booksData.books || [];
           const borrowedBooks = borrowedData.books || [];
@@ -220,12 +226,28 @@ const LibrarianDashboard = () => {
           const completedTransactions = transactions.filter(t => t.status === 'completed').length;
           const pendingRequests = allRequests.filter(req => req.status === 'pending').length;
 
+          console.log('Setting stats:', {
+            booksListed: books.length,
+            timesIssued: borrowedBooks.length,
+            timesReturned: completedTransactions,
+            ongoingRequests: pendingRequests,
+            listedCategories: categories.length
+          });
+
           setSystemStats({
             booksListed: books.length,
             timesIssued: borrowedBooks.length,
             timesReturned: completedTransactions,
             ongoingRequests: pendingRequests,
             listedCategories: categories.length
+          });
+        } else {
+          console.error('One or more API responses failed:', {
+            booksOk: booksRes.ok,
+            borrowedOk: borrowedRes.ok,
+            transOk: transRes.ok,
+            requestsOk: requestsRes.ok,
+            categoriesOk: categoriesRes.ok
           });
         }
       } catch (err) {
