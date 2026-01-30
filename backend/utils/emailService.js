@@ -115,11 +115,116 @@ const sendReservationPendingEmail = async (userEmail, bookTitle) => {
   return sendEmail({ to: userEmail, subject, text, html });
 };
 
+const sendOverdueNotificationEmail = async (userEmail, bookTitle, dueDate, daysOverdue) => {
+  const subject = '📚 Overdue Book Notification - Please Return Your Borrowed Book';
+  const formattedDueDate = new Date(dueDate).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #d32f2f;">📚 Book Return Reminder</h2>
+      <p>Dear Library Member,</p>
+      <p>We are writing to remind you that the following book is <strong style="color: #d32f2f;">overdue</strong>:</p>
+      
+      <div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #d32f2f; margin: 20px 0;">
+        <p><strong>Book Title:</strong> ${bookTitle}</p>
+        <p><strong>Due Date:</strong> ${formattedDueDate}</p>
+        <p><strong>Days Overdue:</strong> ${daysOverdue} day(s)</p>
+      </div>
+      
+      <p><strong>Action Required:</strong></p>
+      <ul>
+        <li>Please return the book to the library as soon as possible</li>
+        <li>You may renew the book if you need more time (subject to availability)</li>
+        <li>Late returns may incur overdue fees as per library policies</li>
+      </ul>
+      
+      <p>If you have already returned this book, please disregard this message and contact the library staff.</p>
+      
+      <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+        <strong>Library Contact Information:</strong><br>
+        If you have any questions or concerns, please contact the library staff.<br>
+        Thank you for your cooperation!
+      </p>
+    </div>
+  `;
+  
+  const text = `Dear Library Member,\n\nThe following book is overdue:\n\nBook Title: ${bookTitle}\nDue Date: ${formattedDueDate}\nDays Overdue: ${daysOverdue}\n\nPlease return the book to the library as soon as possible. Late returns may incur overdue fees.\n\nIf you have already returned this book, please contact the library staff.`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
+const sendOverdueReminderEmail = async (userEmail, booksData) => {
+  // booksData = [{ bookTitle, dueDate, daysOverdue }, ...]
+  const subject = '⚠️ Multiple Books Overdue - Immediate Action Required';
+  
+  let booksHtml = '';
+  booksData.forEach((book, index) => {
+    const formattedDueDate = new Date(book.dueDate).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    booksHtml += `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${index + 1}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${book.bookTitle}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${formattedDueDate}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; color: #d32f2f; font-weight: bold;">${book.daysOverdue}</td>
+      </tr>
+    `;
+  });
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #d32f2f;">⚠️ Multiple Books Overdue</h2>
+      <p>Dear Library Member,</p>
+      <p>You have <strong>${booksData.length}</strong> overdue book(s) that need to be returned immediately:</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">#</th>
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Book Title</th>
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Due Date</th>
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Days Overdue</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${booksHtml}
+        </tbody>
+      </table>
+      
+      <p><strong>Important:</strong></p>
+      <ul>
+        <li>Please return all overdue books immediately</li>
+        <li>Late return fees may apply to your account</li>
+        <li>Your borrowing privileges may be suspended if books remain unreturned</li>
+      </ul>
+      
+      <p>If you need any assistance or would like to discuss payment plans, please contact the library staff.</p>
+      
+      <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+        <strong>Library Hours & Contact:</strong><br>
+        Please visit us during library hours or call for assistance.<br>
+        Thank you!
+      </p>
+    </div>
+  `;
+  
+  return sendEmail({ to: userEmail, subject, text: '', html });
+};
+
 module.exports = {
   sendEmail,
   sendReservationExpiredEmail,
   sendReservationApprovedEmail,
   sendReservationRejectedEmail,
   sendReservationPendingEmail,
-  sendReservationReminderEmail
+  sendReservationReminderEmail,
+  sendOverdueNotificationEmail,
+  sendOverdueReminderEmail
 };

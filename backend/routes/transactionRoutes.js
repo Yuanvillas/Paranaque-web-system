@@ -753,4 +753,309 @@ router.put('/return-requests/:requestId/reject', async (req, res) => {
   }
 });
 
+// Get all overdue books
+router.get('/overdue/all', async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Find all active borrow transactions where endDate has passed
+    const overdueTransactions = await Transaction.find({
+      type: 'borrow',
+      status: 'active',
+      endDate: { $lt: now }
+    }).sort({ endDate: 1 });
+
+    const overdueData = overdueTransactions.map(transaction => {
+      const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
+      return {
+        transactionId: transaction._id,
+        bookTitle: transaction.bookTitle,
+        userEmail: transaction.userEmail,
+        dueDate: transaction.endDate,
+        startDate: transaction.startDate,
+        daysOverdue,
+        reminderSent: transaction.reminderSent
+      };
+    });
+
+    res.json({ 
+      message: `Found ${overdueTransactions.length} overdue book(s)`,
+      count: overdueTransactions.length,
+      overdue: overdueData
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get overdue books for a specific user
+router.get('/overdue/user/:email', async (req, res) => {
+  try {
+    const now = new Date();
+    const userEmail = req.params.email;
+    
+    // Find all active borrow transactions for user where endDate has passed
+    const overdueTransactions = await Transaction.find({
+      userEmail,
+      type: 'borrow',
+      status: 'active',
+      endDate: { $lt: now }
+    }).sort({ endDate: 1 });
+
+    const overdueData = overdueTransactions.map(transaction => {
+      const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
+      return {
+        transactionId: transaction._id,
+        bookTitle: transaction.bookTitle,
+        dueDate: transaction.endDate,
+        startDate: transaction.startDate,
+        daysOverdue,
+        reminderSent: transaction.reminderSent
+      };
+    });
+
+    res.json({ 
+      message: `User ${userEmail} has ${overdueTransactions.length} overdue book(s)`,
+      count: overdueTransactions.length,
+      overdue: overdueData
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Send overdue notification email to a specific user
+router.post('/overdue/notify/:email', async (req, res) => {
+  try {
+    const userEmail = req.params.email;
+    const now = new Date();
+    const { 
+      sendEmail: shouldSendEmail = true,
+      markReminderSent = false 
+    } = req.body;
+
+    // Find all active borrow transactions for user where endDate has passed
+    const overdueTransactions = await Transaction.find({
+      userEmail,
+      type: 'borrow',
+      status: 'active',
+      endDate: { $lt: now }
+    }).sort({ endDate: 1 });
+
+    if (overdueTransactions.length === 0) {
+      return res.json({ 
+        message: 'No overdue books found for this user',
+        emailsSent: 0
+      });
+    }
+
+    const { 
+      sendOverdueNotificationEmail,
+      sendOverdueReminderEmail
+    } = require('../utils/emailService');
+
+    let emailResults = [];
+
+    if (overdueTransactions.length === 1 && shouldSendEmail) {
+      // Single overdue book - send individual notification
+      const transaction = overdueTransactions[0];
+      const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
+      
+      const result = await sendOverdueNotificationEmail(
+        userEmail,
+        transaction.bookTitle,
+        transaction.endDate,
+        daysOverdue
+      );
+      emailResults.push(result);
+
+      if (markReminderSent) {
+        transaction.reminderSent = true;
+        await transaction.save();
+      }
+
+      await new Log({
+        userEmail,
+        action: `Overdue notification email sent for book: ${transaction.bookTitle}`
+      }).save();
+    } else if (overdueTransactions.length > 1 && shouldSendEmail) {
+      // Multiple overdue books - send bulk notification
+      const booksData = overdueTransactions.map(transaction => {
+        const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
+        return {
+          bookTitle: transaction.bookTitle,
+          dueDate: transaction.endDate,
+          daysOverdue
+        };
+      });
+
+      const result = await sendOverdueReminderEmail(userEmail, booksData);
+      emailResults.push(result);
+
+      if (markReminderSent) {
+        // Mark all transactions as reminder sent
+        await Transaction.updateMany(
+          { _id: { $in: overdueTransactions.map(t => t._id) } },
+          { reminderSent: true }
+        );
+      }
+
+      await new Log({
+        userEmail,
+        action: `Bulk overdue notification email sent for ${overdueTransactions.length} book(s)`
+      }).save();
+    }
+
+    res.json({ 
+      message: `Overdue notification sent to ${userEmail}`,
+      overdueCount: overdueTransactions.length,
+      emailsSent: shouldSendEmail ? 1 : 0,
+      emailResults,
+      books: overdueTransactions.map(t => ({
+        title: t.bookTitle,
+        dueDate: t.endDate
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Batch send overdue notifications to all users with overdue books
+router.post('/overdue/notify-all', async (req, res) => {
+  try {
+    const now = new Date();
+    const { 
+      sendEmails: shouldSendEmails = true,
+      markReminderSent = false,
+      daysOverdueMinimum = 0 
+    } = req.body;
+
+    // Find all active borrow transactions where endDate has passed
+    const overdueTransactions = await Transaction.find({
+      type: 'borrow',
+      status: 'active',
+      endDate: { $lt: now }
+    });
+
+    // Group by user email
+    const userOverdueMap = {};
+    overdueTransactions.forEach(transaction => {
+      const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
+      
+      // Skip if below minimum days overdue
+      if (daysOverdue < daysOverdueMinimum) return;
+
+      if (!userOverdueMap[transaction.userEmail]) {
+        userOverdueMap[transaction.userEmail] = [];
+      }
+      userOverdueMap[transaction.userEmail].push({
+        transaction,
+        daysOverdue
+      });
+    });
+
+    const userEmails = Object.keys(userOverdueMap);
+    
+    if (userEmails.length === 0) {
+      return res.json({ 
+        message: 'No overdue books found',
+        notificationsQueued: 0,
+        userCount: 0
+      });
+    }
+
+    const { 
+      sendOverdueNotificationEmail,
+      sendOverdueReminderEmail
+    } = require('../utils/emailService');
+
+    let notificationResults = [];
+    let transactionUpdates = [];
+
+    for (const userEmail of userEmails) {
+      const userOverdues = userOverdueMap[userEmail];
+      
+      try {
+        if (userOverdues.length === 1 && shouldSendEmails) {
+          // Single book - send individual notification
+          const { transaction, daysOverdue } = userOverdues[0];
+          const result = await sendOverdueNotificationEmail(
+            userEmail,
+            transaction.bookTitle,
+            transaction.endDate,
+            daysOverdue
+          );
+          notificationResults.push({
+            userEmail,
+            success: !result.error,
+            bookCount: 1,
+            messageId: result.messageId
+          });
+
+          transactionUpdates.push({
+            transactionId: transaction._id,
+            reminderSent: markReminderSent
+          });
+        } else if (userOverdues.length > 1 && shouldSendEmails) {
+          // Multiple books - send bulk notification
+          const booksData = userOverdues.map(({ transaction, daysOverdue }) => ({
+            bookTitle: transaction.bookTitle,
+            dueDate: transaction.endDate,
+            daysOverdue
+          }));
+
+          const result = await sendOverdueReminderEmail(userEmail, booksData);
+          notificationResults.push({
+            userEmail,
+            success: !result.error,
+            bookCount: userOverdues.length,
+            messageId: result.messageId
+          });
+
+          userOverdues.forEach(({ transaction }) => {
+            transactionUpdates.push({
+              transactionId: transaction._id,
+              reminderSent: markReminderSent
+            });
+          });
+        }
+
+        await new Log({
+          userEmail,
+          action: `Overdue notification sent for ${userOverdues.length} book(s)`
+        }).save();
+      } catch (emailError) {
+        console.error(`Error sending email to ${userEmail}:`, emailError.message);
+        notificationResults.push({
+          userEmail,
+          success: false,
+          bookCount: userOverdues.length,
+          error: emailError.message
+        });
+      }
+    }
+
+    // Update transaction reminder flags
+    if (markReminderSent) {
+      for (const update of transactionUpdates) {
+        await Transaction.findByIdAndUpdate(update.transactionId, { reminderSent: true });
+      }
+    }
+
+    const successCount = notificationResults.filter(r => r.success).length;
+
+    res.json({ 
+      message: `Sent overdue notifications to ${successCount}/${notificationResults.length} users`,
+      notificationsQueued: notificationResults.length,
+      userCount: userEmails.length,
+      overdueCount: overdueTransactions.length,
+      results: notificationResults,
+      remindersMarked: markReminderSent ? transactionUpdates.length : 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
