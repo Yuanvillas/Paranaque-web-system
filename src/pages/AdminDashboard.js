@@ -23,6 +23,7 @@ import AdminDashboardTable from "../components/AdminDashboardTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
+import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -907,6 +908,9 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Overdue Notifications Panel */}
+              <OverdueNotificationPanel />
             </>
           )}
 
