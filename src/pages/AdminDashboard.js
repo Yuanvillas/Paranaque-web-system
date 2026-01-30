@@ -6,6 +6,7 @@ import "../components/App.css";
 import BorrowedBooksTable from "../components/BorrowedBooksTable";
 import TransactionsTable from "../components/TransactionsTable";
 import ReservedBooksTable from "../components/ReservedBooksTable";
+import ArchiveBooksTable from "../components/ArchiveBooksTable";
 import logo from "../imgs/liblogo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -412,7 +413,7 @@ const AdminDashboard = () => {
 
   const handleResourceClick = (option) => {
     if (option === "Archive Books") {
-      navigate("/admin/archived-books");
+      setSelectedSubResource("Archive Books");
     } else if (option === "All Books") {
       setSelectedSubResource("All Books");
     } else if (option === "Borrowed Books") {
@@ -963,6 +964,10 @@ const AdminDashboard = () => {
 
           {selectedSubResource === "Reserved Books" && (
             <ReservedBooksTable />
+          )}
+
+          {selectedSubResource === "Archive Books" && (
+            <ArchiveBooksTable />
           )}
 
           {selectedSubResource === "All Books" && (
