@@ -194,32 +194,37 @@ const LibrarianDashboard = () => {
 
     const fetchSystemStats = async () => {
       try {
-        const [booksRes, borrowedRes, transRes, requestsRes, categoriesRes] = await Promise.all([
+        const [booksRes, borrowedRes, transRes, requestsRes] = await Promise.all([
           fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000'),
           fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000'),
           fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000'),
-          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
-          fetch('https://paranaque-web-system.onrender.com/api/categories')
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000')
         ]);
 
         const booksData = await booksRes.json();
         const borrowedData = await borrowedRes.json();
         const transData = await transRes.json();
         const requestsData = await requestsRes.json();
-        const categoriesData = await categoriesRes.json();
 
         console.log('Books Data:', booksData);
         console.log('Borrowed Data:', borrowedData);
         console.log('Transactions Data:', transData);
         console.log('Requests Data:', requestsData);
-        console.log('Categories Data:', categoriesData);
 
-        if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok && categoriesRes.ok) {
+        if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok) {
           const books = booksData.books || [];
           const borrowedBooks = borrowedData.books || [];
           const transactions = transData.transactions || [];
           const allRequests = requestsData.transactions || [];
-          const categories = categoriesData.categories || [];
+
+          // Extract unique categories from books
+          const uniqueCategories = new Set();
+          books.forEach(book => {
+            if (book.category) {
+              uniqueCategories.add(book.category);
+            }
+          });
+          const categoriesCount = uniqueCategories.size;
 
           const completedTransactions = transactions.filter(t => t.status === 'completed').length;
           const pendingRequests = allRequests.filter(req => req.status === 'pending').length;
@@ -229,7 +234,7 @@ const LibrarianDashboard = () => {
             timesIssued: borrowedBooks.length,
             timesReturned: completedTransactions,
             ongoingRequests: pendingRequests,
-            listedCategories: categories.length
+            listedCategories: categoriesCount
           });
 
           setSystemStats({
@@ -237,15 +242,14 @@ const LibrarianDashboard = () => {
             timesIssued: borrowedBooks.length,
             timesReturned: completedTransactions,
             ongoingRequests: pendingRequests,
-            listedCategories: categories.length
+            listedCategories: categoriesCount
           });
         } else {
           console.error('One or more API responses failed:', {
             booksOk: booksRes.ok,
             borrowedOk: borrowedRes.ok,
             transOk: transRes.ok,
-            requestsOk: requestsRes.ok,
-            categoriesOk: categoriesRes.ok
+            requestsOk: requestsRes.ok
           });
         }
       } catch (err) {
@@ -548,10 +552,19 @@ const LibrarianDashboard = () => {
   const handleCategoriesClick = async () => {
     setLoadingModals(true);
     try {
-      const response = await fetch('https://paranaque-web-system.onrender.com/api/categories');
+      const response = await fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000');
       const data = await response.json();
       if (response.ok) {
-        setCategoriesData(data.categories || []);
+        const books = data.books || [];
+        // Extract unique categories from books
+        const uniqueCategories = new Set();
+        books.forEach(book => {
+          if (book.category) {
+            uniqueCategories.add(book.category);
+          }
+        });
+        const categoriesArray = Array.from(uniqueCategories).map(cat => ({ name: cat }));
+        setCategoriesData(categoriesArray);
         setShowCategoriesModal(true);
       }
     } catch (err) {
