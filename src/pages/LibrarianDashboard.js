@@ -196,33 +196,34 @@ const LibrarianDashboard = () => {
 
     const fetchSystemStats = async () => {
       try {
-        const [booksResponse, transactionsResponse, categoriesResponse] = await Promise.all([
-          fetch('https://paranaque-web-system.onrender.com/api/books'),
-          fetch('https://paranaque-web-system.onrender.com/api/transactions'),
+        const [booksRes, borrowedRes, transRes, requestsRes, categoriesRes] = await Promise.all([
+          fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
           fetch('https://paranaque-web-system.onrender.com/api/categories')
         ]);
 
-        const booksData = await booksResponse.json();
-        const transactionsData = await transactionsResponse.json();
-        const categoriesData = await categoriesResponse.json();
+        const booksData = await booksRes.json();
+        const borrowedData = await borrowedRes.json();
+        const transData = await transRes.json();
+        const requestsData = await requestsRes.json();
+        const categoriesData = await categoriesRes.json();
 
-        if (booksResponse.ok && transactionsResponse.ok && categoriesResponse.ok) {
+        if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok && categoriesRes.ok) {
           const books = booksData.books || [];
-          const transactions = transactionsData.transactions || [];
+          const borrowedBooks = borrowedData.books || [];
+          const transactions = transData.transactions || [];
+          const allRequests = requestsData.transactions || [];
           const categories = categoriesData.categories || [];
 
-          // Count issued and returned books from transactions
-          const issuedCount = transactions.filter(t => t.status === 'issued' || t.status === 'borrowed').length;
-          const returnedCount = transactions.filter(t => t.status === 'returned').length;
-          const pendingRequests = transactions.filter(t => 
-            (t.type === 'borrow' || t.type === 'reserve') && 
-            (t.status === 'pending' || t.status === 'requested')
-          ).length;
+          const completedTransactions = transactions.filter(t => t.status === 'completed').length;
+          const pendingRequests = allRequests.filter(req => req.status === 'pending').length;
 
           setSystemStats({
             booksListed: books.length,
-            timesIssued: issuedCount,
-            timesReturned: returnedCount,
+            timesIssued: borrowedBooks.length,
+            timesReturned: completedTransactions,
             ongoingRequests: pendingRequests,
             listedCategories: categories.length
           });
