@@ -15,6 +15,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
+import BooksTable from "../components/BooksTable";
+import BorrowedBooksTable from "../components/BorrowedBooksTable";
+import ReservedBooksTable from "../components/ReservedBooksTable";
+import PendingRequestTable from "../components/PendingRequestTable";
+import TransactionsTable from "../components/TransactionsTable";
 
 const LibrarianDashboard = () => {
   const navigate = useNavigate();
@@ -61,9 +66,11 @@ const LibrarianDashboard = () => {
 
   const resourceOptions = [
     "All Books",
-    "Issued Books",
-    "Returned Books",
-    "Pending Requests"
+    "Archive Books",
+    "Borrowed Books",
+    "Reserved Books",
+    "Pending Requests",
+    "Transactions"
   ];
 
   const handleSectionClick = (name) => {
@@ -94,15 +101,6 @@ const LibrarianDashboard = () => {
 
   const handleResourceClick = (option) => {
     setSelectedSubResource(option);
-    if (option === "All Books") {
-      handleBooksClick();
-    } else if (option === "Issued Books") {
-      handleIssuedClick();
-    } else if (option === "Returned Books") {
-      handleReturnedClick();
-    } else if (option === "Pending Requests") {
-      handleRequestsClick();
-    }
   };
 
   useEffect(() => {
@@ -1286,24 +1284,35 @@ const LibrarianDashboard = () => {
             </div>
           ) : null}
 
-          {selectedSubResource === "Issued Books" && (
-            // Issued Books table will be handled by modal
-            <div></div>
+          {selectedSubResource === "Borrowed Books" && (
+            <BorrowedBooksTable />
           )}
 
-          {selectedSubResource === "Returned Books" && (
-            // Returned Books table will be handled by modal
-            <div></div>
+          {selectedSubResource === "Transactions" && (
+            <TransactionsTable />
           )}
 
           {selectedSubResource === "Pending Requests" && (
-            // Pending Requests table will be handled by modal
-            <div></div>
+            <PendingRequestTable />
+          )}
+
+          {selectedSubResource === "Reserved Books" && (
+            <ReservedBooksTable />
           )}
 
           {selectedSubResource === "All Books" && (
-            // All Books table will be handled by modal
-            <div></div>
+            <BooksTable />
+          )}
+
+          {selectedSubResource === "Archive Books" && (
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#fff',
+              borderRadius: '8px'
+            }}>
+              <h3>Archived Books</h3>
+              <p style={{ color: '#888' }}>Navigate to the <a href="/archived-books" style={{ color: '#0d47a1', textDecoration: 'none' }}>Archived Books</a> page to view and manage archived books.</p>
+            </div>
           )}
           {/* Today's Entries Modal */}
           {showTodayEntriesModal && (
