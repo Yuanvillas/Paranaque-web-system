@@ -908,9 +908,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Overdue Notifications Panel */}
-              <OverdueNotificationPanel />
             </>
           )}
 
@@ -953,6 +950,8 @@ const AdminDashboard = () => {
             setSelectedResource("Resource Management");
             setSelectedSubResource("All Books");
           }} />}
+
+          {!selectedResource && <OverdueNotificationPanel />}
 
           {selectedSubResource === "Borrowed Books" && (
             <BorrowedBooksTable />
