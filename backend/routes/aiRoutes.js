@@ -280,7 +280,7 @@ router.post('/chat', async (req, res) => {
       
       contextBooks.forEach((book, index) => {
         const stock = book.availableStock || 0;
-        const status = stock > 0 ? `Available (${stock})` : `Out of Stock`;
+        const status = stock > 0 ? `Available (${stock})` : `Not Available`;
         const author = book.author || 'Unknown Author';
         const year = book.year ? ` (${book.year})` : '';
         const publisher = book.publisher ? `\n   Publisher: ${book.publisher}` : '';

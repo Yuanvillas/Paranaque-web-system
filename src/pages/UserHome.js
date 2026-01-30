@@ -498,7 +498,7 @@ const UserHome = () => {
                 {(() => {
                   const avail = book.availableStock ?? book.available ?? book.stock ?? 0;
                   return avail <= 0 ? (
-                    <span className="out-of-stock-badge">Out of stock</span>
+                    <span className="out-of-stock-badge">Not Available</span>
                   ) : null;
                 })()}
                 {book.image ? (
