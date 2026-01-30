@@ -378,12 +378,16 @@ const AdminDashboard = () => {
     const fetchPendingRequestsCount = async () => {
       try {
         const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+        const returnResponse = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
         const data = await response.json();
-        if (response.ok) {
+        const returnData = await returnResponse.json();
+        if (response.ok && returnResponse.ok) {
           const allRequests = data.transactions || [];
+          const allReturnRequests = returnData.requests || [];
           const borrowRequests = allRequests.filter(req => req.type === 'borrow');
           const reserveRequests = allRequests.filter(req => req.type === 'reserve');
-          setPendingRequestsCount(borrowRequests.length + reserveRequests.length);
+          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
+          setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
         }
       } catch (err) {
         console.error('Error fetching pending requests count:', err);

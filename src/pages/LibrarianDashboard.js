@@ -62,7 +62,7 @@ const LibrarianDashboard = () => {
   const [requestsData, setRequestsData] = useState([]);
   const [categoriesData, setCategoriesData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
-  const [pendingRequestsCount] = useState(0);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   const resourceOptions = [
     "All Books",
@@ -617,6 +617,32 @@ const LibrarianDashboard = () => {
       profilePicture: storedUser.profilePicture || ''
     });
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchPendingRequestsCount = async () => {
+      try {
+        const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+        const returnResponse = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
+        const data = await response.json();
+        const returnData = await returnResponse.json();
+        if (response.ok && returnResponse.ok) {
+          const allRequests = data.transactions || [];
+          const allReturnRequests = returnData.requests || [];
+          const borrowRequests = allRequests.filter(req => req.type === 'borrow');
+          const reserveRequests = allRequests.filter(req => req.type === 'reserve');
+          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
+          setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
+        }
+      } catch (err) {
+        console.error('Error fetching pending requests count:', err);
+      }
+    };
+
+    const interval = setInterval(fetchPendingRequestsCount, 5000);
+    fetchPendingRequestsCount();
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     // Show confirmation dialog
