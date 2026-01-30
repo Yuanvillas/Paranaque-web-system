@@ -51,6 +51,7 @@ function AppContent() {
         <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
         <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
         <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
+        <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
         <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
 
         <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
