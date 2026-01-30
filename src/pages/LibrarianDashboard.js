@@ -1654,8 +1654,10 @@ const LibrarianDashboard = () => {
                         alignItems: 'center',
                         gap: '8px'
                       }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1565c0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1976d2'}
                     >
-                      🎨 Resources
+                      📚 Resources
                     </button>
                     <button
                       onClick={() => setShowBooksModal(false)}
