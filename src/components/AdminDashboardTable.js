@@ -38,7 +38,16 @@ const AdminDashboardTable = ({ onViewResources }) => {
       const requestsRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
       const requestsData = await requestsRes.json();
       const allRequests = requestsData.transactions || [];
-      const pendingRequests = allRequests.filter(req => req.status === 'pending').length;
+      const pendingBorrowReserveRequests = allRequests.filter(req => req.status === 'pending').length;
+      
+      // Fetch return requests
+      const returnRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
+      const returnData = await returnRes.json();
+      const allReturnRequests = returnData.requests || [];
+      const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending').length;
+      
+      // Total pending requests = borrow/reserve + return
+      const pendingRequests = pendingBorrowReserveRequests + pendingReturnRequests;
       
       // Calculate returned books (completed transactions)
       const transRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000');

@@ -194,28 +194,31 @@ const LibrarianDashboard = () => {
 
     const fetchSystemStats = async () => {
       try {
-        const [booksRes, borrowedRes, transRes, requestsRes] = await Promise.all([
+        const [booksRes, borrowedRes, transRes, requestsRes, returnRes] = await Promise.all([
           fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000'),
           fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000'),
           fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000'),
-          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000')
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests')
         ]);
 
         const booksData = await booksRes.json();
         const borrowedData = await borrowedRes.json();
         const transData = await transRes.json();
         const requestsData = await requestsRes.json();
+        const returnData = await returnRes.json();
 
         console.log('Books Data:', booksData);
         console.log('Borrowed Data:', borrowedData);
         console.log('Transactions Data:', transData);
         console.log('Requests Data:', requestsData);
 
-        if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok) {
+        if (booksRes.ok && borrowedRes.ok && transRes.ok && requestsRes.ok && returnRes.ok) {
           const books = booksData.books || [];
           const borrowedBooks = borrowedData.books || [];
           const transactions = transData.transactions || [];
           const allRequests = requestsData.transactions || [];
+          const allReturnRequests = returnData.requests || [];
 
           // Extract unique categories from books
           const uniqueCategories = new Set();
@@ -227,7 +230,9 @@ const LibrarianDashboard = () => {
           const categoriesCount = uniqueCategories.size;
 
           const completedTransactions = transactions.filter(t => t.status === 'completed').length;
-          const pendingRequests = allRequests.filter(req => req.status === 'pending').length;
+          const pendingBorrowReserveRequests = allRequests.filter(req => req.status === 'pending').length;
+          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending').length;
+          const pendingRequests = pendingBorrowReserveRequests + pendingReturnRequests;
 
           console.log('Setting stats:', {
             booksListed: books.length,
