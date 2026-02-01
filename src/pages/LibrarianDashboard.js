@@ -20,6 +20,7 @@ import BorrowedBooksTable from "../components/BorrowedBooksTable";
 import ReservedBooksTable from "../components/ReservedBooksTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import TransactionsTable from "../components/TransactionsTable";
+import ArchiveBooksTable from "../components/ArchiveBooksTable";
 
 const LibrarianDashboard = () => {
   const navigate = useNavigate();
@@ -1391,14 +1392,7 @@ const LibrarianDashboard = () => {
           )}
 
           {selectedSubResource === "Archive Books" && (
-            <div style={{
-              padding: '20px',
-              backgroundColor: '#fff',
-              borderRadius: '8px'
-            }}>
-              <h3>Archived Books</h3>
-              <p style={{ color: '#888' }}>Navigate to the <a href="/archived-books" style={{ color: '#0d47a1', textDecoration: 'none' }}>Archived Books</a> page to view and manage archived books.</p>
-            </div>
+            <ArchiveBooksTable />
           )}
 
           {/* Entry Monitor Modal */}
