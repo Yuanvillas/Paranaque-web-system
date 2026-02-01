@@ -33,7 +33,13 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
       cancelButtonColor: '#666',
       confirmButtonText: 'Yes, Logout',
       cancelButtonText: 'Cancel',
-      z_index: 10001
+      didOpen: () => {
+        // Ensure the dialog appears on top
+        const swalContainer = document.querySelector('.swal2-container');
+        if (swalContainer) {
+          swalContainer.style.zIndex = '99999';
+        }
+      }
     });
 
     if (confirmed.isConfirmed) {
