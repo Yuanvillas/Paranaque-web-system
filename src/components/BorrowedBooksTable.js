@@ -150,7 +150,6 @@ const BorrowedBooksTable = () => {
                 <th>Borrow Date</th>
                 <th>Due Date</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -188,10 +187,6 @@ const BorrowedBooksTable = () => {
                         </span>
                       )}
                     </td>
-                    <td>
-                      <button className="btn green" onClick={() => handleReturn(book._id, book.borrowedBy)}>Return</button>
-                    </td>
-                    {/* Actions column removed */}
                   </tr>
                 );
               })}
