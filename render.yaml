@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm install && CI=false npm run build && cd backend && npm install
+    buildCommand: npm install && CI=false npm run build && cd backend && npm install && echo "✅ Build complete with build folder at $(pwd)/../build"
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
@@ -15,3 +15,13 @@ services:
         value: https://paranaque-web-system.onrender.com
       - key: FRONTEND_URL
         value: https://paranaque-web-system.onrender.com
+      - key: MONGO_URI
+        value: mongodb+srv://User:Library@cluster0.pteo7.mongodb.net/libraryDB
+      - key: GOOGLE_API_KEY
+        value: AIzaSyBCzWBrxeSTOAuTJQQShzc2oKb0jHXWuDM
+      - key: RESEND_API_KEY
+        value: re_7y76JuJp_MaLBgTadkzUsd6RGK57FJeWP
+      - key: EMAIL_FROM
+        value: Paranaledge Library <noreply@paranaledge.online>
+      - key: AI_PROVIDER
+        value: mock

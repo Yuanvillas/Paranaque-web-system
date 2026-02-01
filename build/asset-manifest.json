@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/static/css/main.79e678b2.css",
+    "main.js": "/static/js/main.c8b89280.js",
+    "static/media/schoolpic.png": "/static/media/schoolpic.bc2bd73ab75cfb4690c0.png",
+    "static/media/liblogo.png": "/static/media/liblogo.432814a5b515ebf0df66.png",
+    "index.html": "/index.html",
+    "main.79e678b2.css.map": "/static/css/main.79e678b2.css.map",
+    "main.c8b89280.js.map": "/static/js/main.c8b89280.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.79e678b2.css",
+    "static/js/main.c8b89280.js"
+  ]
+}

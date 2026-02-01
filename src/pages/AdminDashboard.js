@@ -6,6 +6,7 @@ import "../components/App.css";
 import BorrowedBooksTable from "../components/BorrowedBooksTable";
 import TransactionsTable from "../components/TransactionsTable";
 import ReservedBooksTable from "../components/ReservedBooksTable";
+import ArchiveBooksTable from "../components/ArchiveBooksTable";
 import logo from "../imgs/liblogo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -22,6 +23,7 @@ import AdminDashboardTable from "../components/AdminDashboardTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
+import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -378,12 +380,16 @@ const AdminDashboard = () => {
     const fetchPendingRequestsCount = async () => {
       try {
         const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
+        const returnResponse = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
         const data = await response.json();
-        if (response.ok) {
+        const returnData = await returnResponse.json();
+        if (response.ok && returnResponse.ok) {
           const allRequests = data.transactions || [];
+          const allReturnRequests = returnData.requests || [];
           const borrowRequests = allRequests.filter(req => req.type === 'borrow');
           const reserveRequests = allRequests.filter(req => req.type === 'reserve');
-          setPendingRequestsCount(borrowRequests.length + reserveRequests.length);
+          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
+          setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
         }
       } catch (err) {
         console.error('Error fetching pending requests count:', err);
@@ -408,7 +414,7 @@ const AdminDashboard = () => {
 
   const handleResourceClick = (option) => {
     if (option === "Archive Books") {
-      navigate("/admin/archived-books");
+      setSelectedSubResource("Archive Books");
     } else if (option === "All Books") {
       setSelectedSubResource("All Books");
     } else if (option === "Borrowed Books") {
@@ -439,6 +445,11 @@ const AdminDashboard = () => {
     console.log("Stored User:", storedUser.profilePicture);
     if (!storedUser || (storedUser.role !== "admin" && storedUser.role !== "librarian")) {
       navigate("/"); // redirect to homepage
+    }
+    // If librarian, redirect to librarian dashboard
+    if (storedUser && storedUser.role === "librarian") {
+      navigate("/librarian-dashboard", { replace: true });
+      return;
     }
     setUser({
       name: `${storedUser.firstName || ''} ${storedUser.lastName || ''}`.trim(),
@@ -940,6 +951,8 @@ const AdminDashboard = () => {
             setSelectedSubResource("All Books");
           }} />}
 
+          {!selectedResource && <OverdueNotificationPanel />}
+
           {selectedSubResource === "Borrowed Books" && (
             <BorrowedBooksTable />
           )}
@@ -954,6 +967,10 @@ const AdminDashboard = () => {
 
           {selectedSubResource === "Reserved Books" && (
             <ReservedBooksTable />
+          )}
+
+          {selectedSubResource === "Archive Books" && (
+            <ArchiveBooksTable />
           )}
 
           {selectedSubResource === "All Books" && (
