@@ -227,9 +227,37 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .about-container {
+    padding: 30px 20px;
+  }
+
+  .about-header {
+    margin-bottom: 40px;
+  }
+
+  .about-header h1 {
+    font-size: 36px;
+  }
+
+  .about-section {
+    padding: 30px;
+  }
+
+  .contact-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+}
+
 @media (max-width: 768px) {
   .about-container {
     padding: 20px 15px;
+  }
+
+  .about-header {
+    margin-bottom: 30px;
+    max-width: 100%;
   }
 
   .about-header h1 {
@@ -244,10 +272,17 @@
   .about-section {
     padding: 25px;
     margin-bottom: 20px;
+    border-radius: 10px;
   }
 
   .about-section h2 {
     font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .about-section p {
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   .contact-grid {
@@ -255,61 +290,117 @@
     gap: 20px;
   }
 
+  .contact-item {
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .contact-icon {
+    font-size: 28px;
+    min-width: 40px;
+  }
+
+  .contact-info h3 {
+    font-size: 16px;
+  }
+
+  .contact-info p {
+    font-size: 14px;
+  }
+
+  .map-container {
+    margin-top: 20px;
+  }
+
   .map-container iframe {
     height: 350px;
+    border-radius: 8px;
   }
 
   .directions-button {
     width: 100%;
-    padding: 14px 20px;
+    padding: 12px 20px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
   .about-container {
     padding: 15px 10px;
+    min-height: auto;
+  }
+
+  .about-header {
+    margin-bottom: 20px;
   }
 
   .about-header h1 {
-    font-size: 26px;
+    font-size: 24px;
+  }
+
+  .about-header p {
+    font-size: 13px;
   }
 
   .about-section {
-    padding: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
   }
 
   .about-section h2 {
-    font-size: 20px;
+    font-size: 18px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
   }
 
   .about-section p {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 10px 0;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .contact-item {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+    padding: 12px;
+    min-height: auto;
   }
 
   .contact-icon {
+    font-size: 24px;
+    min-width: 35px;
     justify-content: flex-start;
   }
 
   .contact-info h3 {
-    font-size: 15px;
+    font-size: 14px;
+    margin: 0 0 4px 0;
   }
 
   .contact-info p {
-    font-size: 13px;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .map-container {
+    margin-top: 15px;
   }
 
   .map-container iframe {
-    height: 300px;
+    height: 280px;
+    border-radius: 8px;
   }
 
   .directions-button {
     width: 100%;
-    padding: 12px 15px;
-    font-size: 13px;
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-top: 10px;
   }
 }

@@ -1033,7 +1033,96 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 50px;
+  }
+
+  .sidebar:hover {
+    width: 200px;
+  }
+
+  .search-container {
+    width: 400px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .modal-content {
+    padding: 2rem;
+    min-width: 500px;
+  }
+
+  .modal-body-flex {
+    gap: 20px;
+  }
+}
+
 @media (max-width: 768px) {
+  .sidebar {
+    width: 50px;
+    padding: 15px;
+  }
+
+  .sidebar:hover {
+    width: 180px;
+  }
+
+  .header {
+    padding: 10px 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .search-container {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .search-container input[type="text"] {
+    font-size: 14px;
+  }
+
+  .profile-link {
+    padding: 4px 8px;
+    font-size: 16px;
+  }
+
+  .content {
+    padding: 15px;
+    overflow-y: auto;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    min-width: auto;
+    width: 95vw;
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+
+  .modal-body-flex {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .modal-image-wrapper {
+    margin-right: 0;
+    max-width: 100%;
+    height: 250px;
+  }
+
+  .modal-inputs {
+    min-width: auto;
+    width: 100%;
+  }
+
   .filters {
     flex-direction: column;
     gap: 10px;
@@ -1045,30 +1134,371 @@ body {
   }
 
   .approved-books-table {
-    font-size: 14px;
+    font-size: 13px;
+    min-width: 600px;
   }
 
   .approved-books-table th,
   .approved-books-table td {
-    padding: 8px;
+    padding: 8px 6px;
   }
 
   .pending-reservations-section {
     padding: 15px;
-    margin: 20px 0;
+    margin: 15px 0;
+  }
+
+  .reservation-table {
+    font-size: 12px;
+    min-width: 550px;
   }
 
   .reservation-table th,
   .reservation-table td {
-    padding: 8px;
-    font-size: 0.9em;
+    padding: 6px;
+    font-size: 0.85em;
   }
 
   .pending-borrowing-container {
     padding: 15px;
-    margin: 20px 0;
+    margin: 15px 0;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .book-item {
+    width: 200px;
+    height: 350px;
+    margin: 8px;
+  }
+
+  .book-footer h4 {
+    font-size: 13px;
+  }
+
+  .book-actions button {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+  }
+
+  .modal-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .banner {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .banner h2 {
+    font-size: 20px;
+  }
+
+  .shelf-button {
+    padding: 8px 14px;
+    font-size: 13px;
   }
 }
+
+@media (max-width: 480px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 10px;
+    border-radius: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+
+  .sidebar:hover {
+    width: 100%;
+  }
+
+  .nav-links {
+    flex-direction: row;
+    gap: 5px;
+    margin-left: 5px;
+    overflow-x: auto;
+  }
+
+  .nav-links a span,
+  .nav-links button span {
+    opacity: 0;
+    display: none;
+  }
+
+  .nav-links a,
+  .nav-links button {
+    padding: 8px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .main-content {
+    max-height: calc(100vh - 60px);
+  }
+
+  .header {
+    padding: 8px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    min-height: auto;
+  }
+
+  .search-container {
+    width: 100%;
+    max-width: none;
+  }
+
+  .search-container input[type="text"] {
+    font-size: 16px;
+  }
+
+  .profile-link {
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+  }
+
+  .content {
+    padding: 10px;
+    height: auto;
+  }
+
+  .modal-overlay {
+    padding: 5px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    border-radius: 0;
+    min-width: auto;
+  }
+
+  .modal-body-flex {
+    flex-direction: column;
+    gap: 10px;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+
+  .modal-image-wrapper {
+    margin-right: 0;
+    height: 200px;
+    width: 100%;
+  }
+
+  .modal-inputs {
+    min-width: auto;
+    width: 100%;
+    gap: 15px;
+  }
+
+  .modal-form {
+    gap: 6px;
+  }
+
+  .modal-form input[type="date"] {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .modal-details p {
+    font-size: 12px;
+  }
+
+  .modal-btn {
+    padding: 8px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .modal-btn.cancel {
+    margin-top: 10px;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-input,
+  .status-filter {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .approved-books-table {
+    font-size: 11px;
+    min-width: 500px;
+  }
+
+  .approved-books-table th,
+  .approved-books-table td {
+    padding: 6px 4px;
+  }
+
+  .pending-reservations-section {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+
+  .reservation-table {
+    font-size: 10px;
+    min-width: 450px;
+  }
+
+  .reservation-table th,
+  .reservation-table td {
+    padding: 4px;
+    font-size: 0.75em;
+  }
+
+  .pending-borrowing-container {
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .book-item {
+    width: 150px;
+    height: 300px;
+    margin: 5px;
+  }
+
+  .book-image {
+    height: 180px !important;
+  }
+
+  .book-footer {
+    padding: 8px;
+    gap: 3px;
+  }
+
+  .book-footer h4 {
+    font-size: 11px;
+  }
+
+  .book-info-actions p {
+    font-size: 10px;
+  }
+
+  .book-actions {
+    gap: 3px;
+  }
+
+  .book-actions button {
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .banner {
+    padding: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .banner h2 {
+    font-size: 16px;
+  }
+
+  .banner p {
+    font-size: 12px;
+  }
+
+  .shelf-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .pending-container {
+    padding: 10px;
+    height: auto;
+  }
+
+  .header-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .styled-table {
+    font-size: 10px;
+    min-width: 500px;
+  }
+
+  .styled-table th,
+  .styled-table td {
+    padding: 6px 4px;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .empty-state {
+    padding: 20px 10px;
+    font-size: 13px;
+  }
+
+  .add-book-modal-content {
+    width: 95vw !important;
+    max-width: 100% !important;
+  }
+
+  .resource-submenu {
+    gap: 5px;
+  }
+
+  .resource-option {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
 
 /* Pending Borrowing Styles */
 .pending-borrowing-container {

@@ -130,6 +130,32 @@ body {
 }
 
 /* Mobile responsiveness */
+@media (max-width: 1024px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+
+    .auth-image {
+        display: none;
+    }
+
+    .auth-container {
+        flex: unset;
+        height: 100vh;
+        padding: 20px;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 500px;
+        padding: 2.5rem;
+    }
+
+    .auth-form {
+        width: 100%;
+    }
+}
+
 @media (max-width: 768px) {
     .auth-wrapper {
         flex-direction: column;
@@ -142,6 +168,95 @@ body {
     .auth-container {
         flex: unset;
         height: 100vh;
+        padding: 15px;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 450px;
+        padding: 1.5rem;
+        border-radius: 15px;
+    }
+
+    .auth-card h2 {
+        font-size: 24px;
+        margin-bottom: 1rem;
+    }
+
+    .auth-form {
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    .auth-form input,
+    .auth-form select {
+        font-size: 16px;
+        padding: 10px;
+        margin-bottom: 3px;
+    }
+
+    .auth-form button {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+    }
+
+    .logo {
+        width: 120px;
+    }
+
+    .terms-text {
+        font-size: 0.7rem;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-container {
+        height: auto;
+        min-height: 100vh;
+        padding: 10px;
+        justify-content: flex-start;
+        padding-top: 20px;
+    }
+
+    .auth-card {
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .auth-card h2 {
+        font-size: 20px;
+        margin-bottom: 0.8rem;
+    }
+
+    .auth-form {
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .auth-form input,
+    .auth-form select {
+        font-size: 16px;
+        padding: 12px;
+        margin-bottom: 2px;
+    }
+
+    .auth-form button {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .logo {
+        width: 100px;
+        margin-bottom: 0.8rem;
+    }
+
+    .terms-text {
+        font-size: 0.65rem;
+        margin-top: 0.5rem;
     }
 }
 

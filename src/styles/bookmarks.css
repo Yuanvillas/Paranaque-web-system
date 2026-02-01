@@ -326,6 +326,93 @@
   .clear-all-btn {
     width: 100%;
   }
+
+  .bookmark-card {
+    border-radius: 10px;
+  }
+
+  .book-cover {
+    height: 220px;
+  }
+
+  .card-actions {
+    flex-wrap: wrap;
+  }
+
+  .remove-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 600px) {
+  .bookmarks-container {
+    padding: 20px 10px;
+  }
+
+  .bookmarks-header {
+    margin-bottom: 30px;
+  }
+
+  .bookmarks-header h1 {
+    font-size: 28px;
+    gap: 8px;
+  }
+
+  .bookmarks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+  }
+
+  .bookmark-card {
+    border-radius: 8px;
+  }
+
+  .book-cover {
+    height: 200px;
+  }
+
+  .book-details {
+    padding: 15px;
+  }
+
+  .book-details h3 {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .book-details .author {
+    font-size: 12px;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .book-info {
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .card-actions {
+    padding: 12px 15px;
+    gap: 8px;
+  }
+
+  .remove-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .bookmarks-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .clear-all-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -334,23 +421,64 @@
   }
 
   .bookmarks-header h1 {
-    font-size: 26px;
+    font-size: 24px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bookmarks-header p {
+    font-size: 13px;
   }
 
   .bookmarks-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .bookmark-card {
+    border-radius: 8px;
   }
 
   .book-cover {
     height: 180px;
   }
 
+  .book-details {
+    padding: 12px;
+  }
+
   .book-details h3 {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .book-details .author {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .badge {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .book-info {
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .book-info span {
+    padding: 2px 6px;
+  }
+
+  .card-actions {
+    padding: 10px 12px;
+    gap: 6px;
+    flex-direction: column;
+  }
+
+  .remove-btn {
+    padding: 10px;
+    font-size: 11px;
+    width: 100%;
   }
 
   .empty-state {
@@ -359,5 +487,22 @@
 
   .empty-icon {
     font-size: 48px;
+  }
+
+  .empty-state h2 {
+    font-size: 20px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  .bookmark-count {
+    font-size: 14px;
+  }
+
+  .clear-all-btn {
+    width: 100%;
+    padding: 10px;
   }
 }

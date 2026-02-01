@@ -12,6 +12,7 @@
     width: 100%;
     display: flex;
     margin-right: 20px;
+    flex-wrap: wrap;
 }
 
 .modal-content {
@@ -23,6 +24,8 @@
   max-width: 90vw;
   position: relative;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  overflow-y: auto;
+  max-height: 90vh;
 }
 
 /* Shelf Tabs */
@@ -150,10 +153,12 @@
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #eee;
+  flex-wrap: wrap;
 }
 
 .shelf-card-btn {
   flex: 1;
+  min-width: 100px;
   padding: 8px 12px;
   border: none;
   border-radius: 6px;
@@ -202,4 +207,115 @@
   font-weight: 700;
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
   z-index: 5;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .modal-content {
+    min-width: 500px;
+    padding: 1.5rem;
+    padding-right: 1rem;
+  }
+
+  .shelf-cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .image-info-container {
+    margin-right: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    min-width: auto;
+    width: 95vw;
+    max-width: 100%;
+    padding: 1.5rem 1rem;
+    padding-right: 1rem;
+    border-radius: 8px;
+  }
+
+  .shelf-cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .shelf-card {
+    padding: 15px;
+  }
+
+  .shelf-card h3 {
+    font-size: 14px;
+  }
+
+  .image-info-container {
+    margin-right: 5px;
+  }
+
+  .shelf-card-actions {
+    gap: 5px;
+  }
+
+  .shelf-card-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    border-radius: 0;
+    min-width: auto;
+  }
+
+  .shelf-cards-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tab-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 15px;
+  }
+
+  .shelf-card {
+    padding: 12px;
+  }
+
+  .shelf-card h3 {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .shelf-card-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .shelf-card-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .image-info-container {
+    flex-direction: column;
+    margin-right: 0;
+  }
 }
