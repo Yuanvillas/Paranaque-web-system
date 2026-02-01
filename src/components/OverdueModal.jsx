@@ -57,11 +57,16 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
 
       Swal.hideLoading();
 
-      await Swal.fire({
-        title: 'Parañaledge',
-        text: 'Return request submitted successfully! The librarian will review and approve your request soon.',
+      // Show toast notification
+      Swal.fire({
+        title: '✓ Request Submitted!',
+        text: 'The librarian will review your request soon.',
         icon: 'success',
-        confirmButtonText: 'OK'
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
       });
 
       // Mark book as requested
