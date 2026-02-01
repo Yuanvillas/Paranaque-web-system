@@ -47,7 +47,7 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
 
       const condition = bookConditions[overdueTransaction._id] || 'good';
 
-      const response = await axios.post(
+      await axios.post(
         `https://paranaque-web-system.onrender.com/api/transactions/request-return/${overdueTransaction._id}`,
         {
           condition,
