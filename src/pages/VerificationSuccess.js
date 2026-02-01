@@ -9,6 +9,13 @@ function VerificationSuccess() {
   const email = searchParams.get("email");
 
   useEffect(() => {
+    // Broadcast verification completion to all other tabs
+    localStorage.setItem("verificationComplete", JSON.stringify({
+      email: email,
+      timestamp: Date.now(),
+      verified: true
+    }));
+
     // Clear any cached authentication data
     localStorage.removeItem("userEmail");
     localStorage.removeItem("user");

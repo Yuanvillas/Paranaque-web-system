@@ -14,6 +14,28 @@ function VerifyNotice() {
 
     if (!email) return;
 
+    // Listen for verification completion from other tabs
+    const handleStorageChange = (e) => {
+      if (e.key === "verificationComplete") {
+        const data = JSON.parse(e.newValue);
+        if (data && data.verified && data.email === email) {
+          // Verification completed in another tab
+          clearInterval(interval);
+          Swal.fire({
+            title: "Parañaledge",
+            text: "Email verified successfully! You can now log in.",
+            icon: "success",
+            confirmButtonText: "OK"
+          }).then(() => {
+            localStorage.removeItem("userEmail");
+            window.location.href = "/"; // Full page reload
+          });
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
     const interval = setInterval(async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/auth/is-verified?email=${email}`);
@@ -26,14 +48,17 @@ function VerifyNotice() {
             confirmButtonText: "OK"
           });
           localStorage.removeItem("userEmail");
-          navigate("/"); // redirect to login page
+          window.location.href = "/"; // Full page reload
         }
       } catch (err) {
         console.error("Verification check failed:", err);
       }
     }, 5000); // poll every 5 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [navigate]);
 
   return (
