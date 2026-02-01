@@ -1684,6 +1684,176 @@ const AdminDashboard = () => {
             </div>
           )}
 
+          {/* Books Modal */}
+          {showBooksModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowBooksModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Books Listed</h2>
+                  <button onClick={() => setShowBooksModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
+                </div>
+                {loadingModals ? <p>Loading...</p> : booksData.length === 0 ? <p style={{ color: '#999' }}>No books found.</p> : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}><thead><tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}><th style={{ padding: '10px', textAlign: 'left' }}>Title</th><th style={{ padding: '10px', textAlign: 'left' }}>Author</th><th style={{ padding: '10px', textAlign: 'left' }}>Category</th></tr></thead><tbody>{booksData.map((book, idx) => <tr key={idx} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px' }}>{book.title}</td><td style={{ padding: '10px' }}>{book.author}</td><td style={{ padding: '10px' }}>{book.category}</td></tr>)}</tbody></table></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Issued Modal */}
+          {showIssuedModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowIssuedModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Times Book Issued</h2>
+                  <button onClick={() => setShowIssuedModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
+                </div>
+                {loadingModals ? <p>Loading...</p> : issuedData.length === 0 ? <p style={{ color: '#999' }}>No issued books found.</p> : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}><thead><tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}><th style={{ padding: '10px', textAlign: 'left' }}>User</th><th style={{ padding: '10px', textAlign: 'left' }}>Book</th><th style={{ padding: '10px', textAlign: 'left' }}>Status</th></tr></thead><tbody>{issuedData.map((item, idx) => <tr key={idx} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px' }}>{item.userEmail}</td><td style={{ padding: '10px' }}>{item.bookTitle}</td><td style={{ padding: '10px' }}>{item.status}</td></tr>)}</tbody></table></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Returned Modal */}
+          {showReturnedModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowReturnedModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Times Books Returned</h2>
+                  <button onClick={() => setShowReturnedModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
+                </div>
+                {loadingModals ? <p>Loading...</p> : returnedData.length === 0 ? <p style={{ color: '#999' }}>No returned books found.</p> : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}><thead><tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}><th style={{ padding: '10px', textAlign: 'left' }}>User</th><th style={{ padding: '10px', textAlign: 'left' }}>Book</th><th style={{ padding: '10px', textAlign: 'left' }}>Status</th></tr></thead><tbody>{returnedData.map((item, idx) => <tr key={idx} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px' }}>{item.userEmail}</td><td style={{ padding: '10px' }}>{item.bookTitle}</td><td style={{ padding: '10px' }}>{item.status}</td></tr>)}</tbody></table></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Requests Modal */}
+          {showRequestsModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowRequestsModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Ongoing Requests</h2>
+                  <button onClick={() => setShowRequestsModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
+                </div>
+                {loadingModals ? <p>Loading...</p> : requestsData.length === 0 ? <p style={{ color: '#999' }}>No requests found.</p> : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}><thead><tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}><th style={{ padding: '10px', textAlign: 'left' }}>User</th><th style={{ padding: '10px', textAlign: 'left' }}>Book</th><th style={{ padding: '10px', textAlign: 'left' }}>Type</th><th style={{ padding: '10px', textAlign: 'left' }}>Status</th></tr></thead><tbody>{requestsData.map((req, idx) => <tr key={idx} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px' }}>{req.userEmail}</td><td style={{ padding: '10px' }}>{req.bookTitle}</td><td style={{ padding: '10px' }}>{req.type}</td><td style={{ padding: '10px' }}>{req.status}</td></tr>)}</tbody></table></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Categories Modal */}
+          {showCategoriesModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }} onClick={() => setShowCategoriesModal(false)}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '25px',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                width: '100%',
+                maxWidth: '1000px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Listed Categories</h2>
+                  <button onClick={() => setShowCategoriesModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#999' }}>✕</button>
+                </div>
+                {loadingModals ? <p>Loading...</p> : categoriesData.length === 0 ? <p style={{ color: '#999' }}>No categories found.</p> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>{categoriesData.map((cat, idx) => <div key={idx} style={{ padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>{cat.name}</div>)}</div>}
+              </div>
+            </div>
+          )}
+
         </section>
       </main>
     </div>
