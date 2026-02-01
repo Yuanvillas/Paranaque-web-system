@@ -48,7 +48,10 @@ const TransactionsTable = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    if (!date) return 'Invalid Date';
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) return 'Invalid Date';
+    return parsedDate.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

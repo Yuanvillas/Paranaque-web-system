@@ -1058,4 +1058,61 @@ router.post('/overdue/notify-all', async (req, res) => {
   }
 });
 
+// Admin endpoint: Fix all transactions with missing endDate
+router.post('/admin/fix-missing-dates', async (req, res) => {
+  try {
+    const { adminEmail } = req.body;
+    
+    // Verify admin email is provided
+    if (!adminEmail) {
+      return res.status(400).json({ message: 'Admin email is required' });
+    }
+
+    // Find all transactions without endDate
+    const transactionsWithoutEndDate = await Transaction.find({
+      $or: [
+        { endDate: null },
+        { endDate: { $exists: false } }
+      ]
+    });
+
+    console.log(`Found ${transactionsWithoutEndDate.length} transactions without endDate`);
+
+    if (transactionsWithoutEndDate.length === 0) {
+      return res.json({ 
+        message: 'No transactions need fixing',
+        fixed: 0
+      });
+    }
+
+    // Update all of them
+    const updatePromises = transactionsWithoutEndDate.map(transaction => {
+      // Set endDate to 7 days from startDate (or now if startDate doesn't exist)
+      const baseDate = transaction.startDate || new Date();
+      transaction.endDate = new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return transaction.save();
+    });
+
+    await Promise.all(updatePromises);
+
+    // Verify the fix
+    const stillMissing = await Transaction.find({
+      $or: [
+        { endDate: null },
+        { endDate: { $exists: false } }
+      ]
+    });
+
+    res.json({ 
+      message: `Fixed ${transactionsWithoutEndDate.length} transactions`,
+      fixed: transactionsWithoutEndDate.length,
+      stillMissing: stillMissing.length,
+      success: stillMissing.length === 0
+    });
+  } catch (err) {
+    console.error('Error fixing transactions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
