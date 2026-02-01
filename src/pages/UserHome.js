@@ -3,6 +3,8 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { SearchContext } from "../layouts/UserLayout";
+import OverdueModal from "../components/OverdueModal";
+import axios from "axios";
 import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark as fasBookmark } from "@fortawesome/free-solid-svg-icons"; // filled
@@ -21,12 +23,48 @@ const UserHome = () => {
   const [showModal, setShowModal] = useState(false);
   const [reserveDate, setReserveDate] = useState("");
   const [pendingReservations, setPendingReservations] = useState([]);
+  const [showOverdueModal, setShowOverdueModal] = useState(false);
+  const [overdueBooks, setOverdueBooks] = useState([]);
   const searchTerm = useContext(SearchContext);
   const userEmail = localStorage.getItem("userEmail");
   const [bookmarks, setBookmarks] = useState([]);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
+
+  // Check for overdue books on component mount
+  useEffect(() => {
+    const checkOverdues = async () => {
+      if (!userEmail) return;
+
+      try {
+        const response = await axios.get(
+          `https://paranaque-web-system.onrender.com/api/transactions/overdue/user/${userEmail}`
+        );
+
+        const overdueData = response.data.overdue || [];
+
+        // Check if overdues were already handled in this session
+        const overduesHandled = sessionStorage.getItem('overduesHandled');
+
+        if (overdueData && overdueData.length > 0 && !overduesHandled) {
+          // Has unresolved overdues
+          setOverdueBooks(overdueData);
+          setShowOverdueModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking overdue books:', error);
+      }
+    };
+
+    checkOverdues();
+  }, [userEmail]);
+
+  const handleOverdueModalClose = () => {
+    // Mark overdues as handled in this session
+    sessionStorage.setItem('overduesHandled', 'true');
+    setShowOverdueModal(false);
+  };
 
   const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
@@ -365,6 +403,13 @@ const UserHome = () => {
 
   return (
     <>
+      {showOverdueModal && (
+        <OverdueModal 
+          overdueBooks={overdueBooks} 
+          userEmail={userEmail}
+          onClose={handleOverdueModalClose}
+        />
+      )}
       <div style={{ margin: "20px" }}>
         <div style={{ 
           backgroundColor: "#f9f9f9", 

@@ -144,6 +144,8 @@ function Login() {
   };
 
   const handleOverdueModalClose = () => {
+    // Mark overdues as handled in this session
+    sessionStorage.setItem('overduesHandled', 'true');
     setShowOverdueModal(false);
     navigate("/user-home");
   };
