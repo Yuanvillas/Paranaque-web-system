@@ -19,7 +19,6 @@ import {
   faHome
 } from "@fortawesome/free-solid-svg-icons";
 import BooksTable from "../components/BooksTable";
-import AdminDashboardTable from "../components/AdminDashboardTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
