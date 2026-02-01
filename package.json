@@ -57,5 +57,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5050"
+  "proxy": "http://localhost:5050",
+  "devDependencies": {
+    "ajv": "^8.17.1"
+  }
 }
