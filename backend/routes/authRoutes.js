@@ -270,6 +270,18 @@ router.get('/profile/:email', async (req, res) => {
   }
 });
 
+// Get user basic info (for post-verification redirect)
+router.get('/user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email }).select('email role firstName lastName');
+    if (!user) return res.status(404).json({ message: 'User not found', user: null });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: err.message, user: null });
+  }
+});
+
 // Update profile
 router.put('/profile/:email', async (req, res) => {
   console.log("/profile/", req.params);
