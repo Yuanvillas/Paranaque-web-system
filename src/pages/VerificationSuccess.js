@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../imgs/liblogo.png";
 import "../components/App.css";
@@ -7,45 +7,15 @@ function VerificationSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check user's role after verification
-    const checkUserRole = async () => {
-      try {
-        const response = await fetch(`https://paranaque-web-system.onrender.com/api/auth/user/${email}`);
-        if (response.ok) {
-          const data = await response.json();
-          const userRole = data.user?.role;
-          
-          // Redirect to appropriate dashboard based on role
-          if (userRole === 'admin' || userRole === 'librarian') {
-            navigate('/admin-dashboard');
-          } else {
-            navigate('/home');
-          }
-        } else {
-          // Default to login if check fails
-          navigate("/");
-        }
-      } catch (error) {
-        console.error('Error checking user role:', error);
-        navigate("/");
-      }
-    };
-
-    // Auto-redirect to login after 5 seconds (or sooner if role check completes)
+    // Auto-redirect to login after 5 seconds
     const timer = setTimeout(() => {
-      if (loading) {
-        navigate("/");
-      }
+      navigate("/");
     }, 5000);
 
-    checkUserRole();
-    setLoading(false);
-
     return () => clearTimeout(timer);
-  }, [navigate, email, loading]);
+  }, [navigate]);
 
   return (
     <div
