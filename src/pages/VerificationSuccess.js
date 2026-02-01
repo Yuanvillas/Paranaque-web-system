@@ -28,7 +28,7 @@ function VerificationSuccess() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [email]);
 
   return (
     <div
