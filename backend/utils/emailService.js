@@ -28,8 +28,9 @@ const sendEmail = async ({ to, subject, text, html }) => {
     }
     
     console.log('📧 Sending email via Resend to:', to);
+    const emailFrom = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
     const result = await emailService.emails.send({
-      from: 'Parañaledge <onboarding@resend.dev>',
+      from: emailFrom,
       to,
       subject,
       html: html || `<p>${text}</p>`
