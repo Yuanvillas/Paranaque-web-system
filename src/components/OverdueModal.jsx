@@ -43,23 +43,21 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
     });
 
     if (confirmed.isConfirmed) {
+      // Close all SweetAlert dialogs
+      Swal.close();
+      
       // Clear all session data
       localStorage.removeItem('userEmail');
       localStorage.removeItem('user');
       sessionStorage.clear();
       
-      // Redirect to login immediately
-      navigate('/', { replace: true });
+      // Close the overdue modal
+      onClose();
       
-      // Show success message (non-blocking)
-      Swal.fire({
-        title: 'Logged Out',
-        text: 'You have been successfully logged out.',
-        icon: 'success',
-        confirmButtonText: 'OK',
-        timer: 2000,
-        timerProgressBar: true
-      });
+      // Redirect to login immediately
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
     }
   };
 
