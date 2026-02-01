@@ -148,8 +148,13 @@ router.get('/verify/:token', async (req, res) => {
     user.verificationToken = undefined;
     await user.save();
 
-    // Redirect to success page with email parameter
-    res.redirect(`${FRONTEND_URL}/verify-success?email=${encodeURIComponent(user.email)}`);
+    // Set cache-control headers to prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    // Redirect to success page with email parameter and cache busting
+    res.redirect(`${FRONTEND_URL}/verify-success?email=${encodeURIComponent(user.email)}&t=${Date.now()}`);
   } catch (err) {
     res.redirect(`${FRONTEND_URL}/verify-error?reason=server_error`);
   }

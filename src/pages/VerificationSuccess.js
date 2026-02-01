@@ -9,9 +9,15 @@ function VerificationSuccess() {
   const email = searchParams.get("email");
 
   useEffect(() => {
-    // Auto-redirect to login after 5 seconds
+    // Clear any cached authentication data
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("user");
+    sessionStorage.clear();
+
+    // Auto-redirect to login after 5 seconds with full page reload
     const timer = setTimeout(() => {
-      navigate("/");
+      // Use window.location to force a full page reload and clear all caches
+      window.location.href = "/";
     }, 5000);
 
     return () => clearTimeout(timer);
@@ -107,7 +113,13 @@ function VerificationSuccess() {
           }}
         >
           <button
-            onClick={() => navigate("/")}
+            onClick={() => {
+              // Clear cache and redirect with full page reload
+              localStorage.removeItem("userEmail");
+              localStorage.removeItem("user");
+              sessionStorage.clear();
+              window.location.href = "/";
+            }}
             style={{
               padding: "12px 30px",
               backgroundColor: "#2e7d32",
