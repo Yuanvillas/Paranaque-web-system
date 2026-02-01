@@ -32,7 +32,8 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
       confirmButtonColor: '#d32f2f',
       cancelButtonColor: '#666',
       confirmButtonText: 'Yes, Logout',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      z_index: 10001
     });
 
     if (confirmed.isConfirmed) {
