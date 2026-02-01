@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 import './OverdueModal.css';
 
 /**
@@ -17,9 +18,41 @@ import './OverdueModal.css';
  */
 
 const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
+  const navigate = useNavigate();
   const [submittingBook, setSubmittingBook] = useState(null);
   const [requestedBooks, setRequestedBooks] = useState(new Set());
   const [bookConditions, setBookConditions] = useState({});
+
+  const handleLogout = async () => {
+    const confirmed = await Swal.fire({
+      title: 'Logout Confirmation',
+      text: 'Are you sure you want to logout? Another user can then login with their account.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d32f2f',
+      cancelButtonColor: '#666',
+      confirmButtonText: 'Yes, Logout',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (confirmed.isConfirmed) {
+      // Clear all session data
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('user');
+      sessionStorage.clear();
+      
+      // Show success message
+      Swal.fire({
+        title: 'Logged Out',
+        text: 'You have been successfully logged out.',
+        icon: 'success',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        // Redirect to login
+        navigate('/', { replace: true });
+      });
+    }
+  };
 
   const handleRequestReturn = async (overdueTransaction) => {
     if (!overdueTransaction._id) {
@@ -207,6 +240,13 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
 
         <div className="overdue-modal-footer">
           <p className="footer-note">If you need assistance, please contact the librarian.</p>
+          <button 
+            className="logout-btn"
+            onClick={handleLogout}
+            title="Switch to another user account"
+          >
+            🚪 Logout
+          </button>
         </div>
       </div>
     </div>

@@ -321,6 +321,10 @@
   padding: 15px 25px;
   border-top: 1px solid #e0e0e0;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
 }
 
 .footer-note {
@@ -328,6 +332,29 @@
   color: #999;
   font-size: 12px;
   line-height: 1.5;
+  flex: 1;
+}
+
+.logout-btn {
+  background-color: #666;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background-color: #444;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.logout-btn:active {
+  transform: translateY(1px);
 }
 
 /* Scrollbar styling for overdue books list */
@@ -369,5 +396,19 @@
 
   .days-overdue-badge {
     align-self: flex-start;
+  }
+
+  .overdue-modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-note {
+    order: 2;
+  }
+
+  .logout-btn {
+    order: 1;
+    width: 100%;
   }
 }
