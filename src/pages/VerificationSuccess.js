@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import logo from "../imgs/liblogo.png";
 import "../components/App.css";
 
 function VerificationSuccess() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
 
