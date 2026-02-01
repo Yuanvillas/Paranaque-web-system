@@ -48,15 +48,17 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
       localStorage.removeItem('user');
       sessionStorage.clear();
       
-      // Show success message
+      // Redirect to login immediately
+      navigate('/', { replace: true });
+      
+      // Show success message (non-blocking)
       Swal.fire({
         title: 'Logged Out',
         text: 'You have been successfully logged out.',
         icon: 'success',
-        confirmButtonText: 'OK'
-      }).then(() => {
-        // Redirect to login
-        navigate('/', { replace: true });
+        confirmButtonText: 'OK',
+        timer: 2000,
+        timerProgressBar: true
       });
     }
   };
