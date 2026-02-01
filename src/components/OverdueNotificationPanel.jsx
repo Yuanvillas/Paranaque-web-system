@@ -31,7 +31,7 @@ const OverdueNotificationPanel = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get('/api/transactions/overdue/all');
+      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/overdue/all');
       
       // Process data for statistics
       const overdue = response.data.overdue || [];
@@ -75,7 +75,7 @@ const OverdueNotificationPanel = () => {
 
     try {
       const response = await axios.post(
-        '/api/transactions/overdue/notify-all',
+        'https://paranaque-web-system.onrender.com/api/transactions/overdue/notify-all',
         {
           sendEmails: !dryRun,
           markReminderSent: !dryRun,
