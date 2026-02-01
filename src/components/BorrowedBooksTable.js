@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import Swal from 'sweetalert2';
 
 const BorrowedBooksTable = () => {
   const [borrowedBooks, setBorrowedBooks] = useState([]);
