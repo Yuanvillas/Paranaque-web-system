@@ -34,55 +34,6 @@ const BorrowedBooksTable = () => {
     fetchAllBooks();
   }, []);
 
-
-  const handleReturn = async (bookId, userEmail) => {
-    console.log("handleReturn Clicked!", bookId, userEmail);
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/books/return/${bookId}`, {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ bookId, userEmail })
-      });
-      console.log("Response status:", res.status, res.ok);
-
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Return successful:", data);
-        await Swal.fire({
-          title: "Parañaledge",
-          text: "Book returned successfully!",
-          icon: "success",
-          confirmButtonText: "OK"
-        });
-        // Refresh the data after successful return
-        console.log("Fetching all books after return...");
-        await fetchAllBooks();
-        console.log("Books refreshed");
-      } else {
-        const data = await res.json();
-        console.error("Return failed:", data);
-        await Swal.fire({
-          title: "Parañaledge",
-          text: data.message || "Failed to return book",
-          icon: "error",
-          confirmButtonText: "OK"
-        });
-      }
-    } catch (err) {
-      console.error("Error in handleReturn:", err);
-      await Swal.fire({
-        title: "Parañaledge",
-        text: "Error returning book",
-        icon: "error",
-        confirmButtonText: "OK"
-      });
-    }
-  };
-
-  // handleReturnBook removed (no longer used)
-
   const getDaysOverdue = (dueDate) => {
     if (!dueDate) return 0;
     const today = new Date();
