@@ -977,15 +977,23 @@ router.post('/overdue/notify-all', async (req, res) => {
       const userOverdues = userOverdueMap[userEmail];
       
       try {
-        if (userOverdues.length === 1 && shouldSendEmails) {
+        if (userOverdues.length === 1) {
           // Single book - send individual notification
           const { transaction, daysOverdue } = userOverdues[0];
-          const result = await sendOverdueNotificationEmail(
-            userEmail,
-            transaction.bookTitle,
-            transaction.endDate,
-            daysOverdue
-          );
+          
+          let result;
+          if (shouldSendEmails) {
+            result = await sendOverdueNotificationEmail(
+              userEmail,
+              transaction.bookTitle,
+              transaction.endDate,
+              daysOverdue
+            );
+          } else {
+            // Dry run - simulate success
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+          
           notificationResults.push({
             userEmail,
             success: !result.error,
@@ -993,11 +1001,13 @@ router.post('/overdue/notify-all', async (req, res) => {
             messageId: result.messageId
           });
 
-          transactionUpdates.push({
-            transactionId: transaction._id,
-            reminderSent: markReminderSent
-          });
-        } else if (userOverdues.length > 1 && shouldSendEmails) {
+          if (shouldSendEmails) {
+            transactionUpdates.push({
+              transactionId: transaction._id,
+              reminderSent: markReminderSent
+            });
+          }
+        } else if (userOverdues.length > 1) {
           // Multiple books - send bulk notification
           const booksData = userOverdues.map(({ transaction, daysOverdue }) => ({
             bookTitle: transaction.bookTitle,
@@ -1005,7 +1015,14 @@ router.post('/overdue/notify-all', async (req, res) => {
             daysOverdue
           }));
 
-          const result = await sendOverdueReminderEmail(userEmail, booksData);
+          let result;
+          if (shouldSendEmails) {
+            result = await sendOverdueReminderEmail(userEmail, booksData);
+          } else {
+            // Dry run - simulate success
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+          
           notificationResults.push({
             userEmail,
             success: !result.error,
@@ -1013,12 +1030,14 @@ router.post('/overdue/notify-all', async (req, res) => {
             messageId: result.messageId
           });
 
-          userOverdues.forEach(({ transaction }) => {
-            transactionUpdates.push({
-              transactionId: transaction._id,
-              reminderSent: markReminderSent
+          if (shouldSendEmails) {
+            userOverdues.forEach(({ transaction }) => {
+              transactionUpdates.push({
+                transactionId: transaction._id,
+                reminderSent: markReminderSent
+              });
             });
-          });
+          }
         }
 
         await new Log({
