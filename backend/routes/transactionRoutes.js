@@ -805,8 +805,11 @@ router.get('/overdue/user/:email', async (req, res) => {
     const overdueData = overdueTransactions.map(transaction => {
       const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
       return {
+        _id: transaction._id,
         transactionId: transaction._id,
+        bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
+        endDate: transaction.endDate,
         dueDate: transaction.endDate,
         startDate: transaction.startDate,
         daysOverdue,
