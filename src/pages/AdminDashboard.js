@@ -1310,11 +1310,6 @@ const AdminDashboard = () => {
             </div>
           ) : null}
 
-          {!selectedResource && <AdminDashboardTable onViewResources={() => {
-            setSelectedResource("Resource Management");
-            setSelectedSubResource("All Books");
-          }} />}
-
           {!selectedResource && <OverdueNotificationPanel />}
 
           {selectedSubResource === "Borrowed Books" && (
