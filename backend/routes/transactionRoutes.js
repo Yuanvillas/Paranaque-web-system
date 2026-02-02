@@ -504,6 +504,135 @@ router.get('/reserved-books', async (req, res) => {
   }
 });
 
+// Send notifications to users with pending reservations
+router.post('/reservation/notify-pending', async (req, res) => {
+  try {
+    const {
+      sendEmails: shouldSendEmails = true,
+      markNotificationSent = false
+    } = req.body;
+
+    // Find all pending reservations
+    const pendingReservations = await Transaction.find({
+      type: 'reserve',
+      status: 'pending'
+    });
+
+    if (pendingReservations.length === 0) {
+      return res.json({
+        message: 'No pending reservations found',
+        notificationsQueued: 0,
+        userCount: 0
+      });
+    }
+
+    // Group by user email
+    const userReservationMap = {};
+    pendingReservations.forEach(transaction => {
+      if (!userReservationMap[transaction.userEmail]) {
+        userReservationMap[transaction.userEmail] = [];
+      }
+      userReservationMap[transaction.userEmail].push(transaction);
+    });
+
+    const userEmails = Object.keys(userReservationMap);
+    const { sendReservationPendingEmail } = require('../utils/emailService');
+
+    let notificationResults = [];
+    let transactionUpdates = [];
+
+    for (const userEmail of userEmails) {
+      const userReservations = userReservationMap[userEmail];
+
+      try {
+        let result;
+        if (userReservations.length === 1) {
+          // Single reservation
+          const reservation = userReservations[0];
+
+          if (shouldSendEmails) {
+            result = await sendReservationPendingEmail(
+              userEmail,
+              reservation.bookTitle
+            );
+          } else {
+            // Dry run
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          if (markNotificationSent) {
+            transactionUpdates.push({
+              _id: reservation._id,
+              notificationSent: true
+            });
+          }
+
+          notificationResults.push({
+            userEmail,
+            bookTitle: reservation.bookTitle,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        } else {
+          // Multiple reservations
+          if (shouldSendEmails) {
+            result = await sendReservationPendingEmail(
+              userEmail,
+              `${userReservations.length} books`
+            );
+          } else {
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          userReservations.forEach(reservation => {
+            if (markNotificationSent) {
+              transactionUpdates.push({
+                _id: reservation._id,
+                notificationSent: true
+              });
+            }
+          });
+
+          notificationResults.push({
+            userEmail,
+            bookCount: userReservations.length,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        }
+      } catch (err) {
+        console.error(`Error sending email to ${userEmail}:`, err);
+        notificationResults.push({
+          userEmail,
+          status: 'failed',
+          error: err.message
+        });
+      }
+    }
+
+    // Update transactions if needed
+    if (markNotificationSent) {
+      for (const update of transactionUpdates) {
+        await Transaction.findByIdAndUpdate(update._id, {
+          notificationSent: true,
+          notificationSentAt: new Date()
+        });
+      }
+    }
+
+    res.json({
+      message: `Processed ${userEmails.length} users with pending reservations`,
+      notificationsQueued: notificationResults.length,
+      userCount: userEmails.length,
+      results: notificationResults,
+      isDryRun: !shouldSendEmails
+    });
+  } catch (err) {
+    console.error('Error in reservation notification:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.post('/borrow-request', async (req, res) => {
   try {
     const { bookId, userEmail } = req.body;

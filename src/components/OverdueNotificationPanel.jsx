@@ -84,9 +84,9 @@ const OverdueNotificationPanel = () => {
 
   const fetchReservationStatistics = async () => {
     try {
-      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/reservation/pending');
+      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/pending-reservations');
       
-      const reservations = response.data.reservations || [];
+      const reservations = response.data.transactions || [];
       const byUser = {};
 
       reservations.forEach(item => {
