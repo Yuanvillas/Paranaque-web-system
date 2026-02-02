@@ -599,6 +599,7 @@ router.post('/request-return/:transactionId', async (req, res) => {
       bookId: transaction.bookId,
       bookTitle: book.title,
       userEmail: transaction.userEmail,
+      status: 'pending',
       condition: condition || 'good',
       notes: notes || null
     });
@@ -623,7 +624,7 @@ router.post('/request-return/:transactionId', async (req, res) => {
 // Get all pending return requests (librarian view)
 router.get('/return-requests', async (req, res) => {
   try {
-    const returnRequests = await ReturnRequest.find({ status: 'pending' })
+    const returnRequests = await ReturnRequest.find({})
       .sort({ requestDate: -1 });
     
     res.json({ 
