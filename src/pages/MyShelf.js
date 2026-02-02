@@ -209,6 +209,25 @@ const MyShelf = () => {
 
       {error && <div className="error-msg">{error}</div>}
 
+      {borrowedBooks.length >= 3 && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '8px',
+          padding: '15px 20px',
+          marginBottom: '20px',
+          color: '#856404',
+          fontSize: '14px',
+          fontWeight: '500',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '20px' }}>⚠️</span>
+          <span>You have reached the borrowing limit of <strong>3 books</strong>. Please return some books before borrowing more.</span>
+        </div>
+      )}
+
       {/* Filter Tabs */}
       <div className="shelf-tabs">
         <button 

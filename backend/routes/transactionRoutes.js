@@ -520,6 +520,18 @@ router.post('/borrow-request', async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: 'You already have a pending or active borrow for this book.' });
     }
+
+    // Check borrowing limit - max 3 active borrowed books
+    const activeBorrowedCount = await Transaction.countDocuments({
+      userEmail,
+      type: 'borrow',
+      status: 'active'
+    });
+
+    if (activeBorrowedCount >= 3) {
+      return res.status(400).json({ message: 'You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.' });
+    }
+
     const transaction = new Transaction({
       bookId,
       userEmail,

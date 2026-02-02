@@ -182,6 +182,18 @@ const UserHome = () => {
       return;
     }
 
+    // Check borrowing limit
+    const activeBorrowedCount = borrowedBooks.filter(b => b.status === 'active').length;
+    if (activeBorrowedCount >= 3) {
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.",
+        icon: "warning",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
     if (!userEmail) {
       await Swal.fire({
         title: "Parañaledge",
@@ -683,15 +695,34 @@ const UserHome = () => {
 
               <div className="modal-inputs">
                 <div className="modal-form">
-                  <button
-                    className="modal-btn green"
-                    onClick={handleBorrow}
-                    disabled={((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0)}
-                    style={{ opacity: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 0.6 : 1, cursor: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 'not-allowed' : 'pointer' }}
-                  >
-                    Confirm Borrow
-                  </button>
-                </div>
+                  {(() => {
+                    const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
+                    const activeBorrowedCount = borrowedBooks.filter(b => b.status === 'active').length;
+                    const isLimitReached = activeBorrowedCount >= 3;
+                    const isDisabled = isBookUnavailable || isLimitReached;
+                    return (
+                      <>
+                        <button
+                          className="modal-btn green"
+                          onClick={handleBorrow}
+                          disabled={isDisabled}
+                          style={{ 
+                            opacity: isDisabled ? 0.6 : 1, 
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            backgroundColor: isLimitReached ? '#d1d5db' : '#4CAF50'
+                          }}
+                          title={isLimitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}
+                        >
+                          Confirm Borrow
+                        </button>
+                        {isLimitReached && (
+                          <p style={{ color: '#d32f2f', fontSize: '12px', marginTop: '8px' }}>
+                            ⚠️ Borrowing limit reached (3/3 books). Return some books to continue.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
 
                 <div className="modal-form">
                   <label>

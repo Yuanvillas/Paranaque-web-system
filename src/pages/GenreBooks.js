@@ -10,6 +10,7 @@ const GenreBooks = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [reserveDate, setReserveDate] = useState("");
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
   const userEmail = localStorage.getItem("userEmail");
 
   const fetchBooks = (p = page) => {
@@ -24,6 +25,22 @@ const GenreBooks = () => {
       .catch(console.error);
   };
 
+  const fetchBorrowedBooks = async () => {
+    if (!userEmail) return;
+    try {
+      const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
+      const data = await response.json();
+      if (response.ok) {
+        const borrowed = data.transactions.filter(
+          transaction => transaction.type === 'borrow' && transaction.status === 'active'
+        );
+        setBorrowedBooks(borrowed);
+      }
+    } catch (error) {
+      console.error("Error fetching borrowed books:", error);
+    }
+  };
+
   // Reset to page 1 when genre changes
   useEffect(() => {
     setPage(1);
@@ -35,11 +52,27 @@ const GenreBooks = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [genre, page]);
 
+  useEffect(() => {
+    fetchBorrowedBooks();
+  }, [userEmail]);
+
   const handleBorrow = async () => {
     if (!userEmail) {
       await Swal.fire({ title: "Parañaledge", text: "User email not found. Please log in.", icon: "error", confirmButtonText: "OK" });
       return;
     }
+
+    // Check borrowing limit
+    if (borrowedBooks.length >= 3) {
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.",
+        icon: "warning",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
     try {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/borrow-request`, {
         method: "POST",
@@ -204,15 +237,33 @@ const GenreBooks = () => {
 
               <div className="modal-inputs">
                 <div className="modal-form">
-                  <button
-                    className="modal-btn green"
-                    onClick={handleBorrow}
-                    disabled={((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0)}
-                    style={{ opacity: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 0.6 : 1, cursor: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 'not-allowed' : 'pointer' }}
-                  >
-                    Confirm Borrow
-                  </button>
-                </div>
+                  {(() => {
+                    const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
+                    const isLimitReached = borrowedBooks.length >= 3;
+                    const isDisabled = isBookUnavailable || isLimitReached;
+                    return (
+                      <>
+                        <button
+                          className="modal-btn green"
+                          onClick={handleBorrow}
+                          disabled={isDisabled}
+                          style={{ 
+                            opacity: isDisabled ? 0.6 : 1, 
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            backgroundColor: isLimitReached ? '#d1d5db' : '#4CAF50'
+                          }}
+                          title={isLimitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}
+                        >
+                          Confirm Borrow
+                        </button>
+                        {isLimitReached && (
+                          <p style={{ color: '#d32f2f', fontSize: '12px', marginTop: '8px' }}>
+                            ⚠️ Borrowing limit reached (3/3 books). Return some books to continue.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
 
                 <div className="modal-form">
                   <label>
