@@ -678,7 +678,16 @@ const OverdueNotificationPanel = () => {
         </div>
       )}
 
-      {/* Reservation Result Section */}
+      {error && (
+        <div className="error-banner">
+          ⚠️ {error}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OverdueNotificationPanel;      {/* Reservation Result Section */}
       {showReservationResult && reservationResult && (
         <div className={`result-section ${reservationResult.success ? 'success' : 'error'}`}>
           <div className="result-header">
