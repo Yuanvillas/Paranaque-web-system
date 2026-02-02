@@ -678,16 +678,7 @@ const OverdueNotificationPanel = () => {
         </div>
       )}
 
-      {error && (
-        <div className="error-banner">
-          ⚠️ {error}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default OverdueNotificationPanel;      {/* Reservation Result Section */}
+      {/* Reservation Result Section */}
       {showReservationResult && reservationResult && (
         <div className={`result-section ${reservationResult.success ? 'success' : 'error'}`}>
           <div className="result-header">
@@ -712,6 +703,220 @@ export default OverdueNotificationPanel;      {/* Reservation Result Section */}
                 <div className="detail-row">
                   <span className="detail-label">Total Reservations:</span>
                   <span className="detail-value">{reservationResult.data.reservationCount}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Users Notified:</span>
+                  <span className="detail-value">{reservationResult.data.notificationsQueued}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="result-message error-message">
+              ❌ Error: {reservationResult.error}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reservation Detail Modal */}
+      {showReservationDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            maxWidth: '800px',
+            width: '90%',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: '12px',
+            backgroundColor: '#fff',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            zIndex: 10000
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#333' }}>
+                📖 Pending Reservations Details
+              </h2>
+              <button
+                onClick={() => setShowReservationDetail(false)}
+                style={{
+                  fontSize: '28px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: 0
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ 
+              overflowY: 'auto', 
+              flex: 1, 
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              {pendingReservations.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                  No pending reservations found.
+                </p>
+              ) : (
+                pendingReservations.map((reservation, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '14px',
+                      backgroundColor: '#f9f9f9',
+                      borderRadius: '6px',
+                      borderLeft: '4px solid #667eea',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <p style={{ 
+                        margin: '0 0 6px 0', 
+                        fontSize: '14px', 
+                        fontWeight: '600', 
+                        color: '#333' 
+                      }}>
+                        📖 {reservation.bookTitle || 'Unknown Book'}
+                      </p>
+                      <p style={{ 
+                        margin: '4px 0', 
+                        fontSize: '13px', 
+                        color: '#666' 
+                      }}>
+                        👤 User: <strong>{reservation.userEmail}</strong>
+                      </p>
+                      <p style={{ 
+                        margin: '4px 0', 
+                        fontSize: '13px', 
+                        color: '#666' 
+                      }}>
+                        📅 Requested: <strong>{new Date(reservation.startDate).toLocaleDateString()}</strong>
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#EDE7F6',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                      marginLeft: '10px'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        color: '#667eea'
+                      }}>
+                        ⏳
+                      </p>
+                      <p style={{
+                        margin: '4px 0 0 0',
+                        fontSize: '11px',
+                        color: '#667eea',
+                        fontWeight: '600'
+                      }}>
+                        Pending
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '15px 20px',
+              borderTop: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px'
+            }}>
+              <button
+                onClick={() => setShowReservationDetail(false)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: '2px solid #ddd',
+                  backgroundColor: '#fff',
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#f0f0f0';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#fff';
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowReservationDetail(false);
+                  setTimeout(() => handleSendReservationNotifications(), 100);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.opacity = '0.9';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.opacity = '1';
+                }}
+              >
+                Send Notifications
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-banner">
+          ⚠️ {error}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OverdueNotificationPanel;
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Users Notified:</span>
