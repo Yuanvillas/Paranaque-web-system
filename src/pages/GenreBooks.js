@@ -264,6 +264,7 @@ const GenreBooks = () => {
                       </>
                     );
                   })()}
+                </div>
 
                 <div className="modal-form">
                   <label>

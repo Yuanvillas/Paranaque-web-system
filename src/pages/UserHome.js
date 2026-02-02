@@ -723,6 +723,7 @@ const UserHome = () => {
                       </>
                     );
                   })()}
+                </div>
 
                 <div className="modal-form">
                   <label>
