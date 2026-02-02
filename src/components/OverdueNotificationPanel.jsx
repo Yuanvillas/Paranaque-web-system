@@ -917,20 +917,7 @@ const OverdueNotificationPanel = () => {
 };
 
 export default OverdueNotificationPanel;
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Users Notified:</span>
-                  <span className="detail-value">{reservationResult.data.notificationsQueued}</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="result-message error-message">
-              ❌ Error: {reservationResult.error}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Reservation Detail Modal */}
       {showReservationDetail && (
