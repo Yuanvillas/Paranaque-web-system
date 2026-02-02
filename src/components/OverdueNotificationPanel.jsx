@@ -220,7 +220,7 @@ const OverdueNotificationPanel = () => {
 
   const fetchPickupStatistics = async () => {
     try {
-      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/pending-reservations');
+      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/approved-reservations');
       
       const reservations = response.data.transactions || [];
       const today = new Date();
@@ -228,11 +228,12 @@ const OverdueNotificationPanel = () => {
       const tomorrowStart = new Date(today);
       tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-      // Filter for today's pickups
+      // Filter for today's pickups (approved reservations with approvalDate = today)
       const pickupToday = reservations.filter(r => {
+        if (!r.approvalDate) return false;
         const approvalDate = new Date(r.approvalDate);
         approvalDate.setHours(0, 0, 0, 0);
-        return r.status === 'approved' && approvalDate.getTime() === today.getTime();
+        return approvalDate.getTime() === today.getTime();
       });
 
       const byUser = {};
