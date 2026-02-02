@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -25,7 +25,7 @@ const GenreBooks = () => {
       .catch(console.error);
   };
 
-  const fetchBorrowedBooks = async () => {
+  const fetchBorrowedBooks = useCallback(async () => {
     if (!userEmail) return;
     try {
       const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
@@ -39,7 +39,7 @@ const GenreBooks = () => {
     } catch (error) {
       console.error("Error fetching borrowed books:", error);
     }
-  };
+  }, [userEmail]);
 
   // Reset to page 1 when genre changes
   useEffect(() => {
@@ -54,7 +54,7 @@ const GenreBooks = () => {
 
   useEffect(() => {
     fetchBorrowedBooks();
-  }, [userEmail]);
+  }, [fetchBorrowedBooks]);
 
   const handleBorrow = async () => {
     if (!userEmail) {
