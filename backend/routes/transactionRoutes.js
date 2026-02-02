@@ -1279,4 +1279,146 @@ router.post('/admin/fix-missing-dates', async (req, res) => {
   }
 });
 
+// Send pickup reminder emails to users whose pickup date is today
+router.post('/reservation/pickup-reminder', async (req, res) => {
+  try {
+    const {
+      sendEmails: shouldSendEmails = true,
+      markNotificationSent = false
+    } = req.body;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(today);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    // Find all approved reservations where approvalDate (pickup date) is today
+    const pickupReservations = await Transaction.find({
+      type: 'reserve',
+      status: 'approved',
+      approvalDate: {
+        $gte: today,
+        $lt: tomorrowStart
+      }
+    });
+
+    if (pickupReservations.length === 0) {
+      return res.json({
+        message: 'No reservations scheduled for pickup today',
+        notificationsQueued: 0,
+        userCount: 0
+      });
+    }
+
+    // Group by user email
+    const userPickupMap = {};
+    pickupReservations.forEach(transaction => {
+      if (!userPickupMap[transaction.userEmail]) {
+        userPickupMap[transaction.userEmail] = [];
+      }
+      userPickupMap[transaction.userEmail].push(transaction);
+    });
+
+    const userEmails = Object.keys(userPickupMap);
+    const { sendPickupReminderEmail } = require('../utils/emailService');
+
+    let notificationResults = [];
+    let transactionUpdates = [];
+
+    for (const userEmail of userEmails) {
+      const userPickups = userPickupMap[userEmail];
+
+      try {
+        let result;
+        if (userPickups.length === 1) {
+          // Single book pickup
+          const reservation = userPickups[0];
+
+          if (shouldSendEmails) {
+            result = await sendPickupReminderEmail(
+              userEmail,
+              reservation.bookTitle,
+              reservation.approvalDate
+            );
+          } else {
+            // Dry run
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          if (markNotificationSent) {
+            transactionUpdates.push({
+              _id: reservation._id,
+              notificationSent: true
+            });
+          }
+
+          notificationResults.push({
+            userEmail,
+            bookTitle: reservation.bookTitle,
+            pickupDate: reservation.approvalDate,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        } else {
+          // Multiple books pickup
+          if (shouldSendEmails) {
+            result = await sendPickupReminderEmail(
+              userEmail,
+              `${userPickups.length} books`,
+              userPickups[0].approvalDate
+            );
+          } else {
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          userPickups.forEach(reservation => {
+            if (markNotificationSent) {
+              transactionUpdates.push({
+                _id: reservation._id,
+                notificationSent: true
+              });
+            }
+          });
+
+          notificationResults.push({
+            userEmail,
+            bookCount: userPickups.length,
+            pickupDate: userPickups[0].approvalDate,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        }
+      } catch (err) {
+        console.error(`Error sending pickup reminder to ${userEmail}:`, err);
+        notificationResults.push({
+          userEmail,
+          status: 'failed',
+          error: err.message
+        });
+      }
+    }
+
+    // Update transactions if needed
+    if (markNotificationSent) {
+      for (const update of transactionUpdates) {
+        await Transaction.findByIdAndUpdate(update._id, {
+          notificationSent: true,
+          notificationSentAt: new Date()
+        });
+      }
+    }
+
+    res.json({
+      message: `Sent pickup reminders to ${userEmails.length} users for today's pickups`,
+      notificationsQueued: notificationResults.length,
+      userCount: userEmails.length,
+      results: notificationResults,
+      isDryRun: !shouldSendEmails
+    });
+  } catch (err) {
+    console.error('Error in pickup reminder notification:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

@@ -14,17 +14,22 @@ import './OverdueNotificationPanel.css';
 const OverdueNotificationPanel = () => {
   const [stats, setStats] = useState(null);
   const [reservationStats, setReservationStats] = useState(null);
+  const [pickupStats, setPickupStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendingReservation, setSendingReservation] = useState(false);
+  const [sendingPickup, setSendingPickup] = useState(false);
   const [result, setResult] = useState(null);
   const [reservationResult, setReservationResult] = useState(null);
+  const [pickupResult, setPickupResult] = useState(null);
   const [error, setError] = useState(null);
   const [dryRun, setDryRun] = useState(true);
   const [dryRunReservation, setDryRunReservation] = useState(true);
+  const [dryRunPickup, setDryRunPickup] = useState(true);
   const [daysMinimum, setDaysMinimum] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [showReservationResult, setShowReservationResult] = useState(false);
+  const [showPickupResult, setShowPickupResult] = useState(false);
   const [showOverdueDetail, setShowOverdueDetail] = useState(false);
   const [showReservationDetail, setShowReservationDetail] = useState(false);
   const [overdueBooks, setOverdueBooks] = useState([]);
@@ -34,10 +39,12 @@ const OverdueNotificationPanel = () => {
   useEffect(() => {
     fetchStatistics();
     fetchReservationStatistics();
+    fetchPickupStatistics();
     // Refresh every 5 minutes
     const interval = setInterval(() => {
       fetchStatistics();
       fetchReservationStatistics();
+      fetchPickupStatistics();
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -174,6 +181,75 @@ const OverdueNotificationPanel = () => {
       });
     } finally {
       setSendingReservation(false);
+    }
+  };
+
+  const handleSendPickupReminders = async () => {
+    setSendingPickup(true);
+    setShowPickupResult(true);
+    setPickupResult(null);
+
+    try {
+      const response = await axios.post(
+        'https://paranaque-web-system.onrender.com/api/transactions/reservation/pickup-reminder',
+        {
+          sendEmails: !dryRunPickup,
+          markNotificationSent: !dryRunPickup
+        }
+      );
+
+      setPickupResult({
+        success: true,
+        data: response.data,
+        isDryRun: dryRunPickup
+      });
+
+      // Refresh statistics after sending
+      setTimeout(fetchPickupStatistics, 2000);
+    } catch (err) {
+      console.error('Error sending pickup reminders:', err);
+      setPickupResult({
+        success: false,
+        error: err.response?.data?.message || err.message,
+        isDryRun: dryRunPickup
+      });
+    } finally {
+      setSendingPickup(false);
+    }
+  };
+
+  const fetchPickupStatistics = async () => {
+    try {
+      const response = await axios.get('https://paranaque-web-system.onrender.com/api/transactions/pending-reservations');
+      
+      const reservations = response.data.transactions || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(today);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+      // Filter for today's pickups
+      const pickupToday = reservations.filter(r => {
+        const approvalDate = new Date(r.approvalDate);
+        approvalDate.setHours(0, 0, 0, 0);
+        return r.status === 'approved' && approvalDate.getTime() === today.getTime();
+      });
+
+      const byUser = {};
+      pickupToday.forEach(item => {
+        if (!byUser[item.userEmail]) {
+          byUser[item.userEmail] = 0;
+        }
+        byUser[item.userEmail]++;
+      });
+
+      setPickupStats({
+        total: pickupToday.length,
+        byUser: Object.keys(byUser).length,
+        requiresNotification: pickupToday.filter(r => !r.notificationSent).length
+      });
+    } catch (err) {
+      console.error('Error fetching pickup statistics:', err);
     }
   };
 
@@ -394,6 +470,108 @@ const OverdueNotificationPanel = () => {
             ) : (
               <>
                 {dryRunReservation ? '👁️ Preview Notifications' : '📧 Send Notifications'}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Pickup Reminder Section */}
+      <div style={{ marginBottom: '40px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px', color: '#333' }}>
+          Today's Book Pickups
+        </h3>
+        {/* Pickup Statistics Cards */}
+        <div className="statistics-section">
+          <div 
+            className="stat-card" 
+            style={{ cursor: 'auto', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            }}
+          >
+            <div className="stat-number">{pickupStats?.total || 0}</div>
+            <div className="stat-label">Books for Pickup Today</div>
+          </div>
+
+          <div 
+            className="stat-card" 
+            style={{ cursor: 'auto', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            }}
+          >
+            <div className="stat-number">{pickupStats?.byUser || 0}</div>
+            <div className="stat-label">Users to Notify</div>
+          </div>
+
+          <div 
+            className="stat-card" 
+            style={{ cursor: 'auto', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            }}
+          >
+            <div className="stat-number">{pickupStats?.requiresNotification || 0}</div>
+            <div className="stat-label">Need Notification</div>
+          </div>
+        </div>
+
+        {/* Control Section for Pickup Reminders */}
+        <div className="control-section">
+          <h3>Send Pickup Reminders</h3>
+
+          <div className="controls">
+            <div className="control-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={dryRunPickup}
+                  onChange={(e) => setDryRunPickup(e.target.checked)}
+                  disabled={sendingPickup}
+                />
+                <span className="checkbox-label">
+                  Dry Run (Preview without sending)
+                </span>
+              </label>
+              <p className="help-text">
+                {dryRunPickup 
+                  ? '✓ No emails will be sent. Use this to preview what would happen.'
+                  : '⚠️ Real emails will be sent to all users with pickups scheduled for today.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            className={`send-btn ${sendingPickup ? 'loading' : ''} ${dryRunPickup ? 'dry-run' : 'real'}`}
+            onClick={handleSendPickupReminders}
+            disabled={sendingPickup || pickupStats?.total === 0}
+            title={pickupStats?.total === 0 ? 'No pickups scheduled for today' : ''}
+            style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}
+          >
+            {sendingPickup ? (
+              <>
+                <span className="spinner"></span>
+                {dryRunPickup ? 'Running Preview...' : 'Sending Reminders...'}
+              </>
+            ) : (
+              <>
+                {dryRunPickup ? '👁️ Preview Reminders' : '📧 Send Reminders'}
               </>
             )}
           </button>
@@ -904,6 +1082,71 @@ const OverdueNotificationPanel = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showPickupResult && pickupResult && (
+        <div className={`result-section ${pickupResult.success ? 'success' : 'error'}`}>
+          <div className="result-header">
+            <h3>
+              {pickupResult.isDryRun ? '👁️ Preview Results' : '📧 Pickup Reminder Results'}
+            </h3>
+            <button 
+              className="close-btn"
+              onClick={() => setShowPickupResult(false)}
+            >
+              ×
+            </button>
+          </div>
+
+          {pickupResult.success ? (
+            <>
+              <div className="result-message success-message">
+                ✅ {pickupResult.data.message}
+              </div>
+
+              <div className="result-details">
+                <div className="detail-row">
+                  <span className="detail-label">Books for Pickup Today:</span>
+                  <span className="detail-value">{pickupResult.data.notificationsQueued}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Users to Notify:</span>
+                  <span className="detail-value">{pickupResult.data.userCount}</span>
+                </div>
+              </div>
+
+              {pickupResult.data.results && pickupResult.data.results.length > 0 && (
+                <div className="results-list">
+                  <h4>Details by User:</h4>
+                  <div className="user-results">
+                    {pickupResult.data.results.slice(0, 10).map((userResult, idx) => (
+                      <div key={idx} className="user-result-item">
+                        <div className="user-info">
+                          <span className="user-email">{userResult.userEmail}</span>
+                          <span className={`status ${userResult.status === 'sent' ? 'success' : 'error'}`}>
+                            {userResult.status === 'sent' ? '✓' : '✗'}
+                          </span>
+                        </div>
+                        <div className="user-details">
+                          {userResult.bookTitle || (userResult.bookCount + ' books')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {pickupResult.data.results.length > 10 && (
+                    <p className="more-results">
+                      ... and {pickupResult.data.results.length - 10} more
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="result-message error-message">
+              ❌ {pickupResult.error}
+            </div>
+          )}
         </div>
       )}
 
