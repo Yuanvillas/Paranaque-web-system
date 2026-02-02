@@ -20,6 +20,8 @@ const OverdueNotificationPanel = () => {
   const [dryRun, setDryRun] = useState(true);
   const [daysMinimum, setDaysMinimum] = useState(1);
   const [showResult, setShowResult] = useState(false);
+  const [showOverdueDetail, setShowOverdueDetail] = useState(false);
+  const [overdueBooks, setOverdueBooks] = useState([]);
 
   // Fetch statistics on component mount
   useEffect(() => {
@@ -59,6 +61,7 @@ const OverdueNotificationPanel = () => {
         byDaysOverdue,
         requiresNotification: overdue.filter(o => !o.reminderSent).length
       });
+      setOverdueBooks(overdue);
       setError(null);
     } catch (err) {
       console.error('Error fetching statistics:', err);
@@ -126,9 +129,22 @@ const OverdueNotificationPanel = () => {
 
       {/* Statistics Cards */}
       <div className="statistics-section">
-        <div className="stat-card">
+        <div 
+          className="stat-card" 
+          style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+          onClick={() => setShowOverdueDetail(true)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          }}
+        >
           <div className="stat-number">{stats?.total || 0}</div>
           <div className="stat-label">Total Overdue</div>
+          <div style={{ fontSize: '12px', color: '#4CAF50', marginTop: '8px' }}>Click to view details →</div>
         </div>
         <div className="stat-card">
           <div className="stat-number">{stats?.byUser || 0}</div>
@@ -312,6 +328,195 @@ const OverdueNotificationPanel = () => {
       {error && (
         <div className="error-banner">
           ⚠️ {error}
+        </div>
+      )}
+
+      {/* Overdue Books Detail Modal */}
+      {showOverdueDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            maxWidth: '800px',
+            width: '90%',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: '12px',
+            backgroundColor: '#fff',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            zIndex: 10000
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#333' }}>
+                📚 Overdue Books Details
+              </h2>
+              <button
+                onClick={() => setShowOverdueDetail(false)}
+                style={{
+                  fontSize: '28px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: 0
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ 
+              overflowY: 'auto', 
+              flex: 1, 
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              {overdueBooks.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                  No overdue books found.
+                </p>
+              ) : (
+                overdueBooks.map((book, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '14px',
+                      backgroundColor: '#f9f9f9',
+                      borderRadius: '6px',
+                      borderLeft: '4px solid #FF6B6B',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <p style={{ 
+                        margin: '0 0 6px 0', 
+                        fontSize: '14px', 
+                        fontWeight: '600', 
+                        color: '#333' 
+                      }}>
+                        📖 {book.bookTitle || 'Unknown Book'}
+                      </p>
+                      <p style={{ 
+                        margin: '4px 0', 
+                        fontSize: '13px', 
+                        color: '#666' 
+                      }}>
+                        👤 User: <strong>{book.userEmail}</strong>
+                      </p>
+                      <p style={{ 
+                        margin: '4px 0', 
+                        fontSize: '13px', 
+                        color: '#666' 
+                      }}>
+                        📅 Due Date: <strong>{new Date(book.dueDate).toLocaleDateString()}</strong>
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#FFE5E5',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                      marginLeft: '10px'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '24px',
+                        fontWeight: '700',
+                        color: '#FF6B6B'
+                      }}>
+                        {book.daysOverdue || 0}
+                      </p>
+                      <p style={{
+                        margin: '4px 0 0 0',
+                        fontSize: '11px',
+                        color: '#FF6B6B',
+                        fontWeight: '600'
+                      }}>
+                        Days Overdue
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '15px 20px',
+              borderTop: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px'
+            }}>
+              <button
+                onClick={() => setShowOverdueDetail(false)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: '2px solid #ddd',
+                  backgroundColor: '#fff',
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#f0f0f0';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#fff';
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowOverdueDetail(false);
+                  document.querySelector('.send-btn')?.click();
+                }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#4CAF50',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#45a049';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#4CAF50';
+                }}
+              >
+                Send Notifications
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
