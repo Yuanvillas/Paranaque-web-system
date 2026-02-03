@@ -1322,18 +1322,19 @@ const LibrarianDashboard = () => {
                   <div style={{ fontSize: '0.9rem', color: '#666' }}>Listed Categories</div>
                 </div>
               </div>
+            </div>
 
-              {/* User Entry Monitor - Main Section */}
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '25px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                marginTop: '30px'
-              }}>
-                <UserEntryMonitor />
-              </div>
-            </>
+            {/* User Entry Monitor - Main Section */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '25px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginTop: '30px'
+            }}>
+              <UserEntryMonitor />
+            </div>
+          </>
           )}
 
           {selectedResource === "Resources" ? (
