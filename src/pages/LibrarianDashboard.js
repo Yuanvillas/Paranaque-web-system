@@ -955,47 +955,6 @@ const LibrarianDashboard = () => {
                     letterSpacing: '0.5px',
                     marginBottom: '15px'
                   }}>
-                    Total Entries
-                  </div>
-                  <div style={{
-                    fontSize: '36px',
-                    fontWeight: 'bold',
-                    color: '#00BFA5',
-                    marginBottom: '5px'
-                  }}>
-                    {entryStats.totalEntries}
-                  </div>
-                </div>
-
-                <div 
-                  onClick={handleTodayEntriesClick}
-                  style={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '12px',
-                    padding: '25px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-5px)';
-                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-                  }}
-                >
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#999',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    marginBottom: '15px'
-                  }}>
                     Today's Entries
                   </div>
                   <div style={{
