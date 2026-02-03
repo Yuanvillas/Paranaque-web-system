@@ -311,22 +311,30 @@ const LibrarianUserManagement = () => {
             </div>
             
             {/* Search bar inside modal */}
-            <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee' }}>
+            <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', backgroundColor: '#f5f5f5' }}>
               <input
                 type="text"
-                placeholder="Search book activities..."
+                placeholder="🔍 Search book activities (title, action, date)..."
                 value={historySearchQuery}
                 onChange={(e) => setHistorySearchQuery(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '5px',
+                  padding: '12px 14px',
+                  borderRadius: '6px',
                   border: '2px solid #ddd',
                   fontSize: '14px',
                   boxSizing: 'border-box',
-                  transition: 'border-color 0.3s'
+                  transition: 'all 0.3s',
+                  fontFamily: 'Arial, sans-serif'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
               />
+              {historySearchQuery && (
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+                  Found {userLogs.length} result{userLogs.length !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
 
             <div className="um-modal-content" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>

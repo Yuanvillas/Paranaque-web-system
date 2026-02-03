@@ -318,7 +318,7 @@ router.post('/approve-reservation/:id', async (req, res) => {
     }
 
     // Update transaction
-    transaction.status = 'active';
+    transaction.status = 'approved';
     transaction.approvedBy = adminEmail;
     transaction.approvalDate = new Date();
     await transaction.save();
@@ -504,6 +504,135 @@ router.get('/reserved-books', async (req, res) => {
   }
 });
 
+// Send notifications to users with pending reservations
+router.post('/reservation/notify-pending', async (req, res) => {
+  try {
+    const {
+      sendEmails: shouldSendEmails = true,
+      markNotificationSent = false
+    } = req.body;
+
+    // Find all pending reservations
+    const pendingReservations = await Transaction.find({
+      type: 'reserve',
+      status: 'pending'
+    });
+
+    if (pendingReservations.length === 0) {
+      return res.json({
+        message: 'No pending reservations found',
+        notificationsQueued: 0,
+        userCount: 0
+      });
+    }
+
+    // Group by user email
+    const userReservationMap = {};
+    pendingReservations.forEach(transaction => {
+      if (!userReservationMap[transaction.userEmail]) {
+        userReservationMap[transaction.userEmail] = [];
+      }
+      userReservationMap[transaction.userEmail].push(transaction);
+    });
+
+    const userEmails = Object.keys(userReservationMap);
+    const { sendReservationPendingEmail } = require('../utils/emailService');
+
+    let notificationResults = [];
+    let transactionUpdates = [];
+
+    for (const userEmail of userEmails) {
+      const userReservations = userReservationMap[userEmail];
+
+      try {
+        let result;
+        if (userReservations.length === 1) {
+          // Single reservation
+          const reservation = userReservations[0];
+
+          if (shouldSendEmails) {
+            result = await sendReservationPendingEmail(
+              userEmail,
+              reservation.bookTitle
+            );
+          } else {
+            // Dry run
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          if (markNotificationSent) {
+            transactionUpdates.push({
+              _id: reservation._id,
+              notificationSent: true
+            });
+          }
+
+          notificationResults.push({
+            userEmail,
+            bookTitle: reservation.bookTitle,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        } else {
+          // Multiple reservations
+          if (shouldSendEmails) {
+            result = await sendReservationPendingEmail(
+              userEmail,
+              `${userReservations.length} books`
+            );
+          } else {
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          userReservations.forEach(reservation => {
+            if (markNotificationSent) {
+              transactionUpdates.push({
+                _id: reservation._id,
+                notificationSent: true
+              });
+            }
+          });
+
+          notificationResults.push({
+            userEmail,
+            bookCount: userReservations.length,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        }
+      } catch (err) {
+        console.error(`Error sending email to ${userEmail}:`, err);
+        notificationResults.push({
+          userEmail,
+          status: 'failed',
+          error: err.message
+        });
+      }
+    }
+
+    // Update transactions if needed
+    if (markNotificationSent) {
+      for (const update of transactionUpdates) {
+        await Transaction.findByIdAndUpdate(update._id, {
+          notificationSent: true,
+          notificationSentAt: new Date()
+        });
+      }
+    }
+
+    res.json({
+      message: `Processed ${userEmails.length} users with pending reservations`,
+      notificationsQueued: notificationResults.length,
+      userCount: userEmails.length,
+      results: notificationResults,
+      isDryRun: !shouldSendEmails
+    });
+  } catch (err) {
+    console.error('Error in reservation notification:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.post('/borrow-request', async (req, res) => {
   try {
     const { bookId, userEmail } = req.body;
@@ -520,6 +649,18 @@ router.post('/borrow-request', async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: 'You already have a pending or active borrow for this book.' });
     }
+
+    // Check borrowing limit - max 3 active borrowed books
+    const activeBorrowedCount = await Transaction.countDocuments({
+      userEmail,
+      type: 'borrow',
+      status: 'active'
+    });
+
+    if (activeBorrowedCount >= 3) {
+      return res.status(400).json({ message: 'You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.' });
+    }
+
     const transaction = new Transaction({
       bookId,
       userEmail,
@@ -599,6 +740,7 @@ router.post('/request-return/:transactionId', async (req, res) => {
       bookId: transaction.bookId,
       bookTitle: book.title,
       userEmail: transaction.userEmail,
+      status: 'pending',
       condition: condition || 'good',
       notes: notes || null
     });
@@ -623,7 +765,7 @@ router.post('/request-return/:transactionId', async (req, res) => {
 // Get all pending return requests (librarian view)
 router.get('/return-requests', async (req, res) => {
   try {
-    const returnRequests = await ReturnRequest.find({ status: 'pending' })
+    const returnRequests = await ReturnRequest.find({})
       .sort({ requestDate: -1 });
     
     res.json({ 
@@ -805,8 +947,11 @@ router.get('/overdue/user/:email', async (req, res) => {
     const overdueData = overdueTransactions.map(transaction => {
       const daysOverdue = Math.floor((now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24));
       return {
+        _id: transaction._id,
         transactionId: transaction._id,
+        bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
+        endDate: transaction.endDate,
         dueDate: transaction.endDate,
         startDate: transaction.startDate,
         daysOverdue,
@@ -1130,6 +1275,148 @@ router.post('/admin/fix-missing-dates', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fixing transactions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Send pickup reminder emails to users whose pickup date is today
+router.post('/reservation/pickup-reminder', async (req, res) => {
+  try {
+    const {
+      sendEmails: shouldSendEmails = true,
+      markNotificationSent = false
+    } = req.body;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(today);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    // Find all approved reservations where approvalDate (pickup date) is today
+    const pickupReservations = await Transaction.find({
+      type: 'reserve',
+      status: 'approved',
+      approvalDate: {
+        $gte: today,
+        $lt: tomorrowStart
+      }
+    });
+
+    if (pickupReservations.length === 0) {
+      return res.json({
+        message: 'No reservations scheduled for pickup today',
+        notificationsQueued: 0,
+        userCount: 0
+      });
+    }
+
+    // Group by user email
+    const userPickupMap = {};
+    pickupReservations.forEach(transaction => {
+      if (!userPickupMap[transaction.userEmail]) {
+        userPickupMap[transaction.userEmail] = [];
+      }
+      userPickupMap[transaction.userEmail].push(transaction);
+    });
+
+    const userEmails = Object.keys(userPickupMap);
+    const { sendPickupReminderEmail } = require('../utils/emailService');
+
+    let notificationResults = [];
+    let transactionUpdates = [];
+
+    for (const userEmail of userEmails) {
+      const userPickups = userPickupMap[userEmail];
+
+      try {
+        let result;
+        if (userPickups.length === 1) {
+          // Single book pickup
+          const reservation = userPickups[0];
+
+          if (shouldSendEmails) {
+            result = await sendPickupReminderEmail(
+              userEmail,
+              reservation.bookTitle,
+              reservation.approvalDate
+            );
+          } else {
+            // Dry run
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          if (markNotificationSent) {
+            transactionUpdates.push({
+              _id: reservation._id,
+              notificationSent: true
+            });
+          }
+
+          notificationResults.push({
+            userEmail,
+            bookTitle: reservation.bookTitle,
+            pickupDate: reservation.approvalDate,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        } else {
+          // Multiple books pickup
+          if (shouldSendEmails) {
+            result = await sendPickupReminderEmail(
+              userEmail,
+              `${userPickups.length} books`,
+              userPickups[0].approvalDate
+            );
+          } else {
+            result = { messageId: 'DRY_RUN_' + Date.now() };
+          }
+
+          userPickups.forEach(reservation => {
+            if (markNotificationSent) {
+              transactionUpdates.push({
+                _id: reservation._id,
+                notificationSent: true
+              });
+            }
+          });
+
+          notificationResults.push({
+            userEmail,
+            bookCount: userPickups.length,
+            pickupDate: userPickups[0].approvalDate,
+            status: result ? 'sent' : 'failed',
+            isDryRun: !shouldSendEmails
+          });
+        }
+      } catch (err) {
+        console.error(`Error sending pickup reminder to ${userEmail}:`, err);
+        notificationResults.push({
+          userEmail,
+          status: 'failed',
+          error: err.message
+        });
+      }
+    }
+
+    // Update transactions if needed
+    if (markNotificationSent) {
+      for (const update of transactionUpdates) {
+        await Transaction.findByIdAndUpdate(update._id, {
+          notificationSent: true,
+          notificationSentAt: new Date()
+        });
+      }
+    }
+
+    res.json({
+      message: `Sent pickup reminders to ${userEmails.length} users for today's pickups`,
+      notificationsQueued: notificationResults.length,
+      userCount: userEmails.length,
+      results: notificationResults,
+      isDryRun: !shouldSendEmails
+    });
+  } catch (err) {
+    console.error('Error in pickup reminder notification:', err);
     res.status(500).json({ message: err.message });
   }
 });

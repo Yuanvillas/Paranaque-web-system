@@ -6,11 +6,15 @@ import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
+import OverdueModal from "../components/OverdueModal";
 
 function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [showOverdueModal, setShowOverdueModal] = useState(false);
+  const [overdueBooks, setOverdueBooks] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Check if user is already logged in and redirect
   useEffect(() => {
@@ -36,6 +40,27 @@ function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const checkForOverdueBooks = async (userEmail) => {
+    try {
+      const response = await axios.get(
+        `https://paranaque-web-system.onrender.com/api/transactions/overdue/user/${userEmail}`
+      );
+      
+      const overdueData = response.data.overdue || [];
+      
+      if (overdueData && overdueData.length > 0) {
+        setOverdueBooks(overdueData);
+        setShowOverdueModal(true);
+        return true; // Has overdue books
+      }
+      
+      return false; // No overdue books
+    } catch (error) {
+      console.error('Error checking overdue books:', error);
+      return false;
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -54,27 +79,49 @@ function Login() {
       const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/login", form);
       const user = res.data.user;
 
-      Swal.hideLoading();
-      
-      await Swal.fire({
-        title: "Parañaledge",
-        text: res.data.message,
-        icon: "success",
-        confirmButtonText: "OK"
-      });
-      localStorage.setItem("userEmail", user.email);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Only redirect admin/librarian immediately
       if (user.role === "admin" || user.role === "librarian") {
+        Swal.hideLoading();
+        
+        await Swal.fire({
+          title: "Parañaledge",
+          text: res.data.message,
+          icon: "success",
+          confirmButtonText: "OK"
+        });
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("user", JSON.stringify(user));
         console.log("Admin or Librarian logged in:", user);
         navigate("/admin-dashboard");
       } else {
-        console.log("User logged in:", user);
-        navigate("/user-home");
+        // For regular users, check for overdue books first
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("user", JSON.stringify(user));
+        setCurrentUser(user);
+
+        // Check for overdues
+        const hasOverdues = await checkForOverdueBooks(user.email);
+
+        Swal.hideLoading();
+        
+        await Swal.fire({
+          title: "Parañaledge",
+          text: res.data.message,
+          icon: "success",
+          confirmButtonText: "OK"
+        });
+
+        // If no overdues, navigate directly
+        if (!hasOverdues) {
+          console.log("User logged in:", user);
+          navigate("/user-home");
+        }
+        // If overdues exist, the modal will be shown
       }
     } catch (err) {
       Swal.hideLoading();
       setLoading(false);
-      console.log(err)
+      console.log(err);
       const message = err.response?.data?.message;
       if (message === "Please verify your email before logging in.") {
         await Swal.fire({
@@ -96,8 +143,22 @@ function Login() {
     }
   };
 
+  const handleOverdueModalClose = () => {
+    // Mark overdues as handled in this session
+    sessionStorage.setItem('overduesHandled', 'true');
+    setShowOverdueModal(false);
+    navigate("/user-home");
+  };
+
   return (
     <div className="auth-container">
+      {showOverdueModal && (
+        <OverdueModal 
+          overdueBooks={overdueBooks} 
+          userEmail={currentUser?.email}
+          onClose={handleOverdueModalClose}
+        />
+      )}
       <div className="auth-wrapper">
         <div className="auth-image">
           <img src={schoolImage} alt="School" />
@@ -114,6 +175,7 @@ function Login() {
               onChange={handleChange}
               autoComplete="off"
               required
+              disabled={showOverdueModal}
             />
             <PasswordInput
               type="password"
@@ -122,8 +184,9 @@ function Login() {
               value={form.password}
               onChange={handleChange}
               required
+              disabled={showOverdueModal}
             />
-            <button type="submit" disabled={loading} style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            <button type="submit" disabled={loading || showOverdueModal} style={{ opacity: (loading || showOverdueModal) ? 0.6 : 1, cursor: (loading || showOverdueModal) ? 'not-allowed' : 'pointer' }}>
               {loading ? "Logging in..." : "Log In"}
             </button>
           </form>

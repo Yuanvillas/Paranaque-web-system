@@ -3,6 +3,8 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { SearchContext } from "../layouts/UserLayout";
+import OverdueModal from "../components/OverdueModal";
+import axios from "axios";
 import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark as fasBookmark } from "@fortawesome/free-solid-svg-icons"; // filled
@@ -21,12 +23,48 @@ const UserHome = () => {
   const [showModal, setShowModal] = useState(false);
   const [reserveDate, setReserveDate] = useState("");
   const [pendingReservations, setPendingReservations] = useState([]);
+  const [showOverdueModal, setShowOverdueModal] = useState(false);
+  const [overdueBooks, setOverdueBooks] = useState([]);
   const searchTerm = useContext(SearchContext);
   const userEmail = localStorage.getItem("userEmail");
   const [bookmarks, setBookmarks] = useState([]);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
+
+  // Check for overdue books on component mount
+  useEffect(() => {
+    const checkOverdues = async () => {
+      if (!userEmail) return;
+
+      try {
+        const response = await axios.get(
+          `https://paranaque-web-system.onrender.com/api/transactions/overdue/user/${userEmail}`
+        );
+
+        const overdueData = response.data.overdue || [];
+
+        // Check if overdues were already handled in this session
+        const overduesHandled = sessionStorage.getItem('overduesHandled');
+
+        if (overdueData && overdueData.length > 0 && !overduesHandled) {
+          // Has unresolved overdues
+          setOverdueBooks(overdueData);
+          setShowOverdueModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking overdue books:', error);
+      }
+    };
+
+    checkOverdues();
+  }, [userEmail]);
+
+  const handleOverdueModalClose = () => {
+    // Mark overdues as handled in this session
+    sessionStorage.setItem('overduesHandled', 'true');
+    setShowOverdueModal(false);
+  };
 
   const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
@@ -141,6 +179,18 @@ const UserHome = () => {
 
     if (avail <= 0) {
       await Swal.fire({ title: "Parañaledge", text: "This book is currently unavailable.", icon: "warning", confirmButtonText: "OK" });
+      return;
+    }
+
+    // Check borrowing limit
+    const activeBorrowedCount = borrowedBooks.filter(b => b.status === 'active').length;
+    if (activeBorrowedCount >= 3) {
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.",
+        icon: "warning",
+        confirmButtonText: "OK"
+      });
       return;
     }
 
@@ -365,6 +415,13 @@ const UserHome = () => {
 
   return (
     <>
+      {showOverdueModal && (
+        <OverdueModal 
+          overdueBooks={overdueBooks} 
+          userEmail={userEmail}
+          onClose={handleOverdueModalClose}
+        />
+      )}
       <div style={{ margin: "20px" }}>
         <div style={{ 
           backgroundColor: "#f9f9f9", 
@@ -638,14 +695,34 @@ const UserHome = () => {
 
               <div className="modal-inputs">
                 <div className="modal-form">
-                  <button
-                    className="modal-btn green"
-                    onClick={handleBorrow}
-                    disabled={((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0)}
-                    style={{ opacity: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 0.6 : 1, cursor: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 'not-allowed' : 'pointer' }}
-                  >
-                    Confirm Borrow
-                  </button>
+                  {(() => {
+                    const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
+                    const activeBorrowedCount = borrowedBooks.filter(b => b.status === 'active').length;
+                    const isLimitReached = activeBorrowedCount >= 3;
+                    const isDisabled = isBookUnavailable || isLimitReached;
+                    return (
+                      <>
+                        <button
+                          className="modal-btn green"
+                          onClick={handleBorrow}
+                          disabled={isDisabled}
+                          style={{ 
+                            opacity: isDisabled ? 0.6 : 1, 
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            backgroundColor: isLimitReached ? '#d1d5db' : '#4CAF50'
+                          }}
+                          title={isLimitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}
+                        >
+                          Confirm Borrow
+                        </button>
+                        {isLimitReached && (
+                          <p style={{ color: '#d32f2f', fontSize: '12px', marginTop: '8px' }}>
+                            ⚠️ Borrowing limit reached (3/3 books). Return some books to continue.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="modal-form">

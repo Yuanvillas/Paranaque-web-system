@@ -15,6 +15,7 @@ const UserManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterRole, setFilterRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
   const [createForm, setCreateForm] = useState({
     firstName: "",
     lastName: "",
@@ -708,11 +709,36 @@ const UserManagement = () => {
             <div className="modal-overlay">
               <div className="modal-content">
 
-                <button className="modal-close-btn" onClick={() => setViewUserLogs(null)}>
+                <button className="modal-close-btn" onClick={() => {
+                  setViewUserLogs(null);
+                  setHistorySearchQuery('');
+                }}>
                   ✕
                 </button>
 
                 <h2>User Borrowed & Reserved Books History</h2>
+
+                {/* Search bar inside modal */}
+                <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', backgroundColor: '#f5f5f5' }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Search book activities (title, action, date)..."
+                    value={historySearchQuery}
+                    onChange={(e) => setHistorySearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '6px',
+                      border: '2px solid #ddd',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.3s',
+                      fontFamily: 'Arial, sans-serif'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+                    onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                  />
+                </div>
 
                 {(() => {
                   const userLogs = logs.filter(log => log.userEmail === viewUserLogs);
@@ -724,10 +750,15 @@ const UserManagement = () => {
                       log.action.includes("Reservation approved by") ||
                       log.action.includes("Reservation requested for book:")
                     )
+                    .filter(log => {
+                      if (!historySearchQuery) return true;
+                      const searchLower = historySearchQuery.toLowerCase();
+                      return log.action.toLowerCase().includes(searchLower);
+                    })
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
                   if (relevantLogs.length === 0) {
-                    return <p>No logs available.</p>;
+                    return <p style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No logs available.</p>;
                   }
 
                   return (

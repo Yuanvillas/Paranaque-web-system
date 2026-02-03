@@ -28,8 +28,9 @@ const sendEmail = async ({ to, subject, text, html }) => {
     }
     
     console.log('📧 Sending email via Resend to:', to);
+    const emailFrom = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
     const result = await emailService.emails.send({
-      from: 'Parañaledge <onboarding@resend.dev>',
+      from: emailFrom,
       to,
       subject,
       html: html || `<p>${text}</p>`
@@ -218,6 +219,52 @@ const sendOverdueReminderEmail = async (userEmail, booksData) => {
   return sendEmail({ to: userEmail, subject, text: '', html });
 };
 
+const sendPickupReminderEmail = async (userEmail, bookTitle, pickupDate) => {
+  const pickupDateFormatted = new Date(pickupDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #4CAF50; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">📚 Your Book is Ready for Pickup!</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Great news! Your reserved book <strong>"${bookTitle}"</strong> is ready for pickup <strong>today</strong>!
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">Pickup Date:</p>
+          <p style="margin: 5px 0 0 0; color: #4CAF50; font-size: 18px; font-weight: bold;">${pickupDateFormatted}</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Please visit the library during operating hours to collect your book. Don't miss out!
+        </p>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: userEmail,
+    subject: `📚 Your Book is Ready for Pickup Today - "${bookTitle}"`,
+    html
+  });
+};
+
 module.exports = {
   sendEmail,
   sendReservationExpiredEmail,
@@ -226,5 +273,6 @@ module.exports = {
   sendReservationPendingEmail,
   sendReservationReminderEmail,
   sendOverdueNotificationEmail,
-  sendOverdueReminderEmail
+  sendOverdueReminderEmail,
+  sendPickupReminderEmail
 };

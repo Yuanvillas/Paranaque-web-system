@@ -267,10 +267,12 @@ const PendingRequestTable = () => {
     request.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredReturnRequests = returnRequests.filter((request) =>
-    request.bookTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredReturnRequests = returnRequests
+    .filter(request => request.status === 'pending')
+    .filter((request) =>
+      request.bookTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const getConditionColor = (condition) => {
     switch(condition) {

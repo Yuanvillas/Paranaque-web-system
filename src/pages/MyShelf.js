@@ -7,6 +7,7 @@ const MyShelf = () => {
   const [error, setError] = useState(null);
   const userEmail = localStorage.getItem("userEmail");
   const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -199,6 +200,12 @@ const MyShelf = () => {
 
   const filteredItems = getFilteredItems();
 
+  // Search filter
+  const searchFilteredItems = filteredItems.filter(item => {
+    const searchLower = searchQuery.toLowerCase();
+    return item.bookTitle.toLowerCase().includes(searchLower);
+  });
+
   // Count all items for display
   const allCount = borrowedBooks.length + reservedBooks.length + completedBooks.length + pendingBooks.length;
 
@@ -208,6 +215,25 @@ const MyShelf = () => {
       <h2 style={{ fontWeight: '600', fontSize: '25px', marginBottom: '20px' }}>My Shelf</h2>
 
       {error && <div className="error-msg">{error}</div>}
+
+      {borrowedBooks.length >= 3 && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '8px',
+          padding: '15px 20px',
+          marginBottom: '20px',
+          color: '#856404',
+          fontSize: '14px',
+          fontWeight: '500',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '20px' }}>⚠️</span>
+          <span>You have reached the borrowing limit of <strong>3 books</strong>. Please return some books before borrowing more.</span>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="shelf-tabs">
@@ -243,11 +269,38 @@ const MyShelf = () => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div style={{ marginBottom: '20px', marginTop: '20px' }}>
+        <input
+          type="text"
+          placeholder="🔍 Search by book title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: '6px',
+            border: '2px solid #ddd',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            transition: 'all 0.3s',
+            fontFamily: 'Arial, sans-serif'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+          onBlur={(e) => e.target.style.borderColor = '#ddd'}
+        />
+        {searchQuery && (
+          <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+            Found {searchFilteredItems.length} book{searchFilteredItems.length !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
       {/* Cards Container for non-all/non-completed tabs */}
       {activeTab !== 'all' && activeTab !== 'completed' ? (
         <div className="shelf-cards-container">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
+          {searchFilteredItems.length > 0 ? (
+            searchFilteredItems.map((item) => (
               <div key={item._id} className="shelf-card">
                 <h3>{item.bookTitle}</h3>
                 
@@ -320,7 +373,7 @@ const MyShelf = () => {
       ) : (
         /* Table view for All tab */
         <div className="shelf-table-container" style={{ overflowX: 'auto', marginTop: '20px' }}>
-          {filteredItems.length > 0 ? (
+          {searchFilteredItems.length > 0 ? (
             <table style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -340,7 +393,7 @@ const MyShelf = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item, index) => (
+                {searchFilteredItems.map((item, index) => (
                   <tr key={item._id} style={{
                     backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff',
                     borderBottom: '1px solid #e0e0e0'
