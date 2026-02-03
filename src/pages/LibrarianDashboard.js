@@ -1334,7 +1334,7 @@ const LibrarianDashboard = () => {
             }}>
               <UserEntryMonitor />
             </div>
-          </>
+            </>
           )}
 
           {selectedResource === "Resources" ? (
