@@ -9,7 +9,10 @@ const ReturnRequest = require('../models/ReturnRequest');
 const {
   sendReservationPendingEmail,
   sendReservationApprovedEmail,
-  sendReservationRejectedEmail
+  sendReservationRejectedEmail,
+  sendBorrowRequestSubmittedEmail,
+  sendBorrowRequestApprovedEmail,
+  sendBorrowRequestRejectedEmail
 } = require('../utils/emailService');
 
 // Get all transactions
@@ -451,6 +454,17 @@ router.post('/approve-borrow/:id', async (req, res) => {
 
     await transaction.save();
 
+    // Send approval email notification to user
+    const dueDateFormatted = new Date(transaction.endDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    sendBorrowRequestApprovedEmail(transaction.userEmail, transaction.bookTitle, transaction.endDate).catch(err => {
+      console.error('Error sending approval email:', err);
+    });
+
     res.json({ message: 'Borrow request approved and book marked as borrowed.', transaction });
   } catch (err) {
     console.error('Error approving borrow:', err);
@@ -475,6 +489,12 @@ router.post('/reject-borrow/:id', async (req, res) => {
     transaction.approvalDate = new Date();
     transaction.rejectionReason = rejectionReason;
     await transaction.save();
+
+    // Send rejection email notification to user
+    sendBorrowRequestRejectedEmail(transaction.userEmail, transaction.bookTitle, rejectionReason).catch(err => {
+      console.error('Error sending rejection email:', err);
+    });
+
     res.json({ message: 'Borrow request rejected successfully', transaction });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -674,6 +694,12 @@ router.post('/borrow-request', async (req, res) => {
       userEmail,
       action: `Requested to borrow book: ${book.title}`
     }).save();
+
+    // Send email notification to user about their borrow request
+    sendBorrowRequestSubmittedEmail(userEmail, book.title).catch(err => {
+      console.error('Error sending borrow request email:', err);
+    });
+
     res.status(201).json({ message: 'Borrow request submitted and pending admin approval.', transaction });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -265,6 +265,135 @@ const sendPickupReminderEmail = async (userEmail, bookTitle, pickupDate) => {
   });
 };
 
+const sendBorrowRequestSubmittedEmail = async (userEmail, bookTitle) => {
+  const subject = 'Borrow Request Received - Awaiting Approval';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #2196F3; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">📖 Borrow Request Received</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Thank you! Your request to borrow <strong>"${bookTitle}"</strong> has been received.
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 5px 0 0 0; color: #2196F3; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Status:</p>
+          <p style="margin: 5px 0 0 0; color: #FF9800; font-size: 14px;">⏳ Pending Approval</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Our library staff will review your request shortly. You will receive another email once your request has been approved or if any clarification is needed.
+        </p>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Your request to borrow "${bookTitle}" has been received and is pending approval. You will be notified once approved.`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
+const sendBorrowRequestApprovedEmail = async (userEmail, bookTitle, dueDate) => {
+  const dueDateFormatted = new Date(dueDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  const subject = '✅ Your Borrow Request Has Been Approved!';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #4CAF50; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">✅ Borrow Request Approved!</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Great news! Your request to borrow <strong>"${bookTitle}"</strong> has been approved!
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 5px 0 0 0; color: #4CAF50; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Due Date:</p>
+          <p style="margin: 5px 0 0 0; color: #d32f2f; font-size: 14px;">${dueDateFormatted}</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          You can now collect your book from the library. Please return it on or before the due date.
+        </p>
+        <ul style="color: #333; font-size: 14px; line-height: 1.8;">
+          <li>Visit the library during operating hours</li>
+          <li>Return the book by ${dueDateFormatted}</li>
+          <li>Contact us if you need to renew the book</li>
+        </ul>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Your borrow request for "${bookTitle}" has been approved! Due date: ${dueDateFormatted}. Please collect the book from the library.`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
+const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, rejectionReason) => {
+  const subject = '❌ Your Borrow Request Could Not Be Approved';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #d32f2f; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">❌ Borrow Request Not Approved</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Unfortunately, your request to borrow <strong>"${bookTitle}"</strong> could not be approved.
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #d32f2f; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 5px 0 0 0; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Reason:</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;">${rejectionReason}</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          If you have any questions about this decision or would like to discuss alternatives, please contact our library staff. We'd be happy to help!
+        </p>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Unfortunately, your borrow request for "${bookTitle}" could not be approved. Reason: ${rejectionReason}. Please contact the library for more information.`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
 module.exports = {
   sendEmail,
   sendReservationExpiredEmail,
@@ -274,5 +403,8 @@ module.exports = {
   sendReservationReminderEmail,
   sendOverdueNotificationEmail,
   sendOverdueReminderEmail,
-  sendPickupReminderEmail
+  sendPickupReminderEmail,
+  sendBorrowRequestSubmittedEmail,
+  sendBorrowRequestApprovedEmail,
+  sendBorrowRequestRejectedEmail
 };
