@@ -425,12 +425,16 @@ router.post('/approve-borrow/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid transaction for approval' });
     }
 
+    // Keep the original request date/time
+    const originalRequestDate = transaction.startDate || transaction.createdAt;
+    const approvalDate = new Date();
+    const dueDate = new Date(approvalDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from approval
+
     // Update transaction to active
     transaction.status = 'active';
     transaction.approvedBy = adminEmail;
-    transaction.approvalDate = new Date();
-    transaction.startDate = new Date();
-    transaction.endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    transaction.approvalDate = approvalDate;
+    transaction.endDate = dueDate;
 
     const book = await Book.findById(transaction.bookId);
     if (book) {
@@ -454,14 +458,8 @@ router.post('/approve-borrow/:id', async (req, res) => {
 
     await transaction.save();
 
-    // Send approval email notification to user
-    const dueDateFormatted = new Date(transaction.endDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    sendBorrowRequestApprovedEmail(transaction.userEmail, transaction.bookTitle, transaction.endDate).catch(err => {
+    // Send approval email notification to user with request date and due date
+    sendBorrowRequestApprovedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, dueDate).catch(err => {
       console.error('Error sending approval email:', err);
     });
 
@@ -483,6 +481,10 @@ router.post('/reject-borrow/:id', async (req, res) => {
     if (transaction.type !== 'borrow' || transaction.status !== 'pending') {
       return res.status(400).json({ message: 'Invalid transaction for rejection' });
     }
+    
+    // Preserve the original request date
+    const originalRequestDate = transaction.startDate || transaction.createdAt;
+    
     // Update transaction
     transaction.status = 'rejected';
     transaction.approvedBy = adminEmail;
@@ -490,8 +492,8 @@ router.post('/reject-borrow/:id', async (req, res) => {
     transaction.rejectionReason = rejectionReason;
     await transaction.save();
 
-    // Send rejection email notification to user
-    sendBorrowRequestRejectedEmail(transaction.userEmail, transaction.bookTitle, rejectionReason).catch(err => {
+    // Send rejection email notification to user with request date
+    sendBorrowRequestRejectedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, rejectionReason).catch(err => {
       console.error('Error sending rejection email:', err);
     });
 
@@ -681,12 +683,13 @@ router.post('/borrow-request', async (req, res) => {
       return res.status(400).json({ message: 'You have reached the maximum borrowing limit of 3 books. Please return some books before borrowing more.' });
     }
 
+    const requestDate = new Date();
     const transaction = new Transaction({
       bookId,
       userEmail,
       type: 'borrow',
       status: 'pending',
-      startDate: new Date(),
+      startDate: requestDate,
       bookTitle: book.title
     });
     await transaction.save();
@@ -696,7 +699,7 @@ router.post('/borrow-request', async (req, res) => {
     }).save();
 
     // Send email notification to user about their borrow request
-    sendBorrowRequestSubmittedEmail(userEmail, book.title).catch(err => {
+    sendBorrowRequestSubmittedEmail(userEmail, book.title, requestDate).catch(err => {
       console.error('Error sending borrow request email:', err);
     });
 

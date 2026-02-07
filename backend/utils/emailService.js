@@ -265,7 +265,16 @@ const sendPickupReminderEmail = async (userEmail, bookTitle, pickupDate) => {
   });
 };
 
-const sendBorrowRequestSubmittedEmail = async (userEmail, bookTitle) => {
+const sendBorrowRequestSubmittedEmail = async (userEmail, bookTitle, requestDate) => {
+  const requestDateFormatted = new Date(requestDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
   const subject = 'Borrow Request Received - Awaiting Approval';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -278,8 +287,10 @@ const sendBorrowRequestSubmittedEmail = async (userEmail, bookTitle) => {
           Thank you! Your request to borrow <strong>"${bookTitle}"</strong> has been received.
         </p>
         <div style="background-color: #fff; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book:</p>
           <p style="margin: 5px 0 0 0; color: #2196F3; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">📅 Request Date & Time:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${requestDateFormatted}</p>
           <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Status:</p>
           <p style="margin: 5px 0 0 0; color: #FF9800; font-size: 14px;">⏳ Pending Approval</p>
         </div>
@@ -300,12 +311,21 @@ const sendBorrowRequestSubmittedEmail = async (userEmail, bookTitle) => {
     </div>
   `;
 
-  const text = `Your request to borrow "${bookTitle}" has been received and is pending approval. You will be notified once approved.`;
+  const text = `Your request to borrow "${bookTitle}" has been received on ${requestDateFormatted} and is pending approval. You will be notified once approved.`;
   
   return sendEmail({ to: userEmail, subject, text, html });
 };
 
-const sendBorrowRequestApprovedEmail = async (userEmail, bookTitle, dueDate) => {
+const sendBorrowRequestApprovedEmail = async (userEmail, bookTitle, requestDate, dueDate) => {
+  const requestDateFormatted = new Date(requestDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
   const dueDateFormatted = new Date(dueDate).toLocaleDateString('en-US', { 
     weekday: 'long',
     year: 'numeric', 
@@ -325,10 +345,12 @@ const sendBorrowRequestApprovedEmail = async (userEmail, bookTitle, dueDate) => 
           Great news! Your request to borrow <strong>"${bookTitle}"</strong> has been approved!
         </p>
         <div style="background-color: #fff; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book:</p>
           <p style="margin: 5px 0 0 0; color: #4CAF50; font-size: 16px;">${bookTitle}</p>
-          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Due Date:</p>
-          <p style="margin: 5px 0 0 0; color: #d32f2f; font-size: 14px;">${dueDateFormatted}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">📅 Request Date & Time:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${requestDateFormatted}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">📆 Due Date (Return by):</p>
+          <p style="margin: 5px 0 0 0; color: #d32f2f; font-size: 14px; font-weight: bold;">${dueDateFormatted}</p>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
           You can now collect your book from the library. Please return it on or before the due date.
@@ -352,12 +374,21 @@ const sendBorrowRequestApprovedEmail = async (userEmail, bookTitle, dueDate) => 
     </div>
   `;
 
-  const text = `Your borrow request for "${bookTitle}" has been approved! Due date: ${dueDateFormatted}. Please collect the book from the library.`;
+  const text = `Your borrow request for "${bookTitle}" submitted on ${requestDateFormatted} has been approved! Due date: ${dueDateFormatted}. Please collect the book from the library.`;
   
   return sendEmail({ to: userEmail, subject, text, html });
 };
 
-const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, rejectionReason) => {
+const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, requestDate, rejectionReason) => {
+  const requestDateFormatted = new Date(requestDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
   const subject = '❌ Your Borrow Request Could Not Be Approved';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -370,9 +401,11 @@ const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, rejectionRea
           Unfortunately, your request to borrow <strong>"${bookTitle}"</strong> could not be approved.
         </p>
         <div style="background-color: #fff; border-left: 4px solid #d32f2f; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #333; font-weight: bold;">Book:</p>
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book:</p>
           <p style="margin: 5px 0 0 0; font-size: 16px;">${bookTitle}</p>
-          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Reason:</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">📅 Request Date & Time:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${requestDateFormatted}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">❌ Reason:</p>
           <p style="margin: 5px 0 0 0; font-size: 14px;">${rejectionReason}</p>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
@@ -389,7 +422,7 @@ const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, rejectionRea
     </div>
   `;
 
-  const text = `Unfortunately, your borrow request for "${bookTitle}" could not be approved. Reason: ${rejectionReason}. Please contact the library for more information.`;
+  const text = `Unfortunately, your borrow request for "${bookTitle}" submitted on ${requestDateFormatted} could not be approved. Reason: ${rejectionReason}. Please contact the library for more information.`;
   
   return sendEmail({ to: userEmail, subject, text, html });
 };
