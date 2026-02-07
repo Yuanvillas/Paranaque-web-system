@@ -14,7 +14,6 @@ import {
   faBook
 } from "@fortawesome/free-solid-svg-icons";
 import UploadAvatar from "../components/UploadAvatar";
-import UserEntryMonitor from "../components/UserEntryMonitor";
 import BooksTable from "../components/BooksTable";
 import BorrowedBooksTable from "../components/BorrowedBooksTable";
 import ReservedBooksTable from "../components/ReservedBooksTable";
@@ -44,7 +43,6 @@ const LibrarianDashboard = () => {
     ongoingRequests: 0,
     listedCategories: 0
   });
-  const [showEntryModal, setShowEntryModal] = useState(false);
   const [showTodayEntriesModal, setShowTodayEntriesModal] = useState(false);
   const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
   const [showBooksModal, setShowBooksModal] = useState(false);
@@ -887,7 +885,6 @@ const LibrarianDashboard = () => {
                 marginTop: '20px'
               }}>
                 <div 
-                  onClick={() => setShowEntryModal(true)}
                   style={{
                     backgroundColor: 'white',
                     border: '1px solid #e0e0e0',
@@ -895,48 +892,6 @@ const LibrarianDashboard = () => {
                     padding: '25px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-5px)';
-                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-                  }}
-                >
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#999',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    marginBottom: '15px'
-                  }}>
-                    Total Entries
-                  </div>
-                  <div style={{
-                    fontSize: '36px',
-                    fontWeight: 'bold',
-                    color: '#00BFA5',
-                    marginBottom: '5px'
-                  }}>
-                    {entryStats.totalEntries}
-                  </div>
-                </div>
-
-                <div 
-                  onClick={handleTodayEntriesClick}
-                  style={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '12px',
-                    padding: '25px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    textAlign: 'center',
-                    cursor: 'pointer',
                     transition: 'all 0.3s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -1323,16 +1278,7 @@ const LibrarianDashboard = () => {
                 </div>
               </div>
 
-              {/* User Entry Monitor - Main Section */}
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '25px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                marginTop: '30px'
-              }}>
-                <UserEntryMonitor />
-              </div>
+
             </>
           )}
 
@@ -1395,50 +1341,7 @@ const LibrarianDashboard = () => {
             <ArchiveBooksTable />
           )}
 
-          {/* Entry Monitor Modal */}
-          {showEntryModal && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              padding: '20px'
-            }} onClick={() => setShowEntryModal(false)}>
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '25px',
-                maxHeight: '85vh',
-                overflowY: 'auto',
-                width: '100%',
-                maxWidth: '1200px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-              }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>User Entry Monitor</h2>
-                  <button
-                    onClick={() => setShowEntryModal(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      color: '#999'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <UserEntryMonitor />
-              </div>
-            </div>
-          )}
+
 
           {/* Today's Entries Modal */}
           {showTodayEntriesModal && (
