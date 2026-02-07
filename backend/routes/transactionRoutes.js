@@ -14,6 +14,7 @@ const {
   sendBorrowRequestApprovedEmail,
   sendBorrowRequestRejectedEmail
 } = require('../utils/emailService');
+const { notifyBookmarkUsersIfAvailable } = require('../utils/bookmarkNotificationManager');
 
 // Get all transactions
 router.get('/', async (req, res) => {
@@ -181,6 +182,11 @@ router.post('/return/:transactionId', async (req, res) => {
         action: `Returned book: ${book.title}`
       }).save()
     ]);
+
+    // Notify bookmarked users if book is now available (async, non-blocking)
+    notifyBookmarkUsersIfAvailable(book._id, book).catch(err => {
+      console.error('Error notifying bookmark users:', err);
+    });
 
     res.json({ message: 'Book returned successfully', transaction });
   } catch (err) {

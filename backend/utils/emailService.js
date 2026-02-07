@@ -427,6 +427,56 @@ const sendBorrowRequestRejectedEmail = async (userEmail, bookTitle, requestDate,
   return sendEmail({ to: userEmail, subject, text, html });
 };
 
+const sendBookAvailableEmail = async (userEmail, bookTitle, availableCopies) => {
+  const subject = '🎉 Your Bookmarked Book is Now Available!';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #10B981; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">🎉 Good News - Your Book is Available!</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Great news! The book you bookmarked is now available in our library!
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book Title:</p>
+          <p style="margin: 5px 0 0 0; color: #10B981; font-size: 16px; font-weight: bold;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">📦 Available Copies:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${availableCopies} copy(ies) ready to borrow</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          You can now either:
+        </p>
+        <ul style="color: #333; font-size: 14px; line-height: 1.8;">
+          <li><strong>🏷️ Reserve</strong> the book to guarantee your place in the queue</li>
+          <li><strong>📖 Borrow</strong> the book immediately if you're available</li>
+        </ul>
+        <p style="color: #333; font-size: 14px; line-height: 1.6;">
+          Please visit our library portal to complete your reservation or borrow request. Available copies may be limited, so we recommend taking action soon!
+        </p>
+        <div style="margin-top: 20px; text-align: center;">
+          <a href="https://paranaledge.online" style="display: inline-block; background-color: #10B981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Visit Library Portal</a>
+        </div>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Good news! The book "${bookTitle}" is now available with ${availableCopies} copy(ies). Visit our library portal to reserve or borrow it!`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
 module.exports = {
   sendEmail,
   sendReservationExpiredEmail,
@@ -439,5 +489,6 @@ module.exports = {
   sendPickupReminderEmail,
   sendBorrowRequestSubmittedEmail,
   sendBorrowRequestApprovedEmail,
-  sendBorrowRequestRejectedEmail
+  sendBorrowRequestRejectedEmail,
+  sendBookAvailableEmail
 };
