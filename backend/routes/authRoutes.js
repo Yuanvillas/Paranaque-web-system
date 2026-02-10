@@ -198,12 +198,16 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user.isVerified) {
-      // Log unverified login attempt
-      await new Log({
-        userEmail: email,
-        action: 'Failed login attempt - Email not verified'
-      }).save();
-      return res.status(401).json({ message: 'Please verify your email before logging in.' });
+      // ✅ Allow admins and librarians to bypass email verification (bootstrap scenario)
+      if (user.role !== 'admin' && user.role !== 'librarian') {
+        // Log unverified login attempt
+        await new Log({
+          userEmail: email,
+          action: 'Failed login attempt - Email not verified'
+        }).save();
+        return res.status(401).json({ message: 'Please verify your email before logging in.' });
+      }
+      // Admin/Librarian can proceed without verification
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -860,6 +864,81 @@ router.get('/monthly-stats', async (req, res) => {
   } catch (err) {
     console.error("Error fetching monthly stats:", err);
     res.status(500).json({ error: 'Server error while fetching monthly stats' });
+  }
+});
+
+// Create first admin account (bootstrap endpoint)
+// Usage: POST /api/auth/create-first-admin with admin credentials
+router.post('/create-first-admin', async (req, res) => {
+  try {
+    const { firstName = 'Library', lastName = 'Admin', email = 'admin@gmail.com', password = 'Admin123@', contactNumber = '09000000000', address = 'Parañaledge Library' } = req.body;
+
+    // Check if any admin already exists
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    if (existingAdmin) {
+      return res.status(400).json({ 
+        message: 'Admin account already exists',
+        existingAdmin: existingAdmin.email 
+      });
+    }
+
+    // Email validation
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
+      return res.status(400).json({ message: 'Only Gmail addresses are allowed.' });
+    }
+
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.',
+      });
+    }
+
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already exists.' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create admin user
+    const newAdmin = new User({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      contactNumber,
+      address,
+      role: 'admin',
+      isVerified: true,
+      suffix: ''
+    });
+
+    await newAdmin.save();
+
+    // Log admin creation
+    await new Log({
+      userEmail: email,
+      action: 'First admin account created'
+    }).save();
+
+    console.log('✅ First admin account created:', email);
+
+    return res.status(200).json({
+      message: 'First admin account created successfully',
+      admin: {
+        firstName: newAdmin.firstName,
+        lastName: newAdmin.lastName,
+        email: newAdmin.email,
+        role: newAdmin.role
+      }
+    });
+  } catch (err) {
+    console.error('Error creating first admin:', err);
+    return res.status(500).json({ message: err.message });
   }
 });
 

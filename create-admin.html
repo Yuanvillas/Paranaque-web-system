@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create First Admin - Parañaledge</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .loading {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+            margin-right: 5px;
+        }
+        @keyframes blink {
+            0%, 20%, 50%, 80%, 100% { opacity: 1; }
+            40% { opacity: 0.3; }
+            60% { opacity: 0.3; }
+        }
+        .info {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            border: 1px solid #b8daff;
+        }
+        .credentials {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 13px;
+            font-family: monospace;
+        }
+        .credentials-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .credential-item {
+            margin: 5px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Create Admin Account</h1>
+        
+        <div class="info">
+            ℹ️ This will create the first admin account for Parañaledge Library. Only run once.
+        </div>
+
+        <form id="adminForm" onsubmit="createAdmin(event)">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" value="Library" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" value="Admin" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email (Gmail only):</label>
+                <input type="email" id="email" value="admin@gmail.com" required pattern=".*@gmail\.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="Admin123@" required 
+                       title="Must include uppercase, lowercase, number, and special character">
+            </div>
+
+            <div class="form-group">
+                <label for="contactNumber">Contact Number:</label>
+                <input type="text" id="contactNumber" value="09000000000" required pattern="09\d{9}">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" value="Parañaledge Library" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Create Admin Account</button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div id="credentials" class="credentials" style="display: none;">
+            <div class="credentials-label">✅ Credentials Created:</div>
+            <div class="credential-item"><strong>Email:</strong> <span id="credEmail"></span></div>
+            <div class="credential-item"><strong>Password:</strong> <span id="credPassword"></span></div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                👉 Go to login page and use these credentials
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function createAdmin(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            const credentialsDiv = document.getElementById('credentials');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Creating...';
+
+            const payload = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                contactNumber: document.getElementById('contactNumber').value,
+                address: document.getElementById('address').value
+            };
+
+            try {
+                const response = await fetch('https://paranaque-web-system.onrender.com/api/auth/create-first-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = '✅ Admin account created successfully!';
+                    
+                    document.getElementById('credEmail').textContent = payload.email;
+                    document.getElementById('credPassword').textContent = payload.password;
+                    credentialsDiv.style.display = 'block';
+
+                    document.getElementById('adminForm').style.display = 'none';
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = '❌ ' + (data.message || 'Failed to create admin account');
+                    btn.disabled = false;
+                    btn.textContent = 'Create Admin Account';
+                }
+            } catch (err) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '❌ Network error: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Create Admin Account';
+            }
+        }
+    </script>
+</body>
+</html>
