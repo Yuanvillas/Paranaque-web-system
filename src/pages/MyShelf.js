@@ -214,26 +214,53 @@ const MyShelf = () => {
     <div style={{ padding: "20px" }}>
       <h2 style={{ fontWeight: '600', fontSize: '25px', marginBottom: '20px' }}>My Shelf</h2>
 
-      {error && <div className="error-msg">{error}</div>}
-
-      {borrowedBooks.length >= 3 && (
-        <div style={{
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffc107',
-          borderRadius: '8px',
-          padding: '15px 20px',
-          marginBottom: '20px',
-          color: '#856404',
-          fontSize: '14px',
-          fontWeight: '500',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <span style={{ fontSize: '20px' }}>⚠️</span>
-          <span>You have reached the borrowing limit of <strong>3 books</strong>. Please return some books before borrowing more.</span>
+      {/* Borrowing Limit Progress Bar */}
+      <div style={{
+        backgroundColor: '#f5f5f5',
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <strong style={{ fontSize: '14px', color: '#333' }}>📚 Books Borrowed</strong>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: borrowedBooks.length >= 3 ? '#d32f2f' : '#2e7d32' }}>
+            {borrowedBooks.length}/3
+          </span>
         </div>
-      )}
+        <div style={{
+          width: '100%',
+          height: '24px',
+          backgroundColor: '#e0e0e0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '1px solid #bdbdbd'
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${(borrowedBooks.length / 3) * 100}%`,
+            backgroundColor: borrowedBooks.length >= 3 ? '#d32f2f' : borrowedBooks.length >= 2 ? '#ff9800' : '#4caf50',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            {borrowedBooks.length > 0 && `${borrowedBooks.length}`}
+          </div>
+        </div>
+        <p style={{ fontSize: '12px', color: '#666', margin: '8px 0 0', textAlign: 'center' }}>
+          {borrowedBooks.length === 0 && "No books borrowed yet"}
+          {borrowedBooks.length === 1 && "You can borrow 2 more books"}
+          {borrowedBooks.length === 2 && "You can borrow 1 more book"}
+          {borrowedBooks.length >= 3 && "Limit reached - return a book to borrow another"}
+        </p>
+      </div>
+
+      {error && <div className="error-msg">{error}</div>}
 
       {/* Filter Tabs */}
       <div className="shelf-tabs">
