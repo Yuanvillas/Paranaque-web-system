@@ -236,6 +236,11 @@ const GenreBooks = () => {
               </div>
 
               <div className="modal-inputs">
+                <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
+                  <p style={{ margin: '0', fontSize: '13px', color: '#e65100', fontWeight: '500' }}>
+                    📌 <strong>Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.
+                  </p>
+                </div>
                 <div className="modal-form">
                   {(() => {
                     const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
