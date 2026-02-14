@@ -20,6 +20,7 @@ import ReservedBooksTable from "../components/ReservedBooksTable";
 import PendingRequestTable from "../components/PendingRequestTable";
 import TransactionsTable from "../components/TransactionsTable";
 import ArchiveBooksTable from "../components/ArchiveBooksTable";
+import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
 
 const LibrarianDashboard = () => {
   const navigate = useNavigate();
@@ -1278,6 +1279,10 @@ const LibrarianDashboard = () => {
                 </div>
               </div>
 
+              {/* Overdue Notification Panel */}
+              <div style={{ marginTop: '30px' }}>
+                <OverdueNotificationPanel />
+              </div>
 
             </>
           )}
