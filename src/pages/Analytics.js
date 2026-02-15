@@ -313,6 +313,130 @@ const Analytics = () => {
             </div>
           )}
 
+          {/* Modal for Books Listed (from chart) */}
+          {selectedModal === 'booksListed' && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '30px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', position: 'relative', width: '100%', marginLeft: '20px', marginRight: '20px' }}>
+                <button onClick={() => setSelectedModal(null)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2>Books Listed Status ({books.length})</h2>
+                  <button 
+                    onClick={() => {
+                      const data = books.map(book => ({
+                        Title: book.title,
+                        Author: book.author,
+                        Year: book.year,
+                        Category: book.category,
+                        'Accession Number': book.accessionNumber,
+                        Location: book.location ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}` : 'N/A',
+                        Status: book.status || 'Available',
+                        'Available': book.availableStock || 0,
+                        'Borrowed': (book.stock || 0) - (book.availableStock || 0)
+                      }));
+                      exportToExcel(data, "Books_Listed_Status");
+                    }}
+                    style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  >
+                    📥 Export to Excel
+                  </button>
+                </div>
+                <table className="styled-table" style={{ marginTop: '20px' }}>
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Category</th>
+                      <th>Year</th>
+                      <th>Stock</th>
+                      <th>Available</th>
+                      <th>Borrowed</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {books.map((book) => (
+                      <tr key={book._id}>
+                        <td>{book.image ? <img src={book.image} alt={book.title} style={{ width: '50px', height: 'auto' }} /> : 'No Image'}</td>
+                        <td>{book.title}</td>
+                        <td>{book.author}</td>
+                        <td>{book.category}</td>
+                        <td>{book.year}</td>
+                        <td>{book.stock || 0}</td>
+                        <td><span style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{book.availableStock || 0}</span></td>
+                        <td><span style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{(book.stock || 0) - (book.availableStock || 0)}</span></td>
+                        <td>{book.status ? book.status : 'Available'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Modal for Borrow vs Return (from chart) */}
+          {selectedModal === 'borrowReturn' && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '30px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', position: 'relative', width: '100%', marginLeft: '20px', marginRight: '20px' }}>
+                <button onClick={() => setSelectedModal(null)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+                <h2 style={{ marginBottom: '20px' }}>Borrow vs Return Summary</h2>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '30px' }}>
+                  <div style={{ backgroundColor: '#ffebee', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
+                    <h3 style={{ color: '#c62828', margin: '0 0 10px 0' }}>Borrowed</h3>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#c62828', margin: 0 }}>{borrowedBooks.filter(b => !b.returnedAt).length}</p>
+                  </div>
+                  <div style={{ backgroundColor: '#e8f5e9', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
+                    <h3 style={{ color: '#2e7d32', margin: '0 0 10px 0' }}>Returned</h3>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2e7d32', margin: 0 }}>{borrowedBooks.filter(b => b.returnedAt).length}</p>
+                  </div>
+                  <div style={{ backgroundColor: '#f3e5f5', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
+                    <h3 style={{ color: '#6a1b9a', margin: '0 0 10px 0' }}>Total</h3>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6a1b9a', margin: 0 }}>{borrowedBooks.length}</p>
+                  </div>
+                </div>
+
+                <h3>Book Transactions Detail</h3>
+                <table className="styled-table" style={{ marginTop: '20px' }}>
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Title</th>
+                      <th>Borrower</th>
+                      <th>Borrow Date</th>
+                      <th>Due Date</th>
+                      <th>Returned Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {borrowedBooks.map((book) => (
+                      <tr key={book._id}>
+                        <td>{book.image ? <img src={book.image} alt={book.title} style={{ width: '50px', height: 'auto' }} /> : 'No Image'}</td>
+                        <td>{book.title}</td>
+                        <td>{book.borrowedBy || 'N/A'}</td>
+                        <td>{book.borrowedAt ? new Date(book.borrowedAt).toLocaleDateString() : 'N/A'}</td>
+                        <td>{book.dueDate ? new Date(book.dueDate).toLocaleDateString() : 'N/A'}</td>
+                        <td>{book.returnedAt ? new Date(book.returnedAt).toLocaleDateString() : 'Not Returned'}</td>
+                        <td>
+                          {book.returnedAt ? (
+                            <span style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Returned</span>
+                          ) : (
+                            <span style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Borrowed</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Modal for Books Added Today */}
           {selectedModal === 'today' && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
