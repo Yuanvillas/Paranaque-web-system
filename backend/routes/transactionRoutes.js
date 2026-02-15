@@ -395,7 +395,7 @@ router.post('/approve-reservation/:id', async (req, res) => {
     }
 
     // Update transaction
-    transaction.status = 'approved';
+    transaction.status = 'active';
     transaction.approvedBy = adminEmail;
     transaction.approvalDate = new Date();
     await transaction.save();
