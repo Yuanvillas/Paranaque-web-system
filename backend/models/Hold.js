@@ -23,7 +23,7 @@ const holdSchema = new mongoose.Schema({
   },
   queuePosition: {
     type: Number,
-    required: true
+    default: 1
   },
   holdDate: {
     type: Date,
@@ -76,7 +76,7 @@ holdSchema.index({ queuePosition: 1 });
 
 // Auto-increment queue position within a book's hold queue
 holdSchema.pre('save', async function(next) {
-  if (this.isNew) {
+  if (this.isNew && !this.queuePosition) {
     try {
       // Count how many active holds exist for this book
       const count = await mongoose.model('Hold').countDocuments({

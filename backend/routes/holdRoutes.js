@@ -64,12 +64,20 @@ router.post('/place', async (req, res) => {
     const user = await User.findOne({ email: userEmail });
     const userName = user ? user.firstName + ' ' + user.lastName : 'User';
 
+    // Calculate queue position
+    const existingHoldsCount = await Hold.countDocuments({
+      bookId,
+      status: 'active'
+    });
+    const queuePosition = existingHoldsCount + 1;
+
     // Create new hold
     const newHold = new Hold({
       bookId,
       userEmail,
       userName,
-      bookTitle: book.title
+      bookTitle: book.title,
+      queuePosition
     });
 
     await newHold.save();
