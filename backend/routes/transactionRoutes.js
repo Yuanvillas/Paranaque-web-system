@@ -243,23 +243,20 @@ router.post('/return/:transactionId', async (req, res) => {
           firstHold.notificationDate = new Date();
           await firstHold.save();
           console.log(`📬 Notification sent to ${firstHold.userEmail}`);
-        } catch (emailErr) {
-          console.error('⚠️ Failed to send email but hold marked as ready:', emailErr.message);
+        } else {
+          console.log(`ℹ️ No active holds for book ${book._id}`);
         }
-      } else {
-        console.log(`ℹ️ No active holds for book ${book._id}`);
+      } catch (holdErr) {
+        console.warn('⚠️ Hold processing failed (non-critical):', holdErr.message);
+        // Don't fail the return if hold processing fails
       }
-    } catch (holdErr) {
-      console.warn('⚠️ Hold processing failed (non-critical):', holdErr.message);
-      // Don't fail the return if hold processing fails
-    }
 
-    // Notify bookmarked users if book is now available (async, non-blocking)
-    notifyBookmarkUsersIfAvailable(book._id, book).catch(err => {
-      console.error('Error notifying bookmark users:', err);
-    });
+      // Notify bookmarked users if book is now available (async, non-blocking)
+      notifyBookmarkUsersIfAvailable(book._id, book).catch(err => {
+        console.error('Error notifying bookmark users:', err);
+      });
 
-    res.json({ message: 'Book returned successfully', transaction });
+      res.json({ message: 'Book returned successfully', transaction });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -983,6 +980,10 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
         console.log(`✅ Hold saved successfully. New status: ${savedHold.status}`);
 
         // Send notification email
+        console.log(`📧 Preparing to send email to ${firstHold.userEmail}`);
+        console.log(`📧 EMAIL_USER from env: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}`);
+        console.log(`📧 EMAIL_PASS from env: ${process.env.EMAIL_PASS ? 'SET' : 'NOT SET'}`);
+        
         const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
@@ -1014,13 +1015,20 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
         };
 
         try {
-          await transporter.sendMail(mailOptions);
+          console.log(`📧 Sending email with transporter...`);
+          const result = await transporter.sendMail(mailOptions);
+          console.log(`✅ Email sent successfully! Response:`, result.response);
           firstHold.notificationSent = true;
           firstHold.notificationDate = new Date();
           await firstHold.save();
           console.log(`📬 Notification sent to ${firstHold.userEmail}`);
         } catch (emailErr) {
-          console.error('⚠️ Failed to send email but hold marked as ready:', emailErr.message);
+          console.error('❌ DETAILED EMAIL ERROR:', {
+            message: emailErr.message,
+            code: emailErr.code,
+            response: emailErr.response,
+            stack: emailErr.stack
+          });
         }
       } else {
         console.log(`ℹ️ No active holds for book ${book._id}`);
