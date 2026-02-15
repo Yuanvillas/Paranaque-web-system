@@ -117,14 +117,11 @@ const LandingPage = () => {
                     className="landing-book-card"
                     onClick={() => openModal(book)}
                   >
+                    {avail > 0 && (
+                      <span className="availability-badge available">Available</span>
+                    )}
                     {avail <= 0 && (
                       <span className="availability-badge not-available">Not Available</span>
-                    )}
-                    {avail > 0 && avail < 3 && (
-                      <span className="availability-badge low-stock">Low Stock</span>
-                    )}
-                    {avail >= 3 && (
-                      <span className="availability-badge available">Available</span>
                     )}
 
                     <div className="book-image-container">
