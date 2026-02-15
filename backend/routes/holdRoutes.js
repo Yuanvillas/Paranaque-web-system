@@ -43,6 +43,23 @@ router.post('/place', async (req, res) => {
       });
     }
 
+    // Check if user already borrowed this book
+    const Transaction = require('../models/Transaction');
+    const activeBorrow = await Transaction.findOne({
+      bookId,
+      userEmail,
+      type: 'borrow',
+      status: { $in: ['active', 'approved', 'borrowed'] }
+    });
+
+    if (activeBorrow) {
+      return res.status(409).json({ 
+        error: 'You cannot place a hold on a book you already borrowed. Return the book first.',
+        borrowDate: activeBorrow.startDate,
+        dueDate: activeBorrow.dueDate
+      });
+    }
+
     // Get user info for email field
     const user = await User.findOne({ email: userEmail });
     const userName = user ? user.firstName + ' ' + user.lastName : 'User';
