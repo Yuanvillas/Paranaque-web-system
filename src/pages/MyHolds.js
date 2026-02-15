@@ -42,6 +42,15 @@ const MyHolds = () => {
     fetchHolds();
   }, [fetchHolds]);
 
+  // Auto-refresh holds every 30 seconds to detect status changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchHolds();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchHolds]);
+
   const handleCancelHold = async (holdId, bookTitle) => {
     const confirm = await Swal.fire({
       title: 'Cancel Hold',
@@ -112,7 +121,25 @@ const MyHolds = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '28px', marginBottom: '30px', color: '#333' }}>📋 My Book Holds</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <h1 style={{ fontSize: '28px', color: '#333', margin: '0' }}>📋 My Book Holds</h1>
+        <button
+          onClick={fetchHolds}
+          disabled={loading}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: loading ? '#ccc' : '#1976d2',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
+        </button>
+      </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
