@@ -665,22 +665,20 @@ const UserHome = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (avail > 0) openModal(book);
-                              else Swal.fire({ title: 'Parañaledge', text: 'This book is currently unavailable.', icon: 'warning', confirmButtonText: 'OK' });
+                              openModal(book);
                             }}
-                            title={avail > 0 ? "View" : "Unavailable"}
-                            disabled={avail <= 0}
+                            title="View Book Details"
                             style={{
-                              opacity: avail > 0 ? 1 : 0.6,
-                              cursor: avail > 0 ? 'pointer' : 'not-allowed',
-                              background: avail > 0 ? '#0a66ff' : '#ccc',
+                              opacity: 1,
+                              cursor: 'pointer',
+                              background: avail > 0 ? '#0a66ff' : '#ff9800',
                               border: 'none',
                               color: 'white',
                               padding: '8px 12px',
                               borderRadius: 6
                             }}
                           >
-                            {avail > 0 ? <FontAwesomeIcon icon="book-open" /> : 'Unavailable'}
+                            {avail > 0 ? <FontAwesomeIcon icon="book-open" /> : 'View'}
                           </button>
                         );
                       })()}
