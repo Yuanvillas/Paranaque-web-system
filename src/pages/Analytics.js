@@ -198,16 +198,16 @@ const Analytics = () => {
           {error && <div className="error-message">{error}</div>}
 
           <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px", width: "100%"}}>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('booksListed')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
               <BooksListedChart books={books} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('monthlyUsers')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
               <BooksAddedTodayChart monthlyUsers={monthlyUsers} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('borrowReturn')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
               <BorrowReturnChart borrowedBooks={borrowedBooks} allBooks={books} />
             </div>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden"}}>
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('mostBorrowed')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
               <MostBorrowedBooksChart mostBorrowedBooks={mostBorrowedBooks} />
             </div>
           </div>
@@ -226,6 +226,11 @@ const Analytics = () => {
             <div className="summary-box" onClick={() => setSelectedModal('week')} style={{ cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
               <h3>Books Borrowed Per Week</h3>
               <p>{borrowedWeekCount}</p>
+            </div>
+
+            <div className="summary-box" onClick={() => setSelectedModal('monthlyUsers')} style={{ cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+              <h3>Monthly Users</h3>
+              <p>{monthlyUsers.reduce((sum, u) => sum + (u.count || 0), 0)}</p>
             </div>
 
             <div className="summary-box" onClick={() => setSelectedModal('mostBorrowed')} style={{ cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
@@ -608,6 +613,59 @@ const Analytics = () => {
                           <td>{book.availableStock || '-'}</td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Modal for Monthly Users */}
+          {selectedModal === 'monthlyUsers' && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '30px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', position: 'relative', width: '100%', marginLeft: '20px', marginRight: '20px' }}>
+                <button onClick={() => setSelectedModal(null)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2>Monthly User Statistics (Total: {monthlyUsers.reduce((sum, u) => sum + (u.count || 0), 0)})</h2>
+                  <button 
+                    onClick={() => {
+                      const data = monthlyUsers.map(stat => ({
+                        Month: stat.month,
+                        'Users Registered': stat.count
+                      }));
+                      exportToExcel(data, "Monthly_Users_Report");
+                    }}
+                    style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  >
+                    📥 Export to Excel
+                  </button>
+                </div>
+                {monthlyUsers.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                    <p style={{ fontSize: '16px' }}>No monthly user data available yet.</p>
+                    <p style={{ fontSize: '14px', marginTop: '10px' }}>Users will be listed here as they register in the system.</p>
+                  </div>
+                ) : (
+                  <table className="styled-table" style={{ marginTop: '20px', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '70%' }}>Month</th>
+                        <th style={{ width: '30%', textAlign: 'center' }}>Users Registered</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyUsers.map((stat, index) => (
+                        <tr key={index}>
+                          <td><strong>{stat.month}</strong></td>
+                          <td style={{ textAlign: 'center', fontSize: '16px', color: '#2e7d32', fontWeight: 'bold' }}>{stat.count}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
+                        <td>Total</td>
+                        <td style={{ textAlign: 'center', color: '#2e7d32', fontSize: '16px' }}>{monthlyUsers.reduce((sum, u) => sum + (u.count || 0), 0)}</td>
+                      </tr>
                     </tbody>
                   </table>
                 )}
