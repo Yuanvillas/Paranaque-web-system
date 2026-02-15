@@ -63,6 +63,46 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Check if book already exists
+router.post('/check-duplicate', async (req, res) => {
+  try {
+    console.log("🔍 POST /api/books/check-duplicate called");
+    const { title, author } = req.body;
+    
+    if (!title || !author) {
+      return res.status(400).json({ error: 'Title and author are required' });
+    }
+    
+    // Search for existing book with same title and author (case-insensitive)
+    const existingBook = await Book.findOne({
+      title: { $regex: `^${title}$`, $options: 'i' },
+      author: { $regex: `^${author}$`, $options: 'i' }
+    });
+    
+    if (existingBook) {
+      console.log("⚠️  Duplicate book found:", existingBook.title, "by", existingBook.author);
+      return res.status(200).json({ 
+        isDuplicate: true, 
+        message: `Book "${existingBook.title}" by ${existingBook.author} already exists in the library!`,
+        existingBook: {
+          id: existingBook._id,
+          title: existingBook.title,
+          author: existingBook.author,
+          year: existingBook.year,
+          accessionNumber: existingBook.accessionNumber,
+          stock: existingBook.stock
+        }
+      });
+    }
+    
+    console.log("✅ No duplicate found for:", title, "by", author);
+    return res.status(200).json({ isDuplicate: false, message: 'Book is new' });
+  } catch (err) {
+    console.error("❌ Error checking duplicate:", err);
+    return res.status(500).json({ error: 'Server error while checking for duplicates' });
+  }
+});
+
 // Add Book
 // Accepts either multipart/form-data (with file) or JSON (with base64 image)
 router.post('/', async (req, res) => {
@@ -86,6 +126,30 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Stock is required' });
     }
     console.log("✅ All required fields present");
+    
+    // Check for duplicate books (same title and author)
+    console.log("🔍 Checking for duplicate books...");
+    const duplicateBook = await Book.findOne({
+      title: { $regex: `^${title}$`, $options: 'i' },
+      author: { $regex: `^${author}$`, $options: 'i' }
+    });
+    
+    if (duplicateBook) {
+      console.log("⚠️  Duplicate book found:", duplicateBook.title, "by", duplicateBook.author);
+      return res.status(409).json({ 
+        error: 'Duplicate',
+        message: `Book "${duplicateBook.title}" by ${duplicateBook.author} already exists in the library!`,
+        existingBook: {
+          id: duplicateBook._id,
+          title: duplicateBook.title,
+          author: duplicateBook.author,
+          year: duplicateBook.year,
+          accessionNumber: duplicateBook.accessionNumber,
+          stock: duplicateBook.stock
+        }
+      });
+    }
+    console.log("✅ No duplicate found, proceeding with book addition...");
     
     let imageField = null;
 

@@ -85,6 +85,9 @@ const AddBook = ({ onBookAdded }) => {
   const [categories, setCategories] = useState(["Science", "Math", "Filipino", "English", "Fiction"]);
   const [nextAccessionNumber, setNextAccessionNumber] = useState("Calculating...");
   const [nextCallNumber, setNextCallNumber] = useState("PREFIX.DDD-CCC-YYYY");
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateBook, setDuplicateBook] = useState(null);
+  const [forceProceed, setForceProceed] = useState(false);
 
   const [book, setBook] = useState({
     title: "",
@@ -277,6 +280,41 @@ const AddBook = ({ onBookAdded }) => {
       return;
     }
 
+    // Check for duplicates before submitting
+    await checkDuplicate();
+  };
+
+  const checkDuplicate = async () => {
+    try {
+      console.log("🔍 Checking for duplicate books...");
+      const res = await fetch("https://paranaque-web-system.onrender.com/api/books/check-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: book.title,
+          author: book.author
+        })
+      });
+
+      const data = await res.json();
+      
+      if (data.isDuplicate) {
+        console.log("⚠️  Duplicate book found:", data.message);
+        setDuplicateBook(data.existingBook);
+        setShowDuplicateModal(true);
+        setForceProceed(false);
+      } else {
+        console.log("✅ No duplicate found, proceeding with submission...");
+        setForceProceed(true);
+        submitBook();
+      }
+    } catch (err) {
+      console.error("❌ Error checking duplicate:", err);
+      alert("Error checking for duplicates: " + (err.message || "Network error"));
+    }
+  };
+
+  const submitBook = async () => {
     setLoading(true);
     console.log("🔄 Starting book submission...");
 
@@ -319,6 +357,7 @@ const AddBook = ({ onBookAdded }) => {
       if (res.ok) {
         console.log("✅ Book added successfully! Image URL:", data.book?.image);
         setShowSuccessModal(true);
+        setShowDuplicateModal(false);
         setBook({
           title: "",
           year: "",
@@ -336,6 +375,11 @@ const AddBook = ({ onBookAdded }) => {
         setBase64Image("");
 
         if (onBookAdded) onBookAdded();
+      } else if (res.status === 409) {
+        // Duplicate book error
+        console.error("⚠️  Duplicate book error:", data.message);
+        setDuplicateBook(data.existingBook);
+        setShowDuplicateModal(true);
       } else {
         console.error("❌ Failed to add book:", data.error);
         alert("Failed to add book: " + (data.error || "Unknown error"));
@@ -474,6 +518,67 @@ const AddBook = ({ onBookAdded }) => {
             <button onClick={() => setShowSuccessModal(false)} style={styles.closeModalBtn}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {showDuplicateModal && duplicateBook && (
+        <div style={styles.modalOverlay}>
+          <div style={{...styles.modal, maxWidth: '450px', background: '#fff3cd'}}>
+            <h3 style={{color: '#856404', marginTop: 0}}>⚠️ Duplicate Book Warning</h3>
+            <p style={{color: '#856404', fontSize: '14px', lineHeight: '1.6'}}>
+              This book already exists in the library system:
+            </p>
+            <div style={{
+              background: '#fff',
+              padding: '15px',
+              borderRadius: '5px',
+              marginBottom: '15px',
+              border: '1px solid #ffeaa7'
+            }}>
+              <p style={{margin: '8px 0', fontSize: '14px'}}>
+                <strong>Title:</strong> {duplicateBook.title}
+              </p>
+              <p style={{margin: '8px 0', fontSize: '14px'}}>
+                <strong>Author:</strong> {duplicateBook.author}
+              </p>
+              <p style={{margin: '8px 0', fontSize: '14px'}}>
+                <strong>Year:</strong> {duplicateBook.year}
+              </p>
+              <p style={{margin: '8px 0', fontSize: '14px'}}>
+                <strong>Accession #:</strong> {duplicateBook.accessionNumber}
+              </p>
+              <p style={{margin: '8px 0', fontSize: '14px'}}>
+                <strong>Current Stock:</strong> {duplicateBook.stock}
+              </p>
+            </div>
+            <p style={{color: '#856404', fontSize: '13px', fontStyle: 'italic'}}>
+              Do you want to proceed with adding another copy, or cancel?
+            </p>
+            <div style={{ display: "flex", gap: "10px", marginTop: "15px", justifyContent: 'center' }}>
+              <button 
+                onClick={() => {
+                  setShowDuplicateModal(false);
+                  setForceProceed(true);
+                  submitBook();
+                }} 
+                style={{...styles.submitBtn, background: '#ff9800'}}
+                disabled={loading}
+              >
+                {loading ? "Adding..." : "Proceed Anyway"}
+              </button>
+              <button 
+                onClick={() => { 
+                  setShowDuplicateModal(false); 
+                  setDuplicateBook(null);
+                  setForceProceed(false);
+                }} 
+                style={styles.cancelBtn}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
