@@ -2061,5 +2061,128 @@ router.post('/admin/sync-counter', async (req, res) => {
   }
 });
 
+// Diagnostic endpoint to check book availability and holds
+router.get('/diagnostic/check/:bookId', async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const Hold = require('../models/Hold');
+    const activeHolds = await Hold.find({
+      bookId: bookId,
+      status: 'active'
+    }).sort({ queuePosition: 1 });
+
+    res.json({
+      book: {
+        _id: book._id,
+        title: book.title,
+        stock: book.stock,
+        availableStock: book.availableStock,
+        status: book.status
+      },
+      activeHolds: activeHolds.map(h => ({
+        _id: h._id,
+        userEmail: h.userEmail,
+        status: h.status,
+        queuePosition: h.queuePosition,
+        holdDate: h.holdDate
+      })),
+      message: `Book has ${activeHolds.length} active holds`
+    });
+  } catch (err) {
+    console.error('Diagnostic error:', err);
+    res.status(500).json({ error: 'Diagnostic error: ' + err.message });
+  }
+});
+
+// Force process holds for a book (admin use)
+router.post('/admin/process-holds/:bookId', async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const Hold = require('../models/Hold');
+    const nodemailer = require('nodemailer');
+    
+    // Get first person in hold queue
+    const firstHold = await Hold.findOne({
+      bookId: book._id,
+      status: 'active'
+    }).sort({ queuePosition: 1 });
+
+    if (!firstHold) {
+      return res.json({ message: 'No active holds for this book' });
+    }
+
+    console.log(`📋 Force processing hold for user ${firstHold.userEmail} on book ${book.title}`);
+    
+    // Mark hold as ready
+    firstHold.status = 'ready';
+    firstHold.readyPickupDate = new Date();
+    await firstHold.save();
+
+    // Send notification email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: firstHold.userEmail,
+      subject: `📚 Your Hold is Ready for Pickup - ${firstHold.bookTitle}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2e7d32;">📚 Your Book Hold is Ready!</h2>
+          <p>Dear ${firstHold.userName},</p>
+          <p>Great news! The book you placed a hold on is now available for pickup:</p>
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Book Title:</strong> ${firstHold.bookTitle}</p>
+            <p><strong>Hold Placed:</strong> ${new Date(firstHold.holdDate).toLocaleDateString()}</p>
+            <p><strong>Ready for Pickup:</strong> ${new Date().toLocaleDateString()}</p>
+            <p style="color: #e65100;"><strong>⏰ Please pick up within 7 days or your hold will expire.</strong></p>
+          </div>
+          <p>Please visit our library to pick up your book during our business hours.</p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px;">Parañaledge Library System</p>
+        </div>
+      `
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      firstHold.notificationSent = true;
+      firstHold.notificationDate = new Date();
+      await firstHold.save();
+      console.log(`📬 Notification sent to ${firstHold.userEmail}`);
+    } catch (emailErr) {
+      console.error('⚠️ Failed to send email:', emailErr.message);
+    }
+
+    res.json({ 
+      message: 'Hold processed successfully',
+      holdId: firstHold._id,
+      userEmail: firstHold.userEmail,
+      newStatus: 'ready'
+    });
+  } catch (err) {
+    console.error('Error processing hold:', err);
+    res.status(500).json({ error: 'Failed to process hold: ' + err.message });
+  }
+});
+
 module.exports = router;
+
 
