@@ -829,6 +829,8 @@ router.put('/return/:id', async (req, res) => {
       const Hold = require('../models/Hold');
       const nodemailer = require('nodemailer');
       
+      console.log(`🔍 Checking for holds on book ${book._id} with availableStock=${book.availableStock}`);
+      
       // Get first person in hold queue
       const firstHold = await Hold.findOne({
         bookId: book._id,
@@ -836,12 +838,14 @@ router.put('/return/:id', async (req, res) => {
       }).sort({ queuePosition: 1 });
 
       if (firstHold) {
-        console.log(`📋 Processing hold for user ${firstHold.userEmail} on book ${book.title}`);
+        console.log(`📋 Found hold! Processing hold for user ${firstHold.userEmail} on book ${book.title}`);
         
         // Mark hold as ready
         firstHold.status = 'ready';
         firstHold.readyPickupDate = new Date();
-        await firstHold.save();
+        console.log(`📝 Setting hold status to: ${firstHold.status}`);
+        const savedHold = await firstHold.save();
+        console.log(`✅ Hold saved successfully. New status: ${savedHold.status}`);
 
         // Send notification email
         const transporter = nodemailer.createTransport({
