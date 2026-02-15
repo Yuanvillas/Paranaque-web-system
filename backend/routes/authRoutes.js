@@ -857,9 +857,24 @@ router.get('/monthly-stats', async (req, res) => {
       });
     }
 
+    // Count users without createdAt timestamp (legacy users)
+    const usersWithoutTimestamp = await User.countDocuments({
+      createdAt: { $exists: false }
+    });
+
+    // Add legacy users to the current month if they exist
+    if (usersWithoutTimestamp > 0) {
+      const currentMonthIndex = monthlyStats.length - 1;
+      if (currentMonthIndex >= 0) {
+        monthlyStats[currentMonthIndex].count += usersWithoutTimestamp;
+        monthlyStats[currentMonthIndex].legacyUsers = usersWithoutTimestamp;
+      }
+    }
+
     res.status(200).json({
       monthlyStats: monthlyStats,
-      total: monthlyStats.reduce((sum, stat) => sum + stat.count, 0)
+      total: monthlyStats.reduce((sum, stat) => sum + stat.count, 0),
+      legacyUsersFound: usersWithoutTimestamp
     });
   } catch (err) {
     console.error("Error fetching monthly stats:", err);
