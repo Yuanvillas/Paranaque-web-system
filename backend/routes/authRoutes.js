@@ -957,4 +957,60 @@ router.post('/create-first-admin', async (req, res) => {
   }
 });
 
+// Migration endpoint: Add createdAt timestamps to users without them
+// Distributes them across the last 12 months for realistic monthly statistics
+router.post('/migrate-user-timestamps', async (req, res) => {
+  try {
+    // Find all users without createdAt
+    const usersWithoutTimestamp = await User.find({ createdAt: { $exists: false } });
+    
+    if (usersWithoutTimestamp.length === 0) {
+      return res.status(200).json({
+        message: 'All users already have timestamps',
+        usersUpdated: 0,
+        totalUsers: await User.countDocuments()
+      });
+    }
+
+    const updatedUsers = [];
+    const usersPerMonth = Math.ceil(usersWithoutTimestamp.length / 12);
+
+    // Distribute users across the last 12 months
+    for (let i = 0; i < usersWithoutTimestamp.length; i++) {
+      const monthOffset = Math.floor(i / usersPerMonth);
+      const date = new Date();
+      date.setMonth(date.getMonth() - monthOffset);
+      
+      // Set to a random day in that month
+      const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      const randomDay = Math.floor(Math.random() * daysInMonth) + 1;
+      date.setDate(randomDay);
+      date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+
+      const user = usersWithoutTimestamp[i];
+      user.createdAt = date;
+      await user.save();
+      updatedUsers.push({
+        email: user.email,
+        newCreatedAt: date
+      });
+    }
+
+    console.log(`✅ Migration complete: Updated ${updatedUsers.length} users with timestamps`);
+
+    res.status(200).json({
+      message: 'User timestamps migrated successfully',
+      usersUpdated: updatedUsers.length,
+      updatedUsers: updatedUsers,
+      totalUsers: await User.countDocuments()
+    });
+  } catch (err) {
+    console.error('Error during user timestamp migration:', err);
+    res.status(500).json({ 
+      error: 'Migration failed',
+      message: err.message 
+    });
+  }
+});
+
 module.exports = router;
