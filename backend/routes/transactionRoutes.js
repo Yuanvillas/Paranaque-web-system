@@ -12,7 +12,9 @@ const {
   sendReservationRejectedEmail,
   sendBorrowRequestSubmittedEmail,
   sendBorrowRequestApprovedEmail,
-  sendBorrowRequestRejectedEmail
+  sendBorrowRequestRejectedEmail,
+  sendReturnRequestApprovedEmail,
+  sendReturnRequestRejectedEmail
 } = require('../utils/emailService');
 const { notifyBookmarkUsersIfAvailable } = require('../utils/bookmarkNotificationManager');
 
@@ -1024,6 +1026,20 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
       // Don't fail the return approval if hold processing fails
     }
 
+    // SEND RETURN APPROVAL EMAIL TO USER
+    try {
+      console.log(`📧 Sending return approval email to ${transaction.userEmail}`);
+      await sendReturnRequestApprovedEmail(
+        transaction.userEmail,
+        returnRequest.bookTitle,
+        new Date()
+      );
+      console.log(`✅ Return approval email sent to ${transaction.userEmail}`);
+    } catch (emailErr) {
+      console.error('❌ Error sending return approval email:', emailErr.message);
+      // Don't fail the return approval if email fails
+    }
+
     res.json({ 
       message: 'Return request approved successfully', 
       returnRequest,
@@ -1056,6 +1072,21 @@ router.put('/return-requests/:requestId/reject', async (req, res) => {
         action: `Return request rejected for book: ${returnRequest.bookTitle}. Reason: ${rejectionReason || 'No reason provided'}`
       }).save()
     ]);
+
+    // SEND RETURN REJECTION EMAIL TO USER
+    try {
+      console.log(`📧 Sending return rejection email to ${returnRequest.userEmail}`);
+      await sendReturnRequestRejectedEmail(
+        returnRequest.userEmail,
+        returnRequest.bookTitle,
+        rejectionReason || 'No reason provided',
+        new Date()
+      );
+      console.log(`✅ Return rejection email sent to ${returnRequest.userEmail}`);
+    } catch (emailErr) {
+      console.error('❌ Error sending return rejection email:', emailErr.message);
+      // Don't fail the return rejection if email fails
+    }
 
     res.json({ 
       message: 'Return request rejected successfully', 

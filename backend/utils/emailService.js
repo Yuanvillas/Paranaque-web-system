@@ -477,6 +477,118 @@ const sendBookAvailableEmail = async (userEmail, bookTitle, availableCopies) => 
   return sendEmail({ to: userEmail, subject, text, html });
 };
 
+const sendReturnRequestApprovedEmail = async (userEmail, bookTitle, approvalDate) => {
+  const approvalDateFormatted = new Date(approvalDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const subject = '✅ Your Return Request Has Been Approved';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #4CAF50; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">✅ Return Request Approved!</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Great news! Your return request for <strong>"${bookTitle}"</strong> has been approved.
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book:</p>
+          <p style="margin: 5px 0 0 0; color: #4CAF50; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">✅ Approval Date & Time:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${approvalDateFormatted}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Status:</p>
+          <p style="margin: 5px 0 0 0; color: #4CAF50; font-size: 14px; font-weight: bold;">✅ Approved</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          The book has been successfully returned to our inventory. Thank you for returning it in good condition!
+        </p>
+        <ul style="color: #333; font-size: 14px; line-height: 1.8;">
+          <li>Your transaction has been marked as completed</li>
+          <li>The book is now available for other library members</li>
+          <li>If you borrow this book again, don't hesitate to reach out</li>
+        </ul>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Your return request for "${bookTitle}" has been approved on ${approvalDateFormatted}. Thank you for returning the book!`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
+const sendReturnRequestRejectedEmail = async (userEmail, bookTitle, rejectionReason, rejectionDate) => {
+  const rejectionDateFormatted = new Date(rejectionDate).toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const subject = '❌ Your Return Request Could Not Be Approved';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #d32f2f; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">❌ Return Request Not Approved</h1>
+      </div>
+      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">Hello,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Unfortunately, your return request for <strong>"${bookTitle}"</strong> could not be approved.
+        </p>
+        <div style="background-color: #fff; border-left: 4px solid #d32f2f; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #333; font-weight: bold;">📚 Book:</p>
+          <p style="margin: 5px 0 0 0; color: #d32f2f; font-size: 16px;">${bookTitle}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">❌ Rejection Date & Time:</p>
+          <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${rejectionDateFormatted}</p>
+          <p style="margin: 15px 0 0 0; color: #333; font-weight: bold;">Reason:</p>
+          <p style="margin: 5px 0 0 0; color: #d32f2f; font-size: 14px; font-weight: bold;">${rejectionReason}</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Please take the necessary action to resolve the issue and contact the library staff if you need further assistance.
+        </p>
+        <ul style="color: #333; font-size: 14px; line-height: 1.8;">
+          <li>Review the rejection reason above</li>
+          <li>Contact the library staff to discuss the return</li>
+          <li>Take appropriate action to address the issue</li>
+        </ul>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          If you have any questions or would like to discuss this further, please contact the library staff.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Best regards,<br>
+          <strong>Paranaledge Library</strong>
+        </p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+      </div>
+    </div>
+  `;
+
+  const text = `Your return request for "${bookTitle}" has been rejected on ${rejectionDateFormatted}. Reason: ${rejectionReason}. Please contact the library staff for more information.`;
+  
+  return sendEmail({ to: userEmail, subject, text, html });
+};
+
 module.exports = {
   sendEmail,
   sendReservationExpiredEmail,
@@ -490,5 +602,7 @@ module.exports = {
   sendBorrowRequestSubmittedEmail,
   sendBorrowRequestApprovedEmail,
   sendBorrowRequestRejectedEmail,
-  sendBookAvailableEmail
+  sendBookAvailableEmail,
+  sendReturnRequestApprovedEmail,
+  sendReturnRequestRejectedEmail
 };
