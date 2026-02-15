@@ -199,7 +199,34 @@ function Login() {
             <Link to="/forgot-password" style={{ color: "#2e7d32", fontWeight: "bold", fontSize: "14px" }}>
               Forgot Password?
             </Link>
-          </div>        </div>
+          </div>
+          <div style={{ textAlign: "center", marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #e0e0e0" }}>
+            <button
+              type="button"
+              onClick={() => navigate("/landing")}
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor: "#f5f5f5",
+                border: "2px solid #2e7d32",
+                color: "#2e7d32",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.3s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.target.backgroundColor = "#e8f5e9";
+              }}
+              onMouseLeave={(e) => {
+                e.target.backgroundColor = "#f5f5f5";
+              }}
+            >
+              Browse Books Without Login
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

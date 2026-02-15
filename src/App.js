@@ -27,17 +27,19 @@ import UserManagement from "./pages/UserManagement";
 import LibrarianUserManagement from "./pages/LibrarianUserManagement";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import LandingPage from "./pages/LandingPage";
 
 function AppContent() {
   const location = useLocation();
   
-  // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password)
-  const showChat = !["/", "/register", "/verify-notice", "/verify-success", "/forgot-password"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
+  // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password/landing)
+  const showChat = !["/", "/register", "/verify-notice", "/verify-success", "/forgot-password", "/landing"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
 
   return (
     <>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
