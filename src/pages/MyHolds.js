@@ -103,9 +103,9 @@ const MyHolds = () => {
   const getStatusBadgeStyle = (status) => {
     switch (status) {
       case 'active':
-        return { backgroundColor: '#e3f2fd', color: '#1976d2', text: 'Waiting' };
+        return { backgroundColor: '#e3f2fd', color: '#1976d2', text: 'Waiting in Queue' };
       case 'ready':
-        return { backgroundColor: '#f3e5f5', color: '#7b1fa2', text: 'Ready for Pickup' };
+        return { backgroundColor: '#c8e6c9', color: '#2e7d32', text: 'Book Available - Borrow Now' };
       case 'expired':
         return { backgroundColor: '#fbe9e7', color: '#d84315', text: 'Expired' };
       case 'cancelled':
@@ -161,11 +161,11 @@ const MyHolds = () => {
         </div>
       ) : (
         <>
-          {/* Ready for Pickup */}
+          {/* Available to Borrow */}
           {readyHolds.length > 0 && (
             <div style={{ marginBottom: '30px' }}>
               <h2 style={{ fontSize: '20px', color: '#2e7d32', marginBottom: '15px' }}>
-                ✓ Ready for Pickup ({readyHolds.length})
+                ✓ Available to Borrow ({readyHolds.length})
               </h2>
               <div style={{ display: 'grid', gap: '15px' }}>
                 {readyHolds.map(hold => (
@@ -349,9 +349,9 @@ const MyHolds = () => {
         <ul style={{ fontSize: '14px', color: '#4a148c', lineHeight: '1.8', paddingLeft: '20px', margin: '0' }}>
           <li>When a book is unavailable, you can place a hold to be notified when it becomes available</li>
           <li>Holds are managed on a first-come, first-served basis</li>
-          <li>You'll receive an email notification when a book is ready for pickup</li>
-          <li>You have 7 days to pick up your hold from the library</li>
-          <li>Holds automatically expire after 14 days if not picked up</li>
+          <li>You'll receive an email notification when a book is available to borrow</li>
+          <li>You can borrow the book anytime after receiving the notification</li>
+          <li>Your hold expires after 7 days if you don't borrow it</li>
           <li>You can cancel a hold anytime from this page</li>
         </ul>
       </div>

@@ -209,26 +209,26 @@ router.post('/return/:transactionId', async (req, res) => {
         // Send notification email using Resend
         const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2e7d32;">📚 Your Book Hold is Ready!</h2>
+            <h2 style="color: #2e7d32;">📚 Book Now Available!</h2>
             <p>Dear ${firstHold.userName},</p>
-            <p>Great news! The book you placed a hold on is now available for pickup:</p>
+            <p>Great news! The book you placed a hold on is now available for borrowing:</p>
             <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Book Title:</strong> ${firstHold.bookTitle}</p>
               <p><strong>Hold Placed:</strong> ${new Date(firstHold.holdDate).toLocaleDateString()}</p>
-              <p><strong>Ready for Pickup:</strong> ${new Date().toLocaleDateString()}</p>
-              <p style="color: #e65100;"><strong>⏰ Please pick up within 7 days or your hold will expire.</strong></p>
+              <p><strong>Available Since:</strong> ${new Date().toLocaleDateString()}</p>
+              <p style="color: #e65100;"><strong>⏰ You can borrow this book anytime. Your hold will expire in 7 days if you don't borrow it.</strong></p>
             </div>
-            <p>Please visit our library to pick up your book during our business hours.</p>
+            <p>Visit our library or use the app to borrow the book at your convenience.</p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             <p style="color: #999; font-size: 12px;">Parañaledge Library System</p>
           </div>
         `;
 
         try {
-          console.log(`📧 Sending hold-ready email to ${firstHold.userEmail}`);
+          console.log(`📧 Sending hold-available email to ${firstHold.userEmail}`);
           const emailResult = await sendEmail({
             to: firstHold.userEmail,
-            subject: `📚 Your Hold is Ready for Pickup - ${firstHold.bookTitle}`,
+            subject: `📚 Book Available to Borrow - ${firstHold.bookTitle}`,
             html: htmlContent
           });
           
@@ -982,16 +982,16 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
         // Send notification email using Resend
         const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2e7d32;">📚 Your Book Hold is Ready!</h2>
+            <h2 style="color: #2e7d32;">📚 Book Now Available!</h2>
             <p>Dear ${firstHold.userName},</p>
-            <p>Great news! The book you placed a hold on is now available for pickup:</p>
+            <p>Great news! The book you placed a hold on is now available for borrowing:</p>
             <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Book Title:</strong> ${firstHold.bookTitle}</p>
               <p><strong>Hold Placed:</strong> ${new Date(firstHold.holdDate).toLocaleDateString()}</p>
-              <p><strong>Ready for Pickup:</strong> ${new Date().toLocaleDateString()}</p>
-              <p style="color: #e65100;"><strong>⏰ Please pick up within 7 days or your hold will expire.</strong></p>
+              <p><strong>Available Since:</strong> ${new Date().toLocaleDateString()}</p>
+              <p style="color: #e65100;"><strong>⏰ You can borrow this book anytime. Your hold will expire in 7 days if you don't borrow it.</strong></p>
             </div>
-            <p>Please visit our library to pick up your book during our business hours.</p>
+            <p>Visit our library or use the app to borrow the book at your convenience.</p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             <p style="color: #999; font-size: 12px;">Parañaledge Library System</p>
           </div>
