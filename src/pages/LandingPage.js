@@ -91,7 +91,7 @@ const LandingPage = () => {
       <section className="landing-hero">
         <div className="hero-content">
           <h2>Discover Our Collection</h2>
-          <p>Browse thousands of books available in our library. Sign in to borrow or reserve your favorite reads.</p>
+          <p>Browse books available in our library. Sign in to borrow or reserve your favorite reads.</p>
           <div className="hero-search">
             <input
               type="text"
