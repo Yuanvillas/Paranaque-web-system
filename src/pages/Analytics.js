@@ -31,12 +31,53 @@ const Analytics = () => {
   const [monthBorrowedBooks, setMonthBorrowedBooks] = useState([]);
   const [searchBorrowedBooks, setSearchBorrowedBooks] = useState("");
   const [monthlyUsers, setMonthlyUsers] = useState([]);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationMessage, setMigrationMessage] = useState(null);
 
   const exportToExcel = (data, filename) => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${filename}_${new Date().toLocaleDateString()}.xlsx`);
+  };
+
+  const migrateUserTimestamps = async () => {
+    setIsMigrating(true);
+    setMigrationMessage(null);
+    try {
+      const res = await fetch("https://paranaque-web-system.onrender.com/api/auth/migrate-user-timestamps", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMigrationMessage({
+          type: 'success',
+          text: `✅ Migration successful! ${data.usersUpdated} users updated. Refreshing data...`,
+          usersUpdated: data.usersUpdated
+        });
+        
+        // Refresh the monthly users data after successful migration
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setMigrationMessage({
+          type: 'error',
+          text: `❌ Migration failed: ${data.error || data.message}`
+        });
+      }
+    } catch (err) {
+      setMigrationMessage({
+        type: 'error',
+        text: `❌ Error: ${err.message}`
+      });
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   useEffect(() => {
@@ -193,7 +234,43 @@ const Analytics = () => {
       <main className="main-content">
 
         <section className="content" ref={reportRef} style={{ marginTop: "40px" }}>
-          <h2 className="page-title" style={{marginTop: "0px"}}>Analytics Overview</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 className="page-title" style={{marginTop: "0px"}}>Analytics Overview</h2>
+            {monthlyUsers.length === 0 && (
+              <button 
+                onClick={migrateUserTimestamps}
+                disabled={isMigrating}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: isMigrating ? '#ccc' : '#2e7d32',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: isMigrating ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => !isMigrating && (e.target.style.backgroundColor = '#1b5e20')}
+                onMouseLeave={(e) => !isMigrating && (e.target.style.backgroundColor = '#2e7d32')}
+              >
+                {isMigrating ? '⏳ Migrating...' : '📊 Populate User Data'}
+              </button>
+            )}
+          </div>
+
+          {migrationMessage && (
+            <div style={{
+              padding: '15px',
+              marginBottom: '20px',
+              borderRadius: '6px',
+              backgroundColor: migrationMessage.type === 'success' ? '#e8f5e9' : '#ffebee',
+              color: migrationMessage.type === 'success' ? '#2e7d32' : '#c62828',
+              border: `1px solid ${migrationMessage.type === 'success' ? '#4caf50' : '#f44336'}`
+            }}>
+              {migrationMessage.text}
+            </div>
+          )}
 
           {error && <div className="error-message">{error}</div>}
 
