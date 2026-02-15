@@ -15,6 +15,7 @@ const logRoutes = require('./routes/logRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const bookmarksRoutes = require('./routes/bookmarkRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const holdRoutes = require('./routes/holdRoutes');
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5050;
@@ -158,6 +159,7 @@ app.use("/api/logs", logRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/holds", holdRoutes);
 
 // Serve React app for client-side routes (BEFORE 404 handler)
 app.get('*', (req, res) => {

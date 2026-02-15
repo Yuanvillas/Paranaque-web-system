@@ -824,6 +824,71 @@ router.put('/return/:id', async (req, res) => {
     
     await book.save();
 
+    // PROCESS HOLDS: Check if there are any holds waiting for this book
+    try {
+      const Hold = require('../models/Hold');
+      const nodemailer = require('nodemailer');
+      
+      // Get first person in hold queue
+      const firstHold = await Hold.findOne({
+        bookId: book._id,
+        status: 'active'
+      }).sort({ queuePosition: 1 });
+
+      if (firstHold) {
+        console.log(`📋 Processing hold for user ${firstHold.userEmail} on book ${book.title}`);
+        
+        // Mark hold as ready
+        firstHold.status = 'ready';
+        firstHold.readyPickupDate = new Date();
+        await firstHold.save();
+
+        // Send notification email
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: firstHold.userEmail,
+          subject: `📚 Your Hold is Ready for Pickup - ${firstHold.bookTitle}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2e7d32;">📚 Your Book Hold is Ready!</h2>
+              <p>Dear ${firstHold.userName},</p>
+              <p>Great news! The book you placed a hold on is now available for pickup:</p>
+              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Book Title:</strong> ${firstHold.bookTitle}</p>
+                <p><strong>Hold Placed:</strong> ${new Date(firstHold.holdDate).toLocaleDateString()}</p>
+                <p><strong>Ready for Pickup:</strong> ${new Date().toLocaleDateString()}</p>
+                <p style="color: #e65100;"><strong>⏰ Please pick up within 7 days or your hold will expire.</strong></p>
+              </div>
+              <p>Please visit our library to pick up your book during our business hours.</p>
+              <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px;">Parañaledge Library System</p>
+            </div>
+          `
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          firstHold.notificationSent = true;
+          firstHold.notificationDate = new Date();
+          await firstHold.save();
+          console.log(`📬 Notification sent to ${firstHold.userEmail}`);
+        } catch (emailErr) {
+          console.error('⚠️ Failed to send email but hold marked as ready:', emailErr.message);
+        }
+      }
+    } catch (holdErr) {
+      console.warn('⚠️ Hold processing failed (non-critical):', holdErr.message);
+      // Don't fail the return if hold processing fails
+    }
+
     console.log(`Return successful for book ${book._id} by user ${userEmail}`);
     res.json({
       message: 'Book returned successfully',

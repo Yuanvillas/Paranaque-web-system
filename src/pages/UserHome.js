@@ -28,6 +28,8 @@ const UserHome = () => {
   const searchTerm = useContext(SearchContext);
   const userEmail = localStorage.getItem("userEmail");
   const [bookmarks, setBookmarks] = useState([]);
+  const [userHolds, setUserHolds] = useState([]);
+  const [userHoldPosition, setUserHoldPosition] = useState(null);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
@@ -160,7 +162,8 @@ const UserHome = () => {
     fetchBookmarks();
     fetchBorrowedBooks();
     fetchAllBooksForRecommendations();
-  }, [fetchBookmarks, fetchPendingReservations, fetchBorrowedBooks, fetchAllBooksForRecommendations]);
+    fetchUserHolds();
+  }, [fetchBookmarks, fetchPendingReservations, fetchBorrowedBooks, fetchAllBooksForRecommendations, fetchUserHolds]);
 
   useEffect(() => {
     fetchBooks();
@@ -350,6 +353,140 @@ const UserHome = () => {
       });
     }
   }, [userEmail, bookmarks]);
+
+  // Fetch user's holds
+  const fetchUserHolds = useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/user/${userEmail}`);
+      const data = await res.json();
+      setUserHolds(data.holds || []);
+    } catch (error) {
+      console.error('Error fetching holds:', error);
+    }
+  }, [userEmail]);
+
+  // Check hold position for a specific book
+  const checkHoldPosition = useCallback(async (bookId) => {
+    if (!userEmail) return null;
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/position/${bookId}/${userEmail}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error checking hold position:', error);
+      return null;
+    }
+  }, [userEmail]);
+
+  // Place a hold on an unavailable book
+  const handlePlaceHold = async () => {
+    if (!userEmail) {
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "User not logged in.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/place`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          bookId: selectedBook._id, 
+          userEmail 
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        await Swal.fire({
+          title: "Parañaledge",
+          html: `<div style="text-align: left;">
+            <p><strong>✓ Hold Placed Successfully!</strong></p>
+            <p><strong>Book:</strong> ${selectedBook.title}</p>
+            <p><strong>Position in Queue:</strong> #${data.hold.queuePosition}</p>
+            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+              You will be notified by email when this book becomes available for pickup. 
+              Your hold expires in 14 days.
+            </p>
+          </div>`,
+          icon: "success",
+          confirmButtonText: "OK"
+        });
+        fetchUserHolds(); // Refresh holds
+        closeModal();
+      } else {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: data.error || "Error placing hold",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
+      }
+    } catch (error) {
+      console.error('Error placing hold:', error);
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "Error placing hold. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+    }
+  };
+
+  // Cancel a hold
+  const handleCancelHold = async (holdId) => {
+    const confirm = await Swal.fire({
+      title: "Cancel Hold",
+      text: "Are you sure you want to cancel this hold?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      confirmButtonText: "Yes, cancel hold"
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/cancel/${holdId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "User cancelled" })
+      });
+
+      if (res.ok) {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: "Hold cancelled successfully",
+          icon: "success",
+          confirmButtonText: "OK"
+        });
+        fetchUserHolds();
+      } else {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: "Error cancelling hold",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
+      }
+    } catch (error) {
+      console.error('Error cancelling hold:', error);
+      await Swal.fire({
+        title: "Parañaledge",
+        text: "Error cancelling hold",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+    }
+  };
 
   const generateRecommendations = async (borrowed, bookmarks, reservations) => {
     console.log("=== GENERATING AI RECOMMENDATIONS ===");
@@ -750,6 +887,54 @@ const UserHome = () => {
                     Confirm Reserve
                   </button>
                 </div>
+
+                {(() => {
+                  const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
+                  const userHasHold = userHolds.some(h => h.bookId._id === selectedBook._id && h.status === 'active');
+                  
+                  return isBookUnavailable ? (
+                    <div className="modal-form" style={{ backgroundColor: '#e3f2fd', border: '1px solid #90caf9', borderRadius: '6px', padding: '12px' }}>
+                      <div style={{ marginBottom: '12px' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#1976d2', fontWeight: '600' }}>
+                          📚 Book Currently Unavailable
+                        </p>
+                        <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#1565c0' }}>
+                          This book is not available right now, but you can place a hold to be notified when it becomes available!
+                        </p>
+                      </div>
+                      {userHasHold ? (
+                        <div style={{ padding: '8px', backgroundColor: '#c8e6c9', borderRadius: '4px', border: '1px solid #81c784' }}>
+                          <p style={{ margin: '0', fontSize: '12px', color: '#2e7d32', fontWeight: '500' }}>
+                            ✓ You already have a hold on this book
+                          </p>
+                          {userHolds.find(h => h.bookId._id === selectedBook._id && h.status === 'active') && (
+                            <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#388e3c' }}>
+                              Position in queue: #{userHolds.find(h => h.bookId._id === selectedBook._id).queuePosition}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          className="modal-btn"
+                          onClick={handlePlaceHold}
+                          style={{ 
+                            backgroundColor: '#1976d2',
+                            color: 'white',
+                            padding: '10px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            width: '100%',
+                            fontWeight: '600',
+                            fontSize: '14px'
+                          }}
+                        >
+                          📋 Place a Hold
+                        </button>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
 
                 <button className="modal-btn cancel" onClick={closeModal}>Cancel</button>
               </div>
