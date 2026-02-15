@@ -243,20 +243,28 @@ router.post('/return/:transactionId', async (req, res) => {
           firstHold.notificationDate = new Date();
           await firstHold.save();
           console.log(`📬 Notification sent to ${firstHold.userEmail}`);
-        } else {
-          console.log(`ℹ️ No active holds for book ${book._id}`);
+        } catch (emailErr) {
+          console.error('❌ DETAILED EMAIL ERROR:', {
+            message: emailErr.message,
+            code: emailErr.code,
+            response: emailErr.response,
+            stack: emailErr.stack
+          });
         }
-      } catch (holdErr) {
-        console.warn('⚠️ Hold processing failed (non-critical):', holdErr.message);
-        // Don't fail the return if hold processing fails
+      } else {
+        console.log(`ℹ️ No active holds for book ${book._id}`);
       }
+    } catch (holdErr) {
+      console.warn('⚠️ Hold processing failed (non-critical):', holdErr.message);
+      // Don't fail the return if hold processing fails
+    }
 
-      // Notify bookmarked users if book is now available (async, non-blocking)
-      notifyBookmarkUsersIfAvailable(book._id, book).catch(err => {
-        console.error('Error notifying bookmark users:', err);
-      });
+    // Notify bookmarked users if book is now available (async, non-blocking)
+    notifyBookmarkUsersIfAvailable(book._id, book).catch(err => {
+      console.error('Error notifying bookmark users:', err);
+    });
 
-      res.json({ message: 'Book returned successfully', transaction });
+    res.json({ message: 'Book returned successfully', transaction });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
