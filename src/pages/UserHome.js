@@ -29,7 +29,6 @@ const UserHome = () => {
   const userEmail = localStorage.getItem("userEmail");
   const [bookmarks, setBookmarks] = useState([]);
   const [userHolds, setUserHolds] = useState([]);
-  const [userHoldPosition, setUserHoldPosition] = useState(null);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
@@ -155,6 +154,18 @@ const UserHome = () => {
       console.error("Error fetching borrowed books:", error);
     }
   }, []);
+
+  // Fetch user's holds
+  const fetchUserHolds = useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/user/${userEmail}`);
+      const data = await res.json();
+      setUserHolds(data.holds || []);
+    } catch (error) {
+      console.error('Error fetching holds:', error);
+    }
+  }, [userEmail]);
 
   // useEffect hooks
   useEffect(() => {
@@ -354,34 +365,6 @@ const UserHome = () => {
     }
   }, [userEmail, bookmarks]);
 
-  // Fetch user's holds
-  const fetchUserHolds = useCallback(async () => {
-    if (!userEmail) return;
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/user/${userEmail}`);
-      const data = await res.json();
-      setUserHolds(data.holds || []);
-    } catch (error) {
-      console.error('Error fetching holds:', error);
-    }
-  }, [userEmail]);
-
-  // Check hold position for a specific book
-  const checkHoldPosition = useCallback(async (bookId) => {
-    if (!userEmail) return null;
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/position/${bookId}/${userEmail}`);
-      if (res.ok) {
-        const data = await res.json();
-        return data;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error checking hold position:', error);
-      return null;
-    }
-  }, [userEmail]);
-
   // Place a hold on an unavailable book
   const handlePlaceHold = async () => {
     if (!userEmail) {
@@ -435,53 +418,6 @@ const UserHome = () => {
       await Swal.fire({
         title: "Parañaledge",
         text: "Error placing hold. Please try again.",
-        icon: "error",
-        confirmButtonText: "OK"
-      });
-    }
-  };
-
-  // Cancel a hold
-  const handleCancelHold = async (holdId) => {
-    const confirm = await Swal.fire({
-      title: "Cancel Hold",
-      text: "Are you sure you want to cancel this hold?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d32f2f",
-      confirmButtonText: "Yes, cancel hold"
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/cancel/${holdId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "User cancelled" })
-      });
-
-      if (res.ok) {
-        await Swal.fire({
-          title: "Parañaledge",
-          text: "Hold cancelled successfully",
-          icon: "success",
-          confirmButtonText: "OK"
-        });
-        fetchUserHolds();
-      } else {
-        await Swal.fire({
-          title: "Parañaledge",
-          text: "Error cancelling hold",
-          icon: "error",
-          confirmButtonText: "OK"
-        });
-      }
-    } catch (error) {
-      console.error('Error cancelling hold:', error);
-      await Swal.fire({
-        title: "Parañaledge",
-        text: "Error cancelling hold",
         icon: "error",
         confirmButtonText: "OK"
       });

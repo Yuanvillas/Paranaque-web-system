@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Swal from 'sweetalert2';
 import '../components/App.css';
 
@@ -7,11 +7,7 @@ const MyHolds = () => {
   const [loading, setLoading] = useState(true);
   const userEmail = localStorage.getItem('userEmail');
 
-  useEffect(() => {
-    fetchHolds();
-  }, []);
-
-  const fetchHolds = async () => {
+  const fetchHolds = useCallback(async () => {
     if (!userEmail) {
       await Swal.fire({
         title: 'Parañaledge',
@@ -40,7 +36,11 @@ const MyHolds = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userEmail]);
+
+  useEffect(() => {
+    fetchHolds();
+  }, [fetchHolds]);
 
   const handleCancelHold = async (holdId, bookTitle) => {
     const confirm = await Swal.fire({
