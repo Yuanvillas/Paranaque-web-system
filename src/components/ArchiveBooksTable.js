@@ -176,52 +176,42 @@ const ArchiveBooksTable = () => {
   }
 
   return (
-    <div className="books-table-container">
-      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0 }}>Archived Books</h2>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+    <div className="archive-books-container">
+      <div className="archive-header">
+        <h2>📦 Archived Books</h2>
+        <div className="archive-search-bar">
           <input
             type="text"
             placeholder="Search by title, author, or accession number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-              width: '300px',
-              fontSize: '14px'
-            }}
+            className="archive-search-input"
           />
-          <span style={{ fontWeight: 'bold', color: '#666' }}>
+          <span className="archive-total-badge">
             Total: {filteredBooks.length}
           </span>
         </div>
       </div>
 
       {filteredBooks.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px',
-          color: '#999',
-          fontSize: '16px'
-        }}>
-          No archived books found.
+        <div className="archive-no-books">
+          <img src="https://via.placeholder.com/100?text=No+Books" alt="No books" style={{ opacity: 0.5, marginBottom: '10px' }} />
+          <p>No archived books found.</p>
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="books-table">
+        <div className="archive-table-wrapper">
+          <table className="archive-books-table">
             <thead>
               <tr>
-                <th>Image</th>
-                <th>Book Title</th>
-                <th>Author</th>
-                <th>Year</th>
-                <th>Category</th>
-                <th>Accession Number</th>
-                <th>Call Number</th>
-                <th>Location</th>
-                <th>Actions</th>
+                <th style={{ width: '60px' }}>Image</th>
+                <th style={{ width: '20%', minWidth: '150px' }}>Book Title</th>
+                <th style={{ width: '15%', minWidth: '120px' }}>Author</th>
+                <th style={{ width: '70px' }}>Year</th>
+                <th style={{ width: '12%', minWidth: '100px' }}>Category</th>
+                <th style={{ width: '12%', minWidth: '110px' }}>Accession #</th>
+                <th style={{ width: '12%', minWidth: '110px' }}>Call #</th>
+                <th style={{ width: '15%', minWidth: '100px' }}>Location</th>
+                <th style={{ width: '140px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -253,37 +243,17 @@ const ArchiveBooksTable = () => {
                       ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
                       : 'N/A'}
                   </td>
-                  <td style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <td style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
                     <button
                       onClick={() => handleReturnToStocks(book._id, book.title)}
-                      style={{
-                        padding: '6px 10px',
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        whiteSpace: 'nowrap'
-                      }}
+                      className="archive-btn-return"
                       title="Return this book to active stocks"
                     >
                       ↩️ Return
                     </button>
                     <button
                       onClick={() => handleDeletePermanently(book._id, book.title)}
-                      style={{
-                        padding: '6px 10px',
-                        backgroundColor: '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        whiteSpace: 'nowrap'
-                      }}
+                      className="archive-btn-delete"
                       title="Permanently delete this book (cannot be undone)"
                     >
                       🗑️ Delete
