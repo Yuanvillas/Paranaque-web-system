@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Swal from 'sweetalert2';
 import './App.css';
 import AddBook from '../pages/AddBook';
 
@@ -159,7 +160,18 @@ const BooksTable = () => {
   });
 
   const archiveBook = async (bookId) => {
-    if (window.confirm("Are you sure you want to archive this book?")) {
+    const result = await Swal.fire({
+      title: 'Archive Book?',
+      text: 'Are you sure you want to archive this book?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#dab43b',
+      cancelButtonColor: '#666',
+      confirmButtonText: 'Yes, Archive it',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
       try {
         console.log("📦 Archiving book with ID:", bookId);
         const res = await fetch(`https://paranaque-web-system.onrender.com/api/books/archive/${bookId}`, {
@@ -171,18 +183,34 @@ const BooksTable = () => {
         console.log("Archive response status:", res.status, "Full Data:", data);
         
         if (res.ok) {
-          alert("Book archived successfully!");
+          Swal.fire({
+            title: 'Success!',
+            text: 'Book archived successfully!',
+            icon: 'success',
+            confirmButtonColor: '#4CAF50',
+            timer: 2000,
+            timerProgressBar: true
+          });
           const updatedList = books.filter((book) => book._id !== bookId);
           setBooks(updatedList);
         } else {
           console.error("❌ Archive failed - Full response:", data);
           const errorMsg = data.error || data.message || 'Unknown error';
-          const errorDetails = data.details ? `\nDetails: ${data.details}` : '';
-          alert(`Failed to archive book:\n${errorMsg}${errorDetails}`);
+          Swal.fire({
+            title: 'Error!',
+            text: `Failed to archive book: ${errorMsg}`,
+            icon: 'error',
+            confirmButtonColor: '#d33'
+          });
         }
       } catch (err) {
         console.error("❌ Error archiving book:", err);
-        alert("Error archiving book: " + err.message);
+        Swal.fire({
+          title: 'Error!',
+          text: "Error archiving book: " + err.message,
+          icon: 'error',
+          confirmButtonColor: '#d33'
+        });
       }
     }
   };
