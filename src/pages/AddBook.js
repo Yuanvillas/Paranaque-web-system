@@ -87,7 +87,6 @@ const AddBook = ({ onBookAdded }) => {
   const [nextCallNumber, setNextCallNumber] = useState("PREFIX.DDD-CCC-YYYY");
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateBook, setDuplicateBook] = useState(null);
-  const [forceProceed, setForceProceed] = useState(false);
 
   const [book, setBook] = useState({
     title: "",
@@ -302,10 +301,8 @@ const AddBook = ({ onBookAdded }) => {
         console.log("⚠️  Duplicate book found:", data.message);
         setDuplicateBook(data.existingBook);
         setShowDuplicateModal(true);
-        setForceProceed(false);
       } else {
         console.log("✅ No duplicate found, proceeding with submission...");
-        setForceProceed(true);
         submitBook();
       }
     } catch (err) {
@@ -559,7 +556,6 @@ const AddBook = ({ onBookAdded }) => {
               <button 
                 onClick={() => {
                   setShowDuplicateModal(false);
-                  setForceProceed(true);
                   submitBook();
                 }} 
                 style={{...styles.submitBtn, background: '#ff9800'}}
@@ -571,7 +567,6 @@ const AddBook = ({ onBookAdded }) => {
                 onClick={() => { 
                   setShowDuplicateModal(false); 
                   setDuplicateBook(null);
-                  setForceProceed(false);
                 }} 
                 style={styles.cancelBtn}
                 disabled={loading}
