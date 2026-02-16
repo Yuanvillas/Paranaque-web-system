@@ -10,8 +10,9 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Resend } = require('resend');
 const { uploadBase64ToSupabase } = require('../utils/upload');
+const { sendEmail } = require('../utils/emailService');
 
-// Initialize Resend email service
+// Initialize Resend email service (kept for backwards compatibility if needed)
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://paranaque-web-system.onrender.com';
@@ -104,10 +105,9 @@ router.post("/register", async (req, res) => {
 
     console.log(`Attempting to send verification email to: ${email}`);
     
-    // Send email using Resend
+    // Send email using email service with rate limiting and retry logic
     try {
-      const emailResponse = await resend.emails.send({
-        from: EMAIL_FROM,
+      const emailResult = await sendEmail({
         to: email,
         subject: 'Email Verification - Paranaledge',
         html: `
@@ -119,10 +119,9 @@ router.post("/register", async (req, res) => {
           <p>If you did not register, please ignore this email.</p>
         `,
       });
-      console.log(`Verification email sent successfully to: ${email}`, emailResponse);
+      console.log(`Verification email sent successfully to: ${email} - Message ID: ${emailResult.messageId}`);
     } catch (emailErr) {
-      console.error("Email send error details:", emailErr.message);
-      console.error("Full email error:", JSON.stringify(emailErr, null, 2));
+      console.error("Error sending verification email:", emailErr.message);
       // Don't throw error - still allow user registration even if email fails
       console.warn(`User registered but email failed for: ${email}`);
     }
@@ -633,10 +632,9 @@ router.post('/forgot-password', async (req, res) => {
     console.log(`📧 Reset Link: ${resetLink}`);
     console.log(`📧 ==========================================\n`);
 
-    // Send email using Resend
+    // Send email using email service with rate limiting and retry logic
     try {
-      const emailResponse = await resend.emails.send({
-        from: EMAIL_FROM,
+      const emailResult = await sendEmail({
         to: email,
         subject: 'Password Reset Request - Paranaledge Library',
         html: `
@@ -670,9 +668,9 @@ router.post('/forgot-password', async (req, res) => {
       });
       
       console.log(`✅ Password reset email sent successfully to: ${email}`);
-      console.log(`   Resend Response ID: ${emailResponse.data?.id || 'N/A'}`);
+      console.log(`   Message ID: ${emailResult.messageId}`);
     } catch (emailErr) {
-      console.error("❌ Email send error:", emailErr.message);
+      console.error("❌ Error sending password reset email:", emailErr.message);
       throw new Error('Failed to send password reset email. Please try again later.');
     }
     
