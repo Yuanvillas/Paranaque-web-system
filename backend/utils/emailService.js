@@ -29,6 +29,9 @@ const sendEmail = async ({ to, subject, text, html }) => {
     
     console.log('📧 Sending email via Resend to:', to);
     const emailFrom = process.env.EMAIL_FROM || 'Paranaledge Library <noreply@paranaledge.online>';
+    console.log('📧 From:', emailFrom);
+    console.log('📧 Subject:', subject);
+    
     const result = await emailService.emails.send({
       from: emailFrom,
       to,
@@ -36,16 +39,29 @@ const sendEmail = async ({ to, subject, text, html }) => {
       html: html || `<p>${text}</p>`
     });
     
+    console.log('📧 Resend API Raw Response:', JSON.stringify(result, null, 2));
+    
     if (result.error) {
       console.error('❌ Resend error:', result.error);
       throw new Error(result.error);
     }
     
-    console.log('✅ Email sent successfully:', result.id);
-    return { messageId: result.id };
+    // Handle different Resend response structures (v2 vs v3)
+    const messageId = result?.id || result?.data?.id || result?.message?.id;
+    
+    if (!messageId) {
+      console.error('❌ Resend returned no message ID. Response keys:', Object.keys(result));
+      console.error('❌ Full response:', result);
+      console.warn('⚠️  Continuing anyway - email may still be sent');
+      return { messageId: 'unknown-' + Date.now(), data: result };
+    }
+    
+    console.log('✅ Email sent successfully:', messageId);
+    return { messageId };
   } catch (error) {
     console.error('❌ Error sending email:', error.message);
     console.error('❌ Full error:', error);
+    console.error('❌ Error stack:', error.stack);
     // Don't crash - just log the error and continue
     return { messageId: 'error-' + Date.now(), error: error.message };
   }

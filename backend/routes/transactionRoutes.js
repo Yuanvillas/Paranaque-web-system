@@ -132,9 +132,12 @@ router.post('/reserve', async (req, res) => {
     ]);
 
     // Send email and create pending reserved book in the background (non-blocking)
-    sendReservationPendingEmail(userEmail, book.title).catch(err => {
-      console.error('Error sending reservation email:', err);
-    });
+    try {
+      const emailResult = await sendReservationPendingEmail(userEmail, book.title);
+      console.log('📧 Reservation pending email sent to', userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending reservation pending email:', emailErr.message);
+    }
     
     PendingReservedBook.create({
       bookId: book._id,
@@ -424,8 +427,12 @@ router.post('/approve-reservation/:id', async (req, res) => {
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
         details: `Reservation approved by ${adminEmail}`
-      }).save(),
-      sendReservationApprovedEmail(
+      }).save()
+    ]);
+
+    // Send approval email notification to user
+    try {
+      const emailResult = await sendReservationApprovedEmail(
         transaction.userEmail,
         transaction.bookTitle,
         new Date(transaction.endDate).toLocaleDateString('en-US', {
@@ -434,8 +441,11 @@ router.post('/approve-reservation/:id', async (req, res) => {
           month: 'long',
           day: 'numeric'
         })
-      )
-    ]);
+      );
+      console.log('📧 Reservation approval email sent to', transaction.userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending reservation approval email:', emailErr.message);
+    }
 
     res.json({ message: 'Reservation approved successfully', transaction });
   } catch (err) {
@@ -472,16 +482,20 @@ router.post('/reject-reservation/:id', async (req, res) => {
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
         details: `Reservation rejected by ${adminEmail}. Reason: ${rejectionReason}`
-      }).save(),
-      sendReservationRejectedEmail(
-        transaction.userEmail,
-        transaction.bookTitle,
-        rejectionReason
-      )
+      }).save()
     ]);
 
     // Send email notification for rejected reservation
-    sendReservationRejectedEmail(transaction.userEmail, transaction.title, rejectionReason);
+    try {
+      const emailResult = await sendReservationRejectedEmail(
+        transaction.userEmail,
+        transaction.bookTitle,
+        rejectionReason
+      );
+      console.log('📧 Reservation rejection email sent to', transaction.userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending reservation rejection email:', emailErr.message);
+    }
 
     res.json({ message: 'Reservation rejected successfully', transaction });
   } catch (err) {
@@ -535,9 +549,12 @@ router.post('/approve-borrow/:id', async (req, res) => {
     await transaction.save();
 
     // Send approval email notification to user with request date and due date
-    sendBorrowRequestApprovedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, dueDate).catch(err => {
-      console.error('Error sending approval email:', err);
-    });
+    try {
+      const emailResult = await sendBorrowRequestApprovedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, dueDate);
+      console.log('📧 Borrow approval email sent to', transaction.userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending borrow approval email:', emailErr.message);
+    }
 
     res.json({ message: 'Borrow request approved and book marked as borrowed.', transaction });
   } catch (err) {
@@ -569,9 +586,12 @@ router.post('/reject-borrow/:id', async (req, res) => {
     await transaction.save();
 
     // Send rejection email notification to user with request date
-    sendBorrowRequestRejectedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, rejectionReason).catch(err => {
-      console.error('Error sending rejection email:', err);
-    });
+    try {
+      const emailResult = await sendBorrowRequestRejectedEmail(transaction.userEmail, transaction.bookTitle, originalRequestDate, rejectionReason);
+      console.log('📧 Borrow rejection email sent to', transaction.userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending borrow rejection email:', emailErr.message);
+    }
 
     res.json({ message: 'Borrow request rejected successfully', transaction });
   } catch (err) {
@@ -774,10 +794,13 @@ router.post('/borrow-request', async (req, res) => {
       action: `Requested to borrow book: ${book.title}`
     }).save();
 
-    // Send email notification to user about their borrow request
-    sendBorrowRequestSubmittedEmail(userEmail, book.title, requestDate).catch(err => {
-      console.error('Error sending borrow request email:', err);
-    });
+    // Send email notification to user about their borrow request (async, don't wait)
+    try {
+      const emailResult = await sendBorrowRequestSubmittedEmail(userEmail, book.title, requestDate);
+      console.log('📧 Borrow request email sent to', userEmail, '- Result:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Error sending borrow request email to', userEmail, ':', emailErr.message);
+    }
 
     res.status(201).json({ message: 'Borrow request submitted and pending admin approval.', transaction });
   } catch (err) {
