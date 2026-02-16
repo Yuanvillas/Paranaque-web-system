@@ -5,6 +5,11 @@ const { Resend } = require('resend');
 let resend = null;
 let emailConfigured = false;
 
+// Rate limiting: Track email sends to respect Resend's 2 requests/second limit
+const emailQueue = [];
+let isProcessingQueue = false;
+const MIN_EMAIL_DELAY = 600; // 600ms delay between emails (max 1.66/sec to stay safe under 2/sec limit)
+
 const getResend = () => {
   if (!resend) {
     try {
@@ -19,7 +24,35 @@ const getResend = () => {
   return resend;
 };
 
-const sendEmail = async ({ to, subject, text, html }) => {
+// Sleep utility
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Process email queue with rate limiting
+const processEmailQueue = async () => {
+  if (isProcessingQueue || emailQueue.length === 0) return;
+  
+  isProcessingQueue = true;
+  while (emailQueue.length > 0) {
+    const { emailParams, resolve, reject } = emailQueue.shift();
+    try {
+      const result = await sendEmailDirect(emailParams);
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+    
+    // Add delay before next email to stay under rate limit
+    if (emailQueue.length > 0) {
+      await sleep(MIN_EMAIL_DELAY);
+    }
+  }
+  isProcessingQueue = false;
+};
+
+const sendEmailDirect = async (emailParams) => {
+  const { to, subject, text, html, retryCount = 0 } = emailParams;
+  const maxRetries = 2;
+  
   try {
     const emailService = getResend();
     if (!emailService) {
@@ -42,6 +75,17 @@ const sendEmail = async ({ to, subject, text, html }) => {
     console.log('📧 Resend API Raw Response:', JSON.stringify(result, null, 2));
     
     if (result.error) {
+      // Handle rate limit with retry
+      if (result.error.statusCode === 429 && retryCount < maxRetries) {
+        const backoffDelay = 1000 * (retryCount + 1); // 1s, 2s exponential backoff
+        console.warn(`⚠️  Rate limited! Retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        await sleep(backoffDelay);
+        
+        // Retry
+        emailParams.retryCount = retryCount + 1;
+        return sendEmailDirect(emailParams);
+      }
+      
       console.error('❌ Resend error:', result.error);
       throw new Error(result.error);
     }
@@ -62,9 +106,24 @@ const sendEmail = async ({ to, subject, text, html }) => {
     console.error('❌ Error sending email:', error.message);
     console.error('❌ Full error:', error);
     console.error('❌ Error stack:', error.stack);
-    // Don't crash - just log the error and continue
     return { messageId: 'error-' + Date.now(), error: error.message };
   }
+};
+
+const sendEmail = ({ to, subject, text, html }) => {
+  // Return a promise that queues the email for processing with rate limiting
+  return new Promise((resolve, reject) => {
+    emailQueue.push({
+      emailParams: { to, subject, text, html },
+      resolve,
+      reject
+    });
+    
+    // Start processing queue
+    processEmailQueue().catch(err => {
+      console.error('❌ Error processing email queue:', err);
+    });
+  });
 };
 
 const sendReservationExpiredEmail = async (userEmail, bookTitle) => {
