@@ -377,6 +377,29 @@ const UserHome = () => {
       return;
     }
 
+    // Show confirmation dialog
+    const confirmResult = await Swal.fire({
+      title: "📋 Confirm Hold Request",
+      html: `<div style="text-align: left;">
+        <p><strong>Book:</strong> ${selectedBook.title}</p>
+        ${selectedBook.author ? `<p><strong>Author:</strong> ${selectedBook.author}</p>` : ''}
+        <p style="font-size: 13px; color: #666; margin-top: 15px;">
+          ⏰ You will be notified by email when this book becomes available.<br/>
+          Your hold will expire in 14 days if you don't pick it up.
+        </p>
+      </div>`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "✓ Place Hold",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#1976d2",
+      cancelButtonColor: "#d32f2f"
+    });
+
+    if (!confirmResult.isConfirmed) {
+      return;
+    }
+
     try {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/holds/place`, {
         method: "POST",
@@ -607,12 +630,70 @@ const UserHome = () => {
 
       {/* Pagination controls */}
       {totalPages > 1 && (
-        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, margin: '12px 0' }}>
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Prev</button>
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, margin: '30px 0', flexWrap: 'wrap' }}>
+          <button 
+            onClick={() => setPage((p) => Math.max(1, p - 1))} 
+            disabled={page <= 1}
+            style={{
+              padding: '10px 16px',
+              background: page <= 1 ? '#f5f5f5' : '#fff',
+              color: page <= 1 ? '#ccc' : '#1976d2',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              cursor: page <= 1 ? 'not-allowed' : 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.3s ease',
+              boxShadow: page <= 1 ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+              opacity: page <= 1 ? 0.6 : 1
+            }}
+          >
+            ← Prev
+          </button>
           {[...Array(totalPages)].map((_, i) => (
-            <button key={i} onClick={() => setPage(i + 1)} style={{ padding: '6px 10px', background: page === i + 1 ? '#2e7d32' : '#fff', color: page === i + 1 ? '#fff' : '#000', borderRadius: 4, border: '1px solid #ccc' }}>{i + 1}</button>
+            <button 
+              key={i} 
+              onClick={() => setPage(i + 1)} 
+              style={{
+                padding: '10px 14px',
+                minWidth: '40px',
+                background: page === i + 1 ? '#1976d2' : '#fff',
+                color: page === i + 1 ? '#fff' : '#666',
+                border: page === i + 1 ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: page === i + 1 ? '600' : '500',
+                fontSize: '14px',
+                transition: 'all 0.3s ease',
+                boxShadow: page === i + 1 ? '0 4px 12px rgba(25, 118, 210, 0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+                transform: page === i + 1 ? 'scale(1.05)' : 'scale(1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {i + 1}
+            </button>
           ))}
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</button>
+          <button 
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))} 
+            disabled={page >= totalPages}
+            style={{
+              padding: '10px 16px',
+              background: page >= totalPages ? '#f5f5f5' : '#fff',
+              color: page >= totalPages ? '#ccc' : '#1976d2',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.3s ease',
+              boxShadow: page >= totalPages ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+              opacity: page >= totalPages ? 0.6 : 1
+            }}
+          >
+            Next →
+          </button>
         </div>
       )}
 
