@@ -21,6 +21,9 @@ const BooksTable = () => {
   const [historyData, setHistoryData] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedBookForHistory, setSelectedBookForHistory] = useState(null);
+  const [filterType, setFilterType] = useState("all"); // all, borrow, reserve
+  const [filterStatus, setFilterStatus] = useState("all"); // all, active, completed, cancelled, etc
+  const [searchHistoryTerm, setSearchHistoryTerm] = useState("");
 
   useEffect(() => {
     console.log("🔍 BooksTable state - showAddBookModal:", showAddBookModal);
@@ -296,6 +299,9 @@ const BooksTable = () => {
   const viewBookHistory = async (book) => {
     setSelectedBookForHistory(book);
     setShowHistoryModal(true);
+    setFilterType("all");
+    setFilterStatus("all");
+    setSearchHistoryTerm("");
     setHistoryLoading(true);
     
     try {
@@ -609,9 +615,141 @@ const BooksTable = () => {
 
                 <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#1a1a1a', fontWeight: '600', paddingBottom: '10px', borderBottom: '2px solid #f0f0f0' }}>Transaction Details</h3>
                 
+                {/* Filter Controls */}
+                <div style={{ marginBottom: '25px', padding: '18px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
+                    {/* Search */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>
+                        Search User Email
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search by email..."
+                        value={searchHistoryTerm}
+                        onChange={(e) => setSearchHistoryTerm(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    {/* Filter by Type */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>
+                        Transaction Type
+                      </label>
+                      <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          backgroundColor: 'white',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="all">All Types</option>
+                        <option value="borrow">📥 Borrow</option>
+                        <option value="reserve">⚠️ Reserve</option>
+                      </select>
+                    </div>
+
+                    {/* Filter by Status */}
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>
+                        Status
+                      </label>
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          backgroundColor: 'white',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="all">All Status</option>
+                        <option value="completed">✅ Completed</option>
+                        <option value="active">🔄 Active</option>
+                        <option value="approved">👍 Approved</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="cancelled">❌ Cancelled</option>
+                      </select>
+                    </div>
+
+                    {/* Clear Filters Button */}
+                    <button
+                      onClick={() => {
+                        setFilterType("all");
+                        setFilterStatus("all");
+                        setSearchHistoryTerm("");
+                      }}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: '#999',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#777'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#999'}
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+                
                 {/* Transaction Cards View */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {historyData.transactions.map((transaction) => (
+                  {(() => {
+                    const filteredTransactions = historyData.transactions.filter(transaction => {
+                      // Filter by type
+                      if (filterType !== 'all' && transaction.type !== filterType) {
+                        return false;
+                      }
+                      
+                      // Filter by status
+                      if (filterStatus !== 'all' && transaction.status !== filterStatus) {
+                        return false;
+                      }
+                      
+                      // Filter by search term
+                      if (searchHistoryTerm && !transaction.userEmail.toLowerCase().includes(searchHistoryTerm.toLowerCase())) {
+                        return false;
+                      }
+                      
+                      return true;
+                    });
+
+                    if (filteredTransactions.length === 0) {
+                      return (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                          <p style={{ fontSize: '16px', marginBottom: '8px' }}>🔍 No matching transactions</p>
+                          <p style={{ fontSize: '14px' }}>Try adjusting your filters</p>
+                        </div>
+                      );
+                    }
+
+                    return filteredTransactions.map((transaction) => (
                     <div key={transaction._id} style={{ 
                       padding: '18px', 
                       backgroundColor: transaction.type === 'borrow' ? '#f0f7ff' : '#faf5ff',
@@ -708,7 +846,8 @@ const BooksTable = () => {
                         )}
                       </div>
                     </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             ) : (
