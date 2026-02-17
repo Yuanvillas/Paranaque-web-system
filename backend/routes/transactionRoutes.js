@@ -87,6 +87,44 @@ router.post('/borrow', async (req, res) => {
       }).save()
     ]);
 
+    // PROCESS HOLDS: Mark ready hold as picked up and reindex queue
+    try {
+      const Hold = require('../models/Hold');
+      
+      // Look for a ready hold from this user for this book
+      const readyHold = await Hold.findOne({
+        bookId,
+        userEmail,
+        status: 'ready'
+      });
+
+      if (readyHold) {
+        console.log(`✅ Found ready hold for user ${userEmail} on book ${book.title} - marking as picked up`);
+        
+        // Mark hold as picked up and expired
+        readyHold.pickedUp = true;
+        readyHold.pickedUpDate = new Date();
+        readyHold.status = 'expired';
+        await readyHold.save();
+
+        // Reindex queue positions for remaining active holds
+        const activeHolds = await Hold.find({
+          bookId,
+          status: 'active'
+        }).sort({ holdDate: 1 });
+
+        for (let i = 0; i < activeHolds.length; i++) {
+          activeHolds[i].queuePosition = i + 1;
+          await activeHolds[i].save();
+        }
+
+        console.log(`📊 Reindexed ${activeHolds.length} holds for book ${bookId}`);
+      }
+    } catch (holdError) {
+      console.error('Error processing holds after borrow:', holdError);
+      // Don't fail the borrow if hold processing fails
+    }
+
     res.status(201).json({ message: 'Book borrowed successfully', transaction });
   } catch (err) {
     res.status(500).json({ message: err.message });
