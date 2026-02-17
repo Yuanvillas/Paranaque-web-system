@@ -116,6 +116,27 @@ const NotificationBell = () => {
     );
   };
 
+  const dismissNotification = async (e, transactionId, index) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(
+        `https://paranaque-web-system.onrender.com/api/transactions/${transactionId}/dismiss`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      
+      if (response.ok) {
+        // Remove from local state after successful API call
+        setTransactions(transactions.filter((_, idx) => idx !== index));
+        setUnreadCount(Math.max(0, unreadCount - 1));
+      }
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+    }
+  };
+
   return (
     <div className="notification-bell-container" ref={dropdownRef}>
       <button
@@ -176,6 +197,13 @@ const NotificationBell = () => {
                       >
                         {transaction.status}
                       </span>
+                      <button
+                        className="notification-delete-btn"
+                        onClick={(e) => dismissNotification(e, transaction._id, idx)}
+                        title="Dismiss notification"
+                      >
+                        ✕
+                      </button>
                     </div>
                     <p className="transaction-date">
                       {new Date(transaction.createdAt).toLocaleString(

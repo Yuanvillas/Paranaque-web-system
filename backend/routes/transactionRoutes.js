@@ -33,6 +33,7 @@ router.get('/user/:email', async (req, res) => {
   try {
     const transactions = await Transaction.find({
       userEmail: req.params.email,
+      dismissed: { $ne: true },
       $or: [
         { status: { $in: ['active', 'completed'] } },
         { $and: [{ status: 'pending' }, { type: { $in: ['reserve', 'borrow'] } }] }
@@ -1642,6 +1643,25 @@ router.post('/reservation/pickup-reminder', async (req, res) => {
     });
   } catch (err) {
     console.error('Error in pickup reminder notification:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Dismiss a notification
+router.post('/:id/dismiss', async (req, res) => {
+  try {
+    const transaction = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      { dismissed: true },
+      { new: true }
+    );
+    
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    res.json({ message: 'Notification dismissed successfully', transaction });
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });

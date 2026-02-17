@@ -45,6 +45,10 @@ const transactionSchema = new mongoose.Schema({
   bookTitle: {
     type: String,
     required: true
+  },
+  dismissed: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
