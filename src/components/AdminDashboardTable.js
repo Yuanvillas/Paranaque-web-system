@@ -411,7 +411,8 @@ const AdminDashboardTable = ({ onViewResources }) => {
                 {/* Pagination Controls */}
                 {(() => {
                   const totalPages = Math.ceil(detailedData.length / pageSize);
-                  return totalPages > 1 ? (
+                  if (totalPages <= 1) return null;
+                  return (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -457,7 +458,7 @@ const AdminDashboardTable = ({ onViewResources }) => {
                         Next →
                       </button>
                     </div>
-                  ) : null;
+                  );
                 })()}
               )}
             </>
