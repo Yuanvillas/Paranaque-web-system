@@ -17,6 +17,10 @@ const BooksTable = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [selectedBookForHistory, setSelectedBookForHistory] = useState(null);
 
   useEffect(() => {
     console.log("🔍 BooksTable state - showAddBookModal:", showAddBookModal);
@@ -289,6 +293,49 @@ const BooksTable = () => {
     setEditForm({});
   };
 
+  const viewBookHistory = async (book) => {
+    setSelectedBookForHistory(book);
+    setShowHistoryModal(true);
+    setHistoryLoading(true);
+    
+    try {
+      const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/book-history/${book._id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryData(data);
+      } else {
+        setHistoryData(null);
+        Swal.fire({
+          title: 'No History',
+          text: 'No borrowing or reservation history found for this book.',
+          icon: 'info',
+          confirmButtonColor: '#4CAF50'
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching book history:', err);
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to load book history: ' + err.message,
+        icon: 'error',
+        confirmButtonColor: '#d33'
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="pending-container">
       <div className="header-row">
@@ -501,8 +548,9 @@ const BooksTable = () => {
                       <td>
                         {book.status ? book.status : "Available"}
                       </td>
-                      <td style={{ display: 'flex', gap: '5px' }}>
+                      <td style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                         <button onClick={() => startEdit(book)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#4CAF50' }}>✏️ Edit</button>
+                        <button onClick={() => viewBookHistory(book)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#2196F3' }}>📋 History</button>
                         <button onClick={() => archiveBook(book._id)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#dab43bff' }}>Archive</button>
                       </td>
                     </tr>
@@ -514,6 +562,108 @@ const BooksTable = () => {
         );
       })()}
 
+      {/* Book History Modal */}
+      {showHistoryModal && (
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 900, width: '95%', maxHeight: '90vh', padding: '20px', background: '#fff', borderRadius: '10px', position: 'relative', overflowY: 'auto' }}>
+            <button
+              onClick={() => setShowHistoryModal(false)}
+              style={{ position: 'absolute', top: 10, right: 16, background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            
+            <h2 style={{ marginTop: 0, marginBottom: '20px' }}>
+              📋 Book History - {selectedBookForHistory?.title}
+            </h2>
+
+            {historyLoading ? (
+              <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Loading history...</p>
+            ) : historyData && historyData.transactions && historyData.transactions.length > 0 ? (
+              <div>
+                <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
+                  <p style={{ margin: '5px 0' }}>
+                    <strong>Total Transactions:</strong> {historyData.totalTransactions}
+                  </p>
+                  <p style={{ margin: '5px 0' }}>
+                    <strong>Total Times Borrowed:</strong> {historyData.totalBorrows}
+                  </p>
+                  <p style={{ margin: '5px 0' }}>
+                    <strong>Total Times Reserved:</strong> {historyData.totalReserves}
+                  </p>
+                </div>
+
+                <h3 style={{ marginTop: '20px', marginBottom: '15px', color: '#333' }}>Transaction Details</h3>
+                
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="styled-table" style={{ width: '100%', marginBottom: '20px' }}>
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>User Email</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>Due Date</th>
+                        <th>Return Date</th>
+                        <th>Approved By</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyData.transactions.map((transaction) => (
+                        <tr key={transaction._id} style={{ 
+                          backgroundColor: transaction.type === 'borrow' ? '#e3f2fd' : '#f3e5f5'
+                        }}>
+                          <td>
+                            <span style={{ 
+                              padding: '4px 8px', 
+                              borderRadius: '4px',
+                              backgroundColor: transaction.type === 'borrow' ? '#2196F3' : '#9C27B0',
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontSize: '0.85em'
+                            }}>
+                              {transaction.type.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>{transaction.userEmail}</td>
+                          <td>
+                            <span style={{ 
+                              padding: '4px 8px', 
+                              borderRadius: '4px',
+                              backgroundColor: transaction.status === 'completed' ? '#4CAF50' : 
+                                             transaction.status === 'active' ? '#2196F3' :
+                                             transaction.status === 'cancelled' ? '#f44336' :
+                                             transaction.status === 'pending' ? '#FF9800' : '#999',
+                              color: 'white',
+                              fontSize: '0.85em',
+                              fontWeight: 'bold'
+                            }}>
+                              {transaction.status}
+                            </span>
+                          </td>
+                          <td>{formatDate(transaction.startDate)}</td>
+                          <td>{formatDate(transaction.endDate)}</td>
+                          <td>{formatDate(transaction.returnDate)}</td>
+                          <td>{transaction.approvedBy || 'N/A'}</td>
+                          <td>{transaction.rejectionReason || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                <p style={{ fontSize: '18px', marginBottom: '10px' }}>📭 No History Found</p>
+                <p>This book has not been borrowed or reserved yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Edit Book Modal */}
       {editingBook && (
         <div className="modal-overlay" onClick={cancelEdit}>
@@ -521,6 +671,7 @@ const BooksTable = () => {
                 <button
                   onClick={cancelEdit}
                   style={{ position: 'absolute', top: 10, right: 16, background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}
+
                   aria-label="Close"
                 >
                   ×

@@ -1704,4 +1704,36 @@ router.post('/:id/dismiss', async (req, res) => {
   }
 });
 
+// Get book transaction history (who borrowed and reserved it)
+router.get('/book-history/:bookId', async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    
+    // Fetch all transactions for this book, sorted by date
+    const transactions = await Transaction.find({ bookId }).sort({ createdAt: -1 });
+    
+    if (!transactions) {
+      return res.status(404).json({ message: 'No history found for this book' });
+    }
+
+    // Format the response with details about borrows and reserves
+    const borrows = transactions.filter(t => t.type === 'borrow');
+    const reserves = transactions.filter(t => t.type === 'reserve');
+
+    res.json({
+      bookId,
+      totalTransactions: transactions.length,
+      totalBorrows: borrows.length,
+      totalReserves: reserves.length,
+      transactions,
+      borrows,
+      reserves
+    });
+  } catch (err) {
+    console.error('Error fetching book history:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
+
