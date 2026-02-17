@@ -565,99 +565,157 @@ const BooksTable = () => {
       {/* Book History Modal */}
       {showHistoryModal && (
         <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 900, width: '95%', maxHeight: '90vh', padding: '20px', background: '#fff', borderRadius: '10px', position: 'relative', overflowY: 'auto' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 1100, width: '96%', maxHeight: '95vh', padding: '30px', background: '#fff', borderRadius: '12px', position: 'relative', overflowY: 'auto', boxShadow: '0 5px 40px rgba(0,0,0,0.2)' }}>
             <button
               onClick={() => setShowHistoryModal(false)}
-              style={{ position: 'absolute', top: 10, right: 16, background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: 12, right: 18, background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', color: '#666', transition: 'color 0.2s' }}
+              onMouseOver={(e) => e.target.style.color = '#000'}
+              onMouseOut={(e) => e.target.style.color = '#666'}
               aria-label="Close"
             >
               ×
             </button>
             
-            <h2 style={{ marginTop: 0, marginBottom: '20px' }}>
-              📋 Book History - {selectedBookForHistory?.title}
-            </h2>
+            <div style={{ marginBottom: '30px' }}>
+              <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '28px', color: '#1a1a1a' }}>
+                📋 Book History
+              </h2>
+              <p style={{ margin: 0, fontSize: '16px', color: '#4CAF50', fontWeight: '500' }}>
+                {selectedBookForHistory?.title}
+              </p>
+            </div>
 
             {historyLoading ? (
-              <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Loading history...</p>
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+                <p style={{ fontSize: '16px' }}>Loading history...</p>
+              </div>
             ) : historyData && historyData.transactions && historyData.transactions.length > 0 ? (
               <div>
-                <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
-                  <p style={{ margin: '5px 0' }}>
-                    <strong>Total Transactions:</strong> {historyData.totalTransactions}
-                  </p>
-                  <p style={{ margin: '5px 0' }}>
-                    <strong>Total Times Borrowed:</strong> {historyData.totalBorrows}
-                  </p>
-                  <p style={{ margin: '5px 0' }}>
-                    <strong>Total Times Reserved:</strong> {historyData.totalReserves}
-                  </p>
+                {/* Summary Stats Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '35px' }}>
+                  <div style={{ padding: '20px', backgroundColor: '#e3f2fd', borderRadius: '10px', border: '2px solid #2196F3' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Total Transactions</p>
+                    <p style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#2196F3' }}>{historyData.totalTransactions}</p>
+                  </div>
+                  <div style={{ padding: '20px', backgroundColor: '#e3f5e9', borderRadius: '10px', border: '2px solid #4CAF50' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Times Borrowed</p>
+                    <p style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#4CAF50' }}>{historyData.totalBorrows}</p>
+                  </div>
+                  <div style={{ padding: '20px', backgroundColor: '#f3e5f5', borderRadius: '10px', border: '2px solid #9C27B0' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Times Reserved</p>
+                    <p style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#9C27B0' }}>{historyData.totalReserves}</p>
+                  </div>
                 </div>
 
-                <h3 style={{ marginTop: '20px', marginBottom: '15px', color: '#333' }}>Transaction Details</h3>
+                <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#1a1a1a', fontWeight: '600', paddingBottom: '10px', borderBottom: '2px solid #f0f0f0' }}>Transaction Details</h3>
                 
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="styled-table" style={{ width: '100%', marginBottom: '20px' }}>
-                    <thead>
-                      <tr>
-                        <th>Type</th>
-                        <th>User Email</th>
-                        <th>Status</th>
-                        <th>Start Date</th>
-                        <th>Due Date</th>
-                        <th>Return Date</th>
-                        <th>Approved By</th>
-                        <th>Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historyData.transactions.map((transaction) => (
-                        <tr key={transaction._id} style={{ 
-                          backgroundColor: transaction.type === 'borrow' ? '#e3f2fd' : '#f3e5f5'
-                        }}>
-                          <td>
-                            <span style={{ 
-                              padding: '4px 8px', 
-                              borderRadius: '4px',
-                              backgroundColor: transaction.type === 'borrow' ? '#2196F3' : '#9C27B0',
-                              color: 'white',
-                              fontWeight: 'bold',
-                              fontSize: '0.85em'
-                            }}>
-                              {transaction.type.toUpperCase()}
-                            </span>
-                          </td>
-                          <td>{transaction.userEmail}</td>
-                          <td>
-                            <span style={{ 
-                              padding: '4px 8px', 
-                              borderRadius: '4px',
-                              backgroundColor: transaction.status === 'completed' ? '#4CAF50' : 
-                                             transaction.status === 'active' ? '#2196F3' :
-                                             transaction.status === 'cancelled' ? '#f44336' :
-                                             transaction.status === 'pending' ? '#FF9800' : '#999',
-                              color: 'white',
-                              fontSize: '0.85em',
-                              fontWeight: 'bold'
-                            }}>
-                              {transaction.status}
-                            </span>
-                          </td>
-                          <td>{formatDate(transaction.startDate)}</td>
-                          <td>{formatDate(transaction.endDate)}</td>
-                          <td>{formatDate(transaction.returnDate)}</td>
-                          <td>{transaction.approvedBy || 'N/A'}</td>
-                          <td>{transaction.rejectionReason || 'N/A'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                {/* Transaction Cards View */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {historyData.transactions.map((transaction) => (
+                    <div key={transaction._id} style={{ 
+                      padding: '18px', 
+                      backgroundColor: transaction.type === 'borrow' ? '#f0f7ff' : '#faf5ff',
+                      borderLeft: `5px solid ${transaction.type === 'borrow' ? '#2196F3' : '#9C27B0'}`,
+                      borderRadius: '8px',
+                      border: `1px solid ${transaction.type === 'borrow' ? '#b3e5fc' : '#e1bee7'}`,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateX(4px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                        {/* Type */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Type</p>
+                          <span style={{ 
+                            display: 'inline-block',
+                            padding: '6px 12px', 
+                            borderRadius: '6px',
+                            backgroundColor: transaction.type === 'borrow' ? '#2196F3' : '#9C27B0',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '14px'
+                          }}>
+                            {transaction.type === 'borrow' ? '📥 Borrow' : '⚠️ Reserve'}
+                          </span>
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Status</p>
+                          <span style={{ 
+                            display: 'inline-block',
+                            padding: '6px 12px', 
+                            borderRadius: '6px',
+                            backgroundColor: transaction.status === 'completed' ? '#4CAF50' : 
+                                           transaction.status === 'active' ? '#2196F3' :
+                                           transaction.status === 'cancelled' ? '#f44336' :
+                                           transaction.status === 'approved' ? '#8BC34A' :
+                                           transaction.status === 'pending' ? '#FF9800' : '#999',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>
+                            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                          </span>
+                        </div>
+
+                        {/* User */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>User</p>
+                          <p style={{ margin: 0, fontSize: '14px', color: '#1a1a1a', wordBreak: 'break-word' }}>{transaction.userEmail}</p>
+                        </div>
+
+                        {/* Start Date */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Started</p>
+                          <p style={{ margin: 0, fontSize: '14px', color: '#1a1a1a' }}>{formatDate(transaction.startDate)}</p>
+                        </div>
+
+                        {/* Due Date */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Due Date</p>
+                          <p style={{ margin: 0, fontSize: '14px', color: transaction.endDate ? '#1a1a1a' : '#999' }}>{formatDate(transaction.endDate)}</p>
+                        </div>
+
+                        {/* Return Date */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Returned</p>
+                          <p style={{ margin: 0, fontSize: '14px', color: transaction.returnDate ? '#4CAF50' : '#999', fontWeight: transaction.returnDate ? '600' : '400' }}>
+                            {transaction.returnDate ? formatDate(transaction.returnDate) : 'Not yet'}
+                          </p>
+                        </div>
+
+                        {/* Approved By */}
+                        <div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Approved By</p>
+                          <p style={{ margin: 0, fontSize: '14px', color: transaction.approvedBy ? '#1a1a1a' : '#999' }}>{transaction.approvedBy || 'Pending'}</p>
+                        </div>
+
+                        {/* Notes */}
+                        {transaction.rejectionReason && (
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Notes</p>
+                            <p style={{ margin: 0, fontSize: '14px', color: '#f44336', backgroundColor: '#ffebee', padding: '8px 12px', borderRadius: '4px' }}>{transaction.rejectionReason}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                <p style={{ fontSize: '18px', marginBottom: '10px' }}>📭 No History Found</p>
-                <p>This book has not been borrowed or reserved yet.</p>
+              <div style={{ textAlign: 'center', padding: '80px 20px', color: '#999' }}>
+                <p style={{ fontSize: '48px', marginBottom: '15px' }}>📭</p>
+                <p style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px', color: '#666' }}>No History Found</p>
+                <p style={{ fontSize: '16px' }}>This book has not been borrowed or reserved yet.</p>
               </div>
             )}
           </div>
