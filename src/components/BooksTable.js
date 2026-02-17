@@ -464,7 +464,7 @@ const BooksTable = () => {
           <div 
             className="add-book-modal-content" 
             onClick={e => e.stopPropagation()} 
-            style={{ maxWidth: 600, width: '95%', height: '90%', padding: '10px', background: '#fff', borderRadius: '10px', position: 'relative', zIndex: 10000, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.3)', border: '3px solid red' }}
+            style={{ maxWidth: 600, width: '95%', maxHeight: '90%', padding: '25px', background: '#fff', borderRadius: '12px', position: 'relative', zIndex: 10000, overflowY: 'auto', boxShadow: '0 5px 40px rgba(0,0,0,0.3)' }}
           >
             {console.log("🟢 Add Book Modal Content is rendering - MODAL BOX VISIBLE")}
             <button
