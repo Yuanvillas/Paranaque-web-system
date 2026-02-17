@@ -309,8 +309,9 @@ const AdminDashboardTable = ({ onViewResources }) => {
                   ))}
                 </div>
               ) : (
-                // Table view for other metrics
-                <div style={{ overflowX: 'auto' }}>
+                <>
+                  {/* Table view for other metrics */}
+                  <div style={{ overflowX: 'auto' }}>
                   <table style={{
                     width: '100%',
                     borderCollapse: 'collapse',
@@ -460,6 +461,7 @@ const AdminDashboardTable = ({ onViewResources }) => {
                     </div>
                   );
                 })()}
+                </>
               )}
             </>
           )}
