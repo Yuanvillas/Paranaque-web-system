@@ -342,6 +342,81 @@ const BooksTable = () => {
     });
   };
 
+  const exportHistoryToExcel = () => {
+    if (!historyData || !historyData.transactions) return;
+
+    const filteredTransactions = historyData.transactions.filter(transaction => {
+      if (filterType !== 'all' && transaction.type !== filterType) return false;
+      if (filterStatus !== 'all' && transaction.status !== filterStatus) return false;
+      if (searchHistoryTerm && !transaction.userEmail.toLowerCase().includes(searchHistoryTerm.toLowerCase())) return false;
+      return true;
+    });
+
+    const data = filteredTransactions.map(t => ({
+      'Type': t.type === 'borrow' ? 'Borrow' : 'Reserve',
+      'User Email': t.userEmail,
+      'Status': t.status.charAt(0).toUpperCase() + t.status.slice(1),
+      'Started': formatDate(t.startDate),
+      'Due Date': formatDate(t.endDate),
+      'Returned': formatDate(t.returnDate),
+      'Approved By': t.approvedBy || 'Pending',
+      'Notes': t.rejectionReason || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "History");
+    XLSX.writeFile(wb, `Book_History_${selectedBookForHistory?.accessionNumber || 'Export'}_${new Date().toLocaleDateString()}.xlsx`);
+  };
+
+  const exportHistoryToPDF = () => {
+    if (!historyData || !historyData.transactions) return;
+
+    const filteredTransactions = historyData.transactions.filter(transaction => {
+      if (filterType !== 'all' && transaction.type !== filterType) return false;
+      if (filterStatus !== 'all' && transaction.status !== filterStatus) return false;
+      if (searchHistoryTerm && !transaction.userEmail.toLowerCase().includes(searchHistoryTerm.toLowerCase())) return false;
+      return true;
+    });
+
+    const data = filteredTransactions.map(t => [
+      t.type === 'borrow' ? 'Borrow' : 'Reserve',
+      t.userEmail,
+      t.status.charAt(0).toUpperCase() + t.status.slice(1),
+      formatDate(t.startDate),
+      formatDate(t.endDate),
+      formatDate(t.returnDate),
+      t.approvedBy || 'Pending',
+      t.rejectionReason || ''
+    ]);
+
+    const pdf = new jsPDF('l', 'mm', 'a4');
+    pdf.setFontSize(14);
+    pdf.text(`Book History - ${selectedBookForHistory?.title}`, 14, 15);
+    pdf.setFontSize(10);
+    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+
+    pdf.autoTable({
+      head: [['Type', 'User Email', 'Status', 'Started', 'Due Date', 'Returned', 'Approved By', 'Notes']],
+      body: data,
+      startY: 28,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      headStyles: {
+        fillColor: [46, 125, 50],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      }
+    });
+
+    pdf.save(`Book_History_${selectedBookForHistory?.accessionNumber || 'Export'}_${new Date().toLocaleDateString()}.pdf`);
+  };
+
   return (
     <div className="pending-container">
       <div className="header-row">
@@ -714,6 +789,52 @@ const BooksTable = () => {
                       onMouseOut={(e) => e.target.style.backgroundColor = '#999'}
                     >
                       Clear Filters
+                    </button>
+
+                    {/* Export to Excel Button */}
+                    <button
+                      onClick={exportHistoryToExcel}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'background-color 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+                    >
+                      📊 Excel
+                    </button>
+
+                    {/* Export to PDF Button */}
+                    <button
+                      onClick={exportHistoryToPDF}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'background-color 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#da190b'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#f44336'}
+                    >
+                      📄 PDF
                     </button>
                   </div>
                 </div>
