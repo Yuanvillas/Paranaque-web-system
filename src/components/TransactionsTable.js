@@ -122,33 +122,82 @@ const TransactionsTable = () => {
           </button>
         </div>
       </div>
-      <table className="styled-table">
-        <thead>
-          <tr style={{ backgroundColor: '#f5f5f5' }}>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Book Title</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>User</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Type</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Status</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Start Date</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Due Date</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Return Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(() => {
-            // Calculate pagination
-            const totalPages = Math.ceil(filteredBooks.length / pageSize);
-            const startIndex = (currentPage - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
 
-            // Reset to page 1 if current page exceeds total pages
-            if (currentPage > totalPages && totalPages > 0) {
-              setCurrentPage(1);
-            }
+      {(() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
 
-            return (
-              <>
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <>
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, filteredBooks.length - (currentPage - 1) * pageSize)} of {filteredBooks.length} transactions)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+
+            <table className="styled-table">
+              <thead>
+                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Book Title</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>User</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Type</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Status</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Start Date</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Due Date</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: '600' }}>Return Date</th>
+                </tr>
+              </thead>
+              <tbody>
                 {paginatedBooks.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
@@ -180,62 +229,10 @@ const TransactionsTable = () => {
                     </tr>
                   ))
                 )}
-              </>
-            );
-          })()}
-        </tbody>
-      </table>
-
-      {/* Pagination Controls */}
-      {(() => {
-        const totalPages = Math.ceil(filteredBooks.length / pageSize);
-        return totalPages > 1 ? (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '5px'
-          }}>
-            <button
-              onClick={() => setCurrentPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ← Previous
-            </button>
-
-            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-              Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, filteredBooks.length - (currentPage - 1) * pageSize)} of {filteredBooks.length} transactions)
-            </span>
-
-            <button
-              onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Next →
-            </button>
-          </div>
-        ) : null;
+              </tbody>
+            </table>
+          </>
+        );
       })()}
 
       {/* Export Format Modal */}

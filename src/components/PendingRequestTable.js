@@ -427,6 +427,53 @@ const PendingRequestTable = () => {
               </div>
             ) : (
               <div>
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '5px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentBorrowPage(currentBorrowPage - 1)}
+                      disabled={currentBorrowPage === 1}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentBorrowPage === 1 ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentBorrowPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      Page {currentBorrowPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredBorrowRequests.length})
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentBorrowPage(currentBorrowPage + 1)}
+                      disabled={currentBorrowPage === totalPages}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentBorrowPage === totalPages ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentBorrowPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
                 <div className="table-wrapper">
                   <table className="styled-table">
                     <thead>
@@ -471,55 +518,6 @@ const PendingRequestTable = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '20px',
-                    padding: '15px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '5px'
-                  }}>
-                    <button
-                      onClick={() => setCurrentBorrowPage(currentBorrowPage - 1)}
-                      disabled={currentBorrowPage === 1}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: currentBorrowPage === 1 ? '#ccc' : '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: currentBorrowPage === 1 ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      ← Previous
-                    </button>
-
-                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                      Page {currentBorrowPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredBorrowRequests.length})
-                    </span>
-
-                    <button
-                      onClick={() => setCurrentBorrowPage(currentBorrowPage + 1)}
-                      disabled={currentBorrowPage === totalPages}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: currentBorrowPage === totalPages ? '#ccc' : '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: currentBorrowPage === totalPages ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      Next →
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </>
@@ -546,52 +544,12 @@ const PendingRequestTable = () => {
               </div>
             ) : (
               <div>
-                <div className="table-wrapper">
-                  <table className="styled-table">
-                    <thead>
-                      <tr>
-                        <th>Book Title</th>
-                        <th>User</th>
-                        <th>Date Requested</th>
-                        <th style={{ textAlign: "center" }}>Actions</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {paginatedRequests.map((request) => (
-                        <tr key={request._id}>
-                          <td className="title-cell">{request.bookTitle}</td>
-                          <td>{request.userEmail}</td>
-                          <td>{formatDate(request.createdAt)}</td>
-
-                          <td className="action-buttons">
-                            <button
-                              onClick={() => handleApproveReservation(request._id)}
-                              className="btn approve"
-                            >
-                              Approve
-                            </button>
-
-                            <button
-                              onClick={() => openRejectModal(request)}
-                              className="btn reject"
-                            >
-                              Reject
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginTop: '20px',
+                    marginBottom: '20px',
                     padding: '15px',
                     backgroundColor: '#f5f5f5',
                     borderRadius: '5px'
@@ -633,6 +591,44 @@ const PendingRequestTable = () => {
                     </button>
                   </div>
                 )}
+                <div className="table-wrapper">
+                  <table className="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Book Title</th>
+                        <th>User</th>
+                        <th>Date Requested</th>
+                        <th style={{ textAlign: "center" }}>Actions</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {paginatedRequests.map((request) => (
+                        <tr key={request._id}>
+                          <td className="title-cell">{request.bookTitle}</td>
+                          <td>{request.userEmail}</td>
+                          <td>{formatDate(request.createdAt)}</td>
+
+                          <td className="action-buttons">
+                            <button
+                              onClick={() => handleApproveReservation(request._id)}
+                              className="btn approve"
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              onClick={() => openRejectModal(request)}
+                              className="btn reject"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>
@@ -659,6 +655,53 @@ const PendingRequestTable = () => {
               </div>
             ) : (
               <div>
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '5px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentReturnPage(currentReturnPage - 1)}
+                      disabled={currentReturnPage === 1}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReturnPage === 1 ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReturnPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      Page {currentReturnPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredReturnRequests.length})
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentReturnPage(currentReturnPage + 1)}
+                      disabled={currentReturnPage === totalPages}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReturnPage === totalPages ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReturnPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
                 <div className="table-wrapper">
                   <table className="styled-table">
                     <thead>
@@ -718,55 +761,6 @@ const PendingRequestTable = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '20px',
-                    padding: '15px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '5px'
-                  }}>
-                    <button
-                      onClick={() => setCurrentReturnPage(currentReturnPage - 1)}
-                      disabled={currentReturnPage === 1}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: currentReturnPage === 1 ? '#ccc' : '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: currentReturnPage === 1 ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      ← Previous
-                    </button>
-
-                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                      Page {currentReturnPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredReturnRequests.length})
-                    </span>
-
-                    <button
-                      onClick={() => setCurrentReturnPage(currentReturnPage + 1)}
-                      disabled={currentReturnPage === totalPages}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: currentReturnPage === totalPages ? '#ccc' : '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: currentReturnPage === totalPages ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      Next →
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </>

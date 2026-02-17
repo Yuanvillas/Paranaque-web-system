@@ -78,38 +78,12 @@ const ReservedBooksTable = () => {
 
         return (
           <div>
-            <div className="table-wrapper">
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Book Title</th>
-                    <th>Reserved By</th>
-                    <th>Reservation Date</th>
-                    <th>Approved By</th>
-                    <th>Approval Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedBooks.map((reservation) => (
-                    <tr key={reservation._id}>
-                      <td>{reservation.bookTitle}</td>
-                      <td>{reservation.userEmail}</td>
-                      <td>{formatDate(reservation.reservedAt)}</td>
-                      <td>{reservation.approvedBy}</td>
-                      <td>{reservation.approvalDate ? formatDate(reservation.approvalDate) : ''}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: '20px',
+                marginBottom: '20px',
                 padding: '15px',
                 backgroundColor: '#f5f5f5',
                 borderRadius: '5px'
@@ -151,6 +125,30 @@ const ReservedBooksTable = () => {
                 </button>
               </div>
             )}
+            <div className="table-wrapper">
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Book Title</th>
+                    <th>Reserved By</th>
+                    <th>Reservation Date</th>
+                    <th>Approved By</th>
+                    <th>Approval Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((reservation) => (
+                    <tr key={reservation._id}>
+                      <td>{reservation.bookTitle}</td>
+                      <td>{reservation.userEmail}</td>
+                      <td>{formatDate(reservation.reservedAt)}</td>
+                      <td>{reservation.approvedBy}</td>
+                      <td>{reservation.approvalDate ? formatDate(reservation.approvalDate) : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         );
       })()}

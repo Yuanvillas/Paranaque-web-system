@@ -373,6 +373,53 @@ const BooksTable = () => {
 
         return (
           <div>
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
             <div className="table-wrapper">
               <table className="styled-table">
                 <thead>
@@ -458,55 +505,6 @@ const BooksTable = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: '20px',
-                padding: '15px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '5px'
-              }}>
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  style={{
-                    padding: '10px 16px',
-                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  ← Previous
-                </button>
-
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
-                </span>
-
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  style={{
-                    padding: '10px 16px',
-                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Next →
-                </button>
-              </div>
-            )}
           </div>
         );
       })()}
