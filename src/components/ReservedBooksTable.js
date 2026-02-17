@@ -6,6 +6,8 @@ const ReservedBooksTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     fetchReservedBooks();
@@ -62,32 +64,96 @@ const ReservedBooksTable = () => {
         <div className="no-reservations-message">
           <p>No reserved books found.</p>
         </div>
-      ) : (
-        <div className="table-wrapper">
-          <table className="styled-table">
-            <thead>
-              <tr>
-                <th>Book Title</th>
-                <th>Reserved By</th>
-                <th>Reservation Date</th>
-                <th>Approved By</th>
-                <th>Approval Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((reservation) => (
-                <tr key={reservation._id}>
-                  <td>{reservation.bookTitle}</td>
-                  <td>{reservation.userEmail}</td>
-                  <td>{formatDate(reservation.reservedAt)}</td>
-                  <td>{reservation.approvedBy}</td>
-                  <td>{reservation.approvalDate ? formatDate(reservation.approvalDate) : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      ) : (() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <div>
+            <div className="table-wrapper">
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Book Title</th>
+                    <th>Reserved By</th>
+                    <th>Reservation Date</th>
+                    <th>Approved By</th>
+                    <th>Approval Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((reservation) => (
+                    <tr key={reservation._id}>
+                      <td>{reservation.bookTitle}</td>
+                      <td>{reservation.userEmail}</td>
+                      <td>{formatDate(reservation.reservedAt)}</td>
+                      <td>{reservation.approvedBy}</td>
+                      <td>{reservation.approvalDate ? formatDate(reservation.approvalDate) : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };

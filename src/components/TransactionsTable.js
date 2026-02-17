@@ -9,6 +9,8 @@ const TransactionsTable = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
   
   useEffect(() => {
     fetchTransactions();
@@ -133,39 +135,108 @@ const TransactionsTable = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredBooks.length === 0 ? (
-            <tr>
-              <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                No transactions found
-              </td>
-            </tr>
-          ) : (
-            filteredBooks.map((transaction) => (
-              <tr key={transaction._id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px', fontWeight: '600' }}>{transaction.bookTitle}</td>
-                <td style={{ padding: '12px' }}>{transaction.userEmail}</td>
-                <td style={{ padding: '12px', textTransform: 'capitalize' }}>{transaction.type}</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{
-                    backgroundColor: getStatusColor(transaction.status),
-                    color: 'white',
-                    padding: '5px 10px',
-                    borderRadius: '12px',
-                    fontSize: '0.85em'
-                  }}>
-                    {transaction.status}
-                  </span>
-                </td>
-                <td style={{ padding: '12px' }}>{formatDate(transaction.startDate)}</td>
-                <td style={{ padding: '12px' }}>{formatDate(transaction.endDate)}</td>
-                <td style={{ padding: '12px' }}>
-                  {transaction.returnDate ? formatDate(transaction.returnDate) : '-'}
-                </td>
-              </tr>
-            ))
-          )}
+          {(() => {
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredBooks.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+            // Reset to page 1 if current page exceeds total pages
+            if (currentPage > totalPages && totalPages > 0) {
+              setCurrentPage(1);
+            }
+
+            return (
+              <>
+                {paginatedBooks.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                      No transactions found
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedBooks.map((transaction) => (
+                    <tr key={transaction._id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '12px', fontWeight: '600' }}>{transaction.bookTitle}</td>
+                      <td style={{ padding: '12px' }}>{transaction.userEmail}</td>
+                      <td style={{ padding: '12px', textTransform: 'capitalize' }}>{transaction.type}</td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{
+                          backgroundColor: getStatusColor(transaction.status),
+                          color: 'white',
+                          padding: '5px 10px',
+                          borderRadius: '12px',
+                          fontSize: '0.85em'
+                        }}>
+                          {transaction.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px' }}>{formatDate(transaction.startDate)}</td>
+                      <td style={{ padding: '12px' }}>{formatDate(transaction.endDate)}</td>
+                      <td style={{ padding: '12px' }}>
+                        {transaction.returnDate ? formatDate(transaction.returnDate) : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </>
+            );
+          })()}
         </tbody>
       </table>
+
+      {/* Pagination Controls */}
+      {(() => {
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        return totalPages > 1 ? (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '20px',
+            padding: '15px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '5px'
+          }}>
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ← Previous
+            </button>
+
+            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+              Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, filteredBooks.length - (currentPage - 1) * pageSize)} of {filteredBooks.length} transactions)
+            </span>
+
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Next →
+            </button>
+          </div>
+        ) : null;
+      })()}
 
       {/* Export Format Modal */}
       {showExportModal && (

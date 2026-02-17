@@ -9,6 +9,8 @@ const AdminLogs = () => {
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState(null);
   const [filterAction, setFilterAction] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     fetch("https://paranaque-web-system.onrender.com/api/logs")
@@ -102,57 +104,123 @@ const AdminLogs = () => {
 
       {error && <p style={styles.errorMessage}>{error}</p>}
       
-      <div style={styles.tableWrapper}>
-        <table className="log-table" style={styles.table}>
-          <caption style={styles.caption}>All User Activity Logs</caption>
-          <thead>
-            <tr style={styles.tableHeader}>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Action</th>
-              <th style={styles.th}>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredLogs.length === 0 ? (
-              <tr>
-                <td colSpan="3" style={styles.emptyCell}>
-                  <FontAwesomeIcon icon={faHistory} style={{ fontSize: '32px', color: '#ccc', marginBottom: '12px', display: 'block' }} />
-                  No activity logs found.
-                </td>
-              </tr>
-            ) : (
-              filteredLogs.map((log, idx) => {
-                const actionInfo = getActionIcon(log.action);
-                return (
-                  <tr key={idx} style={styles.tableRow}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <td style={styles.td}>
-                      <span style={styles.emailBadge}>{log.userEmail}</span>
-                    </td>
-                    <td style={styles.td}>
-                      <div style={styles.actionCell}>
-                        <div style={{
-                          ...styles.actionIcon,
-                          backgroundColor: actionInfo.bg,
-                          color: actionInfo.color
-                        }}>
-                          <FontAwesomeIcon icon={actionInfo.icon} />
-                        </div>
-                        <span style={styles.actionText}>{log.action}</span>
-                      </div>
-                    </td>
-                    <td style={styles.td}>
-                      <span style={styles.timestamp}>{new Date(log.timestamp).toLocaleString()}</span>
-                    </td>
+      {(() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredLogs.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedLogs = filteredLogs.slice(startIndex, endIndex);
+
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <div>
+            <div style={styles.tableWrapper}>
+              <table className="log-table" style={styles.table}>
+                <caption style={styles.caption}>All User Activity Logs</caption>
+                <thead>
+                  <tr style={styles.tableHeader}>
+                    <th style={styles.th}>Email</th>
+                    <th style={styles.th}>Action</th>
+                    <th style={styles.th}>Timestamp</th>
                   </tr>
-                );
-              })
+                </thead>
+                <tbody>
+                  {paginatedLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" style={styles.emptyCell}>
+                        <FontAwesomeIcon icon={faHistory} style={{ fontSize: '32px', color: '#ccc', marginBottom: '12px', display: 'block' }} />
+                        No activity logs found.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedLogs.map((log, idx) => {
+                      const actionInfo = getActionIcon(log.action);
+                      return (
+                        <tr key={idx} style={styles.tableRow}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={styles.td}>
+                            <span style={styles.emailBadge}>{log.userEmail}</span>
+                          </td>
+                          <td style={styles.td}>
+                            <div style={styles.actionCell}>
+                              <div style={{
+                                ...styles.actionIcon,
+                                backgroundColor: actionInfo.bg,
+                                color: actionInfo.color
+                              }}>
+                                <FontAwesomeIcon icon={actionInfo.icon} />
+                              </div>
+                              <span style={styles.actionText}>{log.action}</span>
+                            </div>
+                          </td>
+                          <td style={styles.td}>
+                            <span style={styles.timestamp}>{new Date(log.timestamp).toLocaleString()}</span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#2e7d32',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedLogs.length} of {filteredLogs.length} logs)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#2e7d32',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

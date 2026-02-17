@@ -6,6 +6,8 @@ const BorrowedBooksTable = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   const fetchAllBooks = async () => {
     try {
@@ -89,61 +91,125 @@ const BorrowedBooksTable = () => {
         <div className="no-books-message">
           <p>No active borrowed books found.</p>
         </div>
-      ) : (
-        <div className="table-wrapper">
-          <table className="styled-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Title</th>
-                <th>Borrower</th>
-                <th>Borrow Date</th>
-                <th>Due Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((book) => {
-                const daysOverdue = getDaysOverdue(book.dueDate);
-                return (
-                  <tr key={book._id}>
-                    <td className="d-flex justify-content-center align-items-center">
-                      {book.image && (
-                        <img
-                          src={book.image ? book.image : ""}
-                          alt={book.title}
-                          style={{
-                            width: "60px",
-                            height: "80px",
-                            objectFit: "cover",
-                            borderRadius: "4px",
-                            border: "1px solid #ddd"
-                          }}
-                          onError={(e) => e.target.style.display = 'none'}
-                        />
-                      )}
-                    </td>
-                    <td>{book.title}</td>
-                    <td>{book.userEmail}</td>
-                    <td>{formatDate(book.borrowDate)}</td>
-                    <td>{formatDate(book.dueDate || book.returnDate)}</td>
-                    <td>
-                      <span className={`status-badge ${book.status}`} style={{ color: 'black' }}>
-                        {book.status}
-                      </span>
-                      {daysOverdue > 0 && book.status === 'active' && (
-                        <span className="overdue-badge">
-                          {daysOverdue} days overdue
-                        </span>
-                      )}
-                    </td>
+      ) : (() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <div>
+            <div className="table-wrapper">
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Borrower</th>
+                    <th>Borrow Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((book) => {
+                    const daysOverdue = getDaysOverdue(book.dueDate);
+                    return (
+                      <tr key={book._id}>
+                        <td className="d-flex justify-content-center align-items-center">
+                          {book.image && (
+                            <img
+                              src={book.image ? book.image : ""}
+                              alt={book.title}
+                              style={{
+                                width: "60px",
+                                height: "80px",
+                                objectFit: "cover",
+                                borderRadius: "4px",
+                                border: "1px solid #ddd"
+                              }}
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          )}
+                        </td>
+                        <td>{book.title}</td>
+                        <td>{book.userEmail}</td>
+                        <td>{formatDate(book.borrowDate)}</td>
+                        <td>{formatDate(book.dueDate || book.returnDate)}</td>
+                        <td>
+                          <span className={`status-badge ${book.status}`} style={{ color: 'black' }}>
+                            {book.status}
+                          </span>
+                          {daysOverdue > 0 && book.status === 'active' && (
+                            <span className="overdue-badge">
+                              {daysOverdue} days overdue
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };

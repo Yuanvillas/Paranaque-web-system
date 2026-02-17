@@ -14,6 +14,12 @@ const PendingRequestTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [activeTab, setActiveTab] = useState('borrow');
+  const [borrowPageSize] = useState(20);
+  const [reservePageSize] = useState(20);
+  const [returnPageSize] = useState(20);
+  const [currentBorrowPage, setCurrentBorrowPage] = useState(1);
+  const [currentReservePage, setCurrentReservePage] = useState(1);
+  const [currentReturnPage, setCurrentReturnPage] = useState(1);
 
   useEffect(() => {
     fetchPendingRequest();
@@ -402,184 +408,370 @@ const PendingRequestTable = () => {
       {error && <div className="error-message">{error}</div>}
 
       {/* Borrow Requests Tab */}
-      {activeTab === 'borrow' && (
-        <>
-          {!error && filteredBorrowRequests.length === 0 ? (
-            <div className="empty-state">
-              <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
-              <p>No borrow requests found.</p>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Request Type</th>
-                    <th>Book Title</th>
-                    <th>User</th>
-                    <th>Date Requested</th>
-                    <th style={{ textAlign: "center" }}>Actions</th>
-                  </tr>
-                </thead>
+      {activeTab === 'borrow' && (() => {
+        const totalPages = Math.ceil(filteredBorrowRequests.length / borrowPageSize);
+        const startIndex = (currentBorrowPage - 1) * borrowPageSize;
+        const endIndex = startIndex + borrowPageSize;
+        const paginatedRequests = filteredBorrowRequests.slice(startIndex, endIndex);
 
-                <tbody>
-                  {filteredBorrowRequests.map((request) => (
-                    <tr key={request._id}>
-                      <td className="type-cell">{request.type}</td>
-                      <td className="title-cell">{request.bookTitle}</td>
-                      <td>{request.userEmail}</td>
-                      <td>{formatDate(request.createdAt)}</td>
+        if (currentBorrowPage > totalPages && totalPages > 0) {
+          setCurrentBorrowPage(1);
+        }
 
-                      <td className="action-buttons">
-                        <button
-                          onClick={() =>
-                            request.type === "borrow"
-                              ? handleApprove(request._id)
-                              : handleApproveReservation(request._id)
-                          }
-                          className="btn approve"
-                        >
-                          Approve
-                        </button>
+        return (
+          <>
+            {!error && filteredBorrowRequests.length === 0 ? (
+              <div className="empty-state">
+                <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
+                <p>No borrow requests found.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="table-wrapper">
+                  <table className="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Request Type</th>
+                        <th>Book Title</th>
+                        <th>User</th>
+                        <th>Date Requested</th>
+                        <th style={{ textAlign: "center" }}>Actions</th>
+                      </tr>
+                    </thead>
 
-                        <button
-                          onClick={() => openRejectModal(request)}
-                          className="btn reject"
-                        >
-                          Reject
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
+                    <tbody>
+                      {paginatedRequests.map((request) => (
+                        <tr key={request._id}>
+                          <td className="type-cell">{request.type}</td>
+                          <td className="title-cell">{request.bookTitle}</td>
+                          <td>{request.userEmail}</td>
+                          <td>{formatDate(request.createdAt)}</td>
+
+                          <td className="action-buttons">
+                            <button
+                              onClick={() =>
+                                request.type === "borrow"
+                                  ? handleApprove(request._id)
+                                  : handleApproveReservation(request._id)
+                              }
+                              className="btn approve"
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              onClick={() => openRejectModal(request)}
+                              className="btn reject"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '5px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentBorrowPage(currentBorrowPage - 1)}
+                      disabled={currentBorrowPage === 1}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentBorrowPage === 1 ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentBorrowPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      Page {currentBorrowPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredBorrowRequests.length})
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentBorrowPage(currentBorrowPage + 1)}
+                      disabled={currentBorrowPage === totalPages}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentBorrowPage === totalPages ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentBorrowPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Reserve Requests Tab */}
-      {activeTab === 'reserve' && (
-        <>
-          {filteredReservationRequests.length === 0 ? (
-            <div className="empty-state">
-              <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
-              <p>No reserve requests found.</p>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Book Title</th>
-                    <th>User</th>
-                    <th>Date Requested</th>
-                    <th style={{ textAlign: "center" }}>Actions</th>
-                  </tr>
-                </thead>
+      {activeTab === 'reserve' && (() => {
+        const totalPages = Math.ceil(filteredReservationRequests.length / reservePageSize);
+        const startIndex = (currentReservePage - 1) * reservePageSize;
+        const endIndex = startIndex + reservePageSize;
+        const paginatedRequests = filteredReservationRequests.slice(startIndex, endIndex);
 
-                <tbody>
-                  {filteredReservationRequests.map((request) => (
-                    <tr key={request._id}>
-                      <td className="title-cell">{request.bookTitle}</td>
-                      <td>{request.userEmail}</td>
-                      <td>{formatDate(request.createdAt)}</td>
+        if (currentReservePage > totalPages && totalPages > 0) {
+          setCurrentReservePage(1);
+        }
 
-                      <td className="action-buttons">
-                        <button
-                          onClick={() => handleApproveReservation(request._id)}
-                          className="btn approve"
-                        >
-                          Approve
-                        </button>
+        return (
+          <>
+            {filteredReservationRequests.length === 0 ? (
+              <div className="empty-state">
+                <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
+                <p>No reserve requests found.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="table-wrapper">
+                  <table className="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Book Title</th>
+                        <th>User</th>
+                        <th>Date Requested</th>
+                        <th style={{ textAlign: "center" }}>Actions</th>
+                      </tr>
+                    </thead>
 
-                        <button
-                          onClick={() => openRejectModal(request)}
-                          className="btn reject"
-                        >
-                          Reject
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
+                    <tbody>
+                      {paginatedRequests.map((request) => (
+                        <tr key={request._id}>
+                          <td className="title-cell">{request.bookTitle}</td>
+                          <td>{request.userEmail}</td>
+                          <td>{formatDate(request.createdAt)}</td>
+
+                          <td className="action-buttons">
+                            <button
+                              onClick={() => handleApproveReservation(request._id)}
+                              className="btn approve"
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              onClick={() => openRejectModal(request)}
+                              className="btn reject"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '5px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentReservePage(currentReservePage - 1)}
+                      disabled={currentReservePage === 1}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReservePage === 1 ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReservePage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      Page {currentReservePage} of {totalPages} (Showing {paginatedRequests.length} of {filteredReservationRequests.length})
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentReservePage(currentReservePage + 1)}
+                      disabled={currentReservePage === totalPages}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReservePage === totalPages ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReservePage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Return Requests Tab */}
-      {activeTab === 'return' && (
-        <>
-          {filteredReturnRequests.length === 0 ? (
-            <div className="empty-state">
-              <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
-              <p>No return requests found.</p>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table className="styled-table">
-                <thead>
-                  <tr>
-                    <th>Book Title</th>
-                    <th>User Email</th>
-                    <th>Condition</th>
-                    <th>Date Requested</th>
-                    <th>Notes</th>
-                    <th style={{ textAlign: "center" }}>Actions</th>
-                  </tr>
-                </thead>
+      {activeTab === 'return' && (() => {
+        const totalPages = Math.ceil(filteredReturnRequests.length / returnPageSize);
+        const startIndex = (currentReturnPage - 1) * returnPageSize;
+        const endIndex = startIndex + returnPageSize;
+        const paginatedRequests = filteredReturnRequests.slice(startIndex, endIndex);
 
-                <tbody>
-                  {filteredReturnRequests.map((request) => (
-                    <tr key={request._id}>
-                      <td className="title-cell">{request.bookTitle}</td>
-                      <td>{request.userEmail}</td>
-                      <td>
-                        <span style={{
-                          backgroundColor: getConditionColor(request.condition),
-                          color: 'white',
-                          padding: '5px 10px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          {request.condition.toUpperCase()}
-                        </span>
-                      </td>
-                      <td>{formatDate(request.requestDate)}</td>
-                      <td style={{ fontSize: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {request.notes || '-'}
-                      </td>
+        if (currentReturnPage > totalPages && totalPages > 0) {
+          setCurrentReturnPage(1);
+        }
 
-                      <td className="action-buttons">
-                        <button
-                          onClick={() => handleApproveReturnRequest(request._id)}
-                          className="btn approve"
-                        >
-                          Approve
-                        </button>
+        return (
+          <>
+            {filteredReturnRequests.length === 0 ? (
+              <div className="empty-state">
+                <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
+                <p>No return requests found.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="table-wrapper">
+                  <table className="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Book Title</th>
+                        <th>User Email</th>
+                        <th>Condition</th>
+                        <th>Date Requested</th>
+                        <th>Notes</th>
+                        <th style={{ textAlign: "center" }}>Actions</th>
+                      </tr>
+                    </thead>
 
-                        <button
-                          onClick={() => {
-                            setSelectedBorrow(request);
-                            setRejectionReason('');
-                            setShowRejectModal(true);
-                          }}
-                          className="btn reject"
-                        >
-                          Reject
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
+                    <tbody>
+                      {paginatedRequests.map((request) => (
+                        <tr key={request._id}>
+                          <td className="title-cell">{request.bookTitle}</td>
+                          <td>{request.userEmail}</td>
+                          <td>
+                            <span style={{
+                              backgroundColor: getConditionColor(request.condition),
+                              color: 'white',
+                              padding: '5px 10px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}>
+                              {request.condition.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>{formatDate(request.requestDate)}</td>
+                          <td style={{ fontSize: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {request.notes || '-'}
+                          </td>
+
+                          <td className="action-buttons">
+                            <button
+                              onClick={() => handleApproveReturnRequest(request._id)}
+                              className="btn approve"
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedBorrow(request);
+                                setRejectionReason('');
+                                setShowRejectModal(true);
+                              }}
+                              className="btn reject"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '5px'
+                  }}>
+                    <button
+                      onClick={() => setCurrentReturnPage(currentReturnPage - 1)}
+                      disabled={currentReturnPage === 1}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReturnPage === 1 ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReturnPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      Page {currentReturnPage} of {totalPages} (Showing {paginatedRequests.length} of {filteredReturnRequests.length})
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentReturnPage(currentReturnPage + 1)}
+                      disabled={currentReturnPage === totalPages}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: currentReturnPage === totalPages ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: currentReturnPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {showRejectModal && (
         <div className="modal-overlay">

@@ -15,6 +15,8 @@ const BooksTable = () => {
   const [editingBook, setEditingBook] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [showExportModal, setShowExportModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     console.log("🔍 BooksTable state - showAddBookModal:", showAddBookModal);
@@ -357,93 +359,157 @@ const BooksTable = () => {
           <img src="/imgs/empty.png" alt="No Data" className="empty-img" />
           <p>No books found. Click "Add Books" to add your first book.</p>
         </div>
-      ) : (
-        <div className="table-wrapper">
-          <table className="styled-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Book Title</th>
-                <th>Year</th>
-                <th>Category</th>
-                <th>Subject</th>
-                <th>Collection Type</th>
-                <th>Source of Funds</th>
-                <th>Author</th>
-                <th>Accession Number</th>
-                <th>Call Number</th>
-                <th>Stock</th>
-                <th>Available Stock</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((book) => (
-                <tr key={book._id}>
-                  <td>
-                    {book.image ? (
-                      <img
-                        src={book.image}
-                        alt={book.title}
-                        style={{ width: "60px", height: "80px", objectFit: "cover", borderRadius: "4px", border: "1px solid #ddd" }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          if (e.target.nextElementSibling) {
-                            e.target.nextElementSibling.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    {!book.image && (
-                      <div 
-                        style={{ 
-                          width: "60px", 
-                          height: "80px", 
-                          backgroundColor: '#f0f0f0', 
-                          borderRadius: "4px", 
-                          border: "1px solid #ddd",
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '24px',
-                          color: '#ccc'
-                        }}
-                      >
-                        📖
-                      </div>
-                    )}
-                  </td>
-                  <td>{book.title}</td>
-                  <td>{book.year}</td>
-                  <td>{book.category}</td>
-                  <td>{book.subject || book.category || '-'}</td>
-                  <td>{book.collectionType || 'Circulation'}</td>
-                  <td>{book.sourceOfFunds || 'Not specified'}</td>
-                  <td>{book.author}</td>
-                  <td>{book.accessionNumber}</td>
-                  <td>{book.callNumber}</td>
-                  <td>{book.stock || '-'}</td>
-                  <td>{book.availableStock !== undefined ? book.availableStock : book.stock || '-'}</td>
-                  <td>
-                    {book.location
-                      ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
-                      : "N/A"}
-                  </td>
-                  <td>
-                    {book.status ? book.status : "Available"}
-                  </td>
-                  <td style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={() => startEdit(book)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#4CAF50' }}>✏️ Edit</button>
-                    <button onClick={() => archiveBook(book._id)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#dab43bff' }}>Archive</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      ) : (() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <div>
+            <div className="table-wrapper">
+              <table className="styled-table">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Book Title</th>
+                    <th>Year</th>
+                    <th>Category</th>
+                    <th>Subject</th>
+                    <th>Collection Type</th>
+                    <th>Source of Funds</th>
+                    <th>Author</th>
+                    <th>Accession Number</th>
+                    <th>Call Number</th>
+                    <th>Stock</th>
+                    <th>Available Stock</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((book) => (
+                    <tr key={book._id}>
+                      <td>
+                        {book.image ? (
+                          <img
+                            src={book.image}
+                            alt={book.title}
+                            style={{ width: "60px", height: "80px", objectFit: "cover", borderRadius: "4px", border: "1px solid #ddd" }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextElementSibling) {
+                                e.target.nextElementSibling.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        ) : null}
+                        {!book.image && (
+                          <div 
+                            style={{ 
+                              width: "60px", 
+                              height: "80px", 
+                              backgroundColor: '#f0f0f0', 
+                              borderRadius: "4px", 
+                              border: "1px solid #ddd",
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '24px',
+                              color: '#ccc'
+                            }}
+                          >
+                            📖
+                          </div>
+                        )}
+                      </td>
+                      <td>{book.title}</td>
+                      <td>{book.year}</td>
+                      <td>{book.category}</td>
+                      <td>{book.subject || book.category || '-'}</td>
+                      <td>{book.collectionType || 'Circulation'}</td>
+                      <td>{book.sourceOfFunds || 'Not specified'}</td>
+                      <td>{book.author}</td>
+                      <td>{book.accessionNumber}</td>
+                      <td>{book.callNumber}</td>
+                      <td>{book.stock || '-'}</td>
+                      <td>{book.availableStock !== undefined ? book.availableStock : book.stock || '-'}</td>
+                      <td>
+                        {book.location
+                          ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
+                          : "N/A"}
+                      </td>
+                      <td>
+                        {book.status ? book.status : "Available"}
+                      </td>
+                      <td style={{ display: 'flex', gap: '5px' }}>
+                        <button onClick={() => startEdit(book)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#4CAF50' }}>✏️ Edit</button>
+                        <button onClick={() => archiveBook(book._id)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px", backgroundColor: '#dab43bff' }}>Archive</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Edit Book Modal */}
       {editingBook && (

@@ -8,6 +8,8 @@ const ArchiveBooksTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     console.log("📚 ArchiveBooksTable mounted, fetching archived books");
@@ -198,73 +200,137 @@ const ArchiveBooksTable = () => {
           <img src="https://via.placeholder.com/100?text=No+Books" alt="No books" style={{ opacity: 0.5, marginBottom: '10px' }} />
           <p>No archived books found.</p>
         </div>
-      ) : (
-        <div className="archive-table-wrapper">
-          <table className="archive-books-table">
-            <thead>
-              <tr>
-                <th style={{ width: '60px' }}>Image</th>
-                <th style={{ width: '20%', minWidth: '150px' }}>Book Title</th>
-                <th style={{ width: '15%', minWidth: '120px' }}>Author</th>
-                <th style={{ width: '70px' }}>Year</th>
-                <th style={{ width: '12%', minWidth: '100px' }}>Category</th>
-                <th style={{ width: '12%', minWidth: '110px' }}>Accession #</th>
-                <th style={{ width: '12%', minWidth: '110px' }}>Call #</th>
-                <th style={{ width: '15%', minWidth: '100px' }}>Location</th>
-                <th style={{ width: '140px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((book) => (
-                <tr key={book._id}>
-                  <td>
-                    <img
-                      src={book.image || 'https://via.placeholder.com/50x75?text=No+Image'}
-                      alt={book.title}
-                      style={{
-                        width: '40px',
-                        height: '60px',
-                        objectFit: 'cover',
-                        borderRadius: '3px'
-                      }}
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/50x75?text=No+Image';
-                      }}
-                    />
-                  </td>
-                  <td>{book.title}</td>
-                  <td>{book.author}</td>
-                  <td>{book.year}</td>
-                  <td>{book.category}</td>
-                  <td>{book.accessionNumber}</td>
-                  <td>{book.callNumber}</td>
-                  <td>
-                    {book.location
-                      ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
-                      : 'N/A'}
-                  </td>
-                  <td style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
-                    <button
-                      onClick={() => handleReturnToStocks(book._id, book.title)}
-                      className="archive-btn-return"
-                      title="Return this book to active stocks"
-                    >
-                      ↩️ Return
-                    </button>
-                    <button
-                      onClick={() => handleDeletePermanently(book._id, book.title)}
-                      className="archive-btn-delete"
-                      title="Permanently delete this book (cannot be undone)"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      ) : (() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+        // Reset to page 1 if current page exceeds total pages
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(1);
+        }
+
+        return (
+          <div>
+            <div className="archive-table-wrapper">
+              <table className="archive-books-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '60px' }}>Image</th>
+                    <th style={{ width: '20%', minWidth: '150px' }}>Book Title</th>
+                    <th style={{ width: '15%', minWidth: '120px' }}>Author</th>
+                    <th style={{ width: '70px' }}>Year</th>
+                    <th style={{ width: '12%', minWidth: '100px' }}>Category</th>
+                    <th style={{ width: '12%', minWidth: '110px' }}>Accession #</th>
+                    <th style={{ width: '12%', minWidth: '110px' }}>Call #</th>
+                    <th style={{ width: '15%', minWidth: '100px' }}>Location</th>
+                    <th style={{ width: '140px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((book) => (
+                    <tr key={book._id}>
+                      <td>
+                        <img
+                          src={book.image || 'https://via.placeholder.com/50x75?text=No+Image'}
+                          alt={book.title}
+                          style={{
+                            width: '40px',
+                            height: '60px',
+                            objectFit: 'cover',
+                            borderRadius: '3px'
+                          }}
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/50x75?text=No+Image';
+                          }}
+                        />
+                      </td>
+                      <td>{book.title}</td>
+                      <td>{book.author}</td>
+                      <td>{book.year}</td>
+                      <td>{book.category}</td>
+                      <td>{book.accessionNumber}</td>
+                      <td>{book.callNumber}</td>
+                      <td>
+                        {book.location
+                          ? `${book.location.genreCode}-${book.location.shelf}-${book.location.level}`
+                          : 'N/A'}
+                      </td>
+                      <td style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
+                        <button
+                          onClick={() => handleReturnToStocks(book._id, book.title)}
+                          className="archive-btn-return"
+                          title="Return this book to active stocks"
+                        >
+                          ↩️ Return
+                        </button>
+                        <button
+                          onClick={() => handleDeletePermanently(book._id, book.title)}
+                          className="archive-btn-delete"
+                          title="Permanently delete this book (cannot be undone)"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '5px'
+              }}>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                  Page {currentPage} of {totalPages} (Showing {paginatedBooks.length} of {filteredBooks.length} books)
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };

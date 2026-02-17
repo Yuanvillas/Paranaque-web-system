@@ -15,6 +15,8 @@ const AdminDashboardTable = ({ onViewResources }) => {
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [detailedData, setDetailedData] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -349,49 +351,114 @@ const AdminDashboardTable = ({ onViewResources }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {detailedData.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                          {selectedMetric === 'books' && (
-                            <>
-                              <td style={{ padding: '10px' }}>{item.title}</td>
-                              <td style={{ padding: '10px' }}>{item.author}</td>
-                              <td style={{ padding: '10px' }}>{item.category}</td>
-                              <td style={{ padding: '10px', textAlign: 'center' }}>{item.stock || 0}</td>
-                            </>
-                          )}
-                          {selectedMetric === 'issued' && (
-                            <>
-                              <td style={{ padding: '10px' }}>{item.title}</td>
-                              <td style={{ padding: '10px' }}>{item.borrowedBy}</td>
-                              <td style={{ padding: '10px' }}>
-                                {item.borrowedAt ? new Date(item.borrowedAt).toLocaleDateString() : '-'}
-                              </td>
-                            </>
-                          )}
-                          {selectedMetric === 'returned' && (
-                            <>
-                              <td style={{ padding: '10px' }}>{item.bookTitle}</td>
-                              <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                              <td style={{ padding: '10px' }}>
-                                {item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}
-                              </td>
-                            </>
-                          )}
-                          {selectedMetric === 'requests' && (
-                            <>
-                              <td style={{ padding: '10px' }}>{item.bookTitle}</td>
-                              <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                              <td style={{ padding: '10px', textTransform: 'capitalize' }}>{item.type}</td>
-                              <td style={{ padding: '10px' }}>
-                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
+                      {(() => {
+                        // Calculate pagination
+                        const totalPages = Math.ceil(detailedData.length / pageSize);
+                        const startIndex = (currentPage - 1) * pageSize;
+                        const endIndex = startIndex + pageSize;
+                        const paginatedData = detailedData.slice(startIndex, endIndex);
+
+                        // Reset to page 1 if current page exceeds total pages
+                        if (currentPage > totalPages && totalPages > 0) {
+                          setCurrentPage(1);
+                        }
+
+                        return paginatedData.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            {selectedMetric === 'books' && (
+                              <>
+                                <td style={{ padding: '10px' }}>{item.title}</td>
+                                <td style={{ padding: '10px' }}>{item.author}</td>
+                                <td style={{ padding: '10px' }}>{item.category}</td>
+                                <td style={{ padding: '10px', textAlign: 'center' }}>{item.stock || 0}</td>
+                              </>
+                            )}
+                            {selectedMetric === 'issued' && (
+                              <>
+                                <td style={{ padding: '10px' }}>{item.title}</td>
+                                <td style={{ padding: '10px' }}>{item.borrowedBy}</td>
+                                <td style={{ padding: '10px' }}>
+                                  {item.borrowedAt ? new Date(item.borrowedAt).toLocaleDateString() : '-'}
+                                </td>
+                              </>
+                            )}
+                            {selectedMetric === 'returned' && (
+                              <>
+                                <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                                <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                                <td style={{ padding: '10px' }}>
+                                  {item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}
+                                </td>
+                              </>
+                            )}
+                            {selectedMetric === 'requests' && (
+                              <>
+                                <td style={{ padding: '10px' }}>{item.bookTitle}</td>
+                                <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                                <td style={{ padding: '10px', textTransform: 'capitalize' }}>{item.type}</td>
+                                <td style={{ padding: '10px' }}>
+                                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        ));
+                      })()}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {(() => {
+                  const totalPages = Math.ceil(detailedData.length / pageSize);
+                  return totalPages > 1 ? (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '20px',
+                      padding: '15px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '5px'
+                    }}>
+                      <button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        ← Previous
+                      </button>
+
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                        Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, detailedData.length - (currentPage - 1) * pageSize)} of {detailedData.length})
+                      </span>
+
+                      <button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  ) : null;
+                })()}
               )}
             </>
           )}

@@ -11,6 +11,8 @@ const LibrarianUserManagement = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [historySearchQuery, setHistorySearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
   const navigate = useNavigate();
 
   const fetchUsers = async () => {
@@ -176,71 +178,144 @@ const LibrarianUserManagement = () => {
 
             {users.length === 0 ? (
               <p className="um-empty">No users found.</p>
-            ) : (
-              <div className="um-table-wrapper">
-                <table className="um-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Contact</th>
-                      <th>Address</th>
-                      <th>Role</th>
-                      <th className="um-actions-col">Actions</th>
-                    </tr>
-                  </thead>
+            ) : (() => {
+              // Filter users based on role and search
+              const filteredUsers = users
+                .filter(user => filterRole === 'all' || user.role === filterRole)
+                .filter(user => {
+                  const searchLower = searchQuery.toLowerCase();
+                  const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+                  const email = user.email.toLowerCase();
+                  const contact = user.contactNumber.toLowerCase();
+                  return (
+                    fullName.includes(searchLower) ||
+                    email.includes(searchLower) ||
+                    contact.includes(searchLower)
+                  );
+                });
 
-                  <tbody>
-                    {users
-                      .filter(user => filterRole === 'all' || user.role === filterRole)
-                      .filter(user => {
-                        const searchLower = searchQuery.toLowerCase();
-                        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-                        const email = user.email.toLowerCase();
-                        const contact = user.contactNumber.toLowerCase();
-                        return (
-                          fullName.includes(searchLower) ||
-                          email.includes(searchLower) ||
-                          contact.includes(searchLower)
-                        );
-                      })
-                      .map((user, idx) => (
-                      <tr 
-                        key={idx} 
-                        className={`um-row um-row-${user.role}`}
+              // Calculate pagination
+              const totalPages = Math.ceil(filteredUsers.length / pageSize);
+              const startIndex = (currentPage - 1) * pageSize;
+              const endIndex = startIndex + pageSize;
+              const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+              // Reset to page 1 if current page exceeds total pages
+              if (currentPage > totalPages && totalPages > 0) {
+                setCurrentPage(1);
+              }
+
+              return (
+                <div>
+                  <div className="um-table-wrapper">
+                    <table className="um-table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Contact</th>
+                          <th>Address</th>
+                          <th>Role</th>
+                          <th className="um-actions-col">Actions</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {paginatedUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                              No users found on this page.
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedUsers.map((user, idx) => (
+                          <tr 
+                            key={idx} 
+                            className={`um-row um-row-${user.role}`}
+                            style={{
+                              borderLeft: user.role === 'admin' ? '4px solid #F44336' : 
+                                          user.role === 'librarian' ? '4px solid #FF9800' : 
+                                          '4px solid #2196F3',
+                              backgroundColor: user.role === 'admin' ? '#FFEBEE' : 
+                                              user.role === 'librarian' ? '#FFF3E0' : 
+                                              'transparent'
+                            }}
+                          >
+                            <td>{user.firstName} {user.lastName}</td>
+                            <td>{user.email}</td>
+                            <td>{user.contactNumber}</td>
+                            <td>{user.address}</td>
+
+                            <td style={{
+                              fontWeight: 'bold',
+                              color: user.role === 'admin' ? '#F44336' : 
+                                     user.role === 'librarian' ? '#FF9800' : 
+                                     '#2196F3'
+                            }}>
+                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </td>
+
+                            <td className="um-actions">
+                              <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">View History</button>
+                            </td>
+                          </tr>
+                        ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '20px',
+                      padding: '15px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '5px'
+                    }}>
+                      <button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
                         style={{
-                          borderLeft: user.role === 'admin' ? '4px solid #F44336' : 
-                                      user.role === 'librarian' ? '4px solid #FF9800' : 
-                                      '4px solid #2196F3',
-                          backgroundColor: user.role === 'admin' ? '#FFEBEE' : 
-                                          user.role === 'librarian' ? '#FFF3E0' : 
-                                          'transparent'
+                          padding: '10px 16px',
+                          backgroundColor: currentPage === 1 ? '#ccc' : '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold'
                         }}
                       >
-                        <td>{user.firstName} {user.lastName}</td>
-                        <td>{user.email}</td>
-                        <td>{user.contactNumber}</td>
-                        <td>{user.address}</td>
+                        ← Previous
+                      </button>
 
-                        <td style={{
-                          fontWeight: 'bold',
-                          color: user.role === 'admin' ? '#F44336' : 
-                                 user.role === 'librarian' ? '#FF9800' : 
-                                 '#2196F3'
-                        }}>
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </td>
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                        Page {currentPage} of {totalPages} (Showing {paginatedUsers.length} of {filteredUsers.length} users)
+                      </span>
 
-                        <td className="um-actions">
-                          <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">View History</button>
-                        </td>
-                      </tr>
-
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      <button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: currentPage === totalPages ? '#ccc' : '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </section>
       </main>
