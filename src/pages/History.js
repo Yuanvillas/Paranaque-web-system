@@ -2,10 +2,7 @@ import React, { useEffect, useState } from "react";
 
 function History() {
   const userEmail = localStorage.getItem("userEmail");
-  const [showHistory, setShowHistory] = useState(true);
   const [logs, setLogs] = useState([]);
-  const [error, setError] = useState(null);
-  const [viewUserLogs, setViewUserLogs] = useState(userEmail);
 
   useEffect(() => {
     fetch("https://paranaque-web-system.onrender.com/api/logs")
@@ -15,10 +12,9 @@ function History() {
       })
       .catch((err) => {
         console.error('Error fetching logs:', err);
-        setError("Failed to fetch logs.");
       });
 
-  }, [viewUserLogs]);
+  }, [userEmail]);
 
   return (
     <div className="history-page" style={{ padding: "1rem" }}>
@@ -26,7 +22,7 @@ function History() {
 
       {(() => {
         const userLogs = logs.filter(log => log.userEmail === viewUserLogs);
-
+userEmail
         const relevantLogs = userLogs
           .filter(log =>
             log.action.includes("Requested to borrow book:") ||

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import "./NotificationBell.css";
@@ -11,24 +11,7 @@ const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const userEmail = localStorage.getItem("userEmail");
 
-  // Fetch user transactions when the component mounts or dropdown opens
-  useEffect(() => {
-    if (isOpen || true) {
-      // Always check for new transactions
-      fetchTransactions();
-    }
-  }, [isOpen]);
-
-  // Set up interval to check for new transactions every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTransactions();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!userEmail) return;
 
     setLoading(true);
@@ -57,7 +40,24 @@ const NotificationBell = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userEmail]);
+
+  // Fetch user transactions when the component mounts or dropdown opens
+  useEffect(() => {
+    if (isOpen || true) {
+      // Always check for new transactions
+      fetchTransactions();
+    }
+  }, [isOpen, fetchTransactions]);
+
+  // Set up interval to check for new transactions every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTransactions();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchTransactions]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
