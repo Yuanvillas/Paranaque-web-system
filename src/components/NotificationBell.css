@@ -158,6 +158,9 @@
   transition: background-color 0.2s ease;
   display: block;
   background-color: #f9f9f9;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .notification-footer:hover {

@@ -8,8 +8,7 @@ import {
   faBookOpen,
   faRightFromBracket,
   faUser,
-  faListCheck,
-  faHistory
+  faListCheck
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faBookmark,
@@ -121,9 +120,6 @@ const UserLayout = () => {
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faListCheck} /> <span>My Holds</span>
             </Link>
             <Link to="/user-home/history">
-              <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHistory} /> <span>History</span>
-            </Link>
-            <Link to="/user-home/faq">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faQuestionCircle} /> <span>FAQ</span>
             </Link>
             <Link to="/user-home/about">

@@ -194,9 +194,15 @@ const NotificationBell = () => {
             )}
           </div>
 
-          <a href="/user-home/shelf" className="notification-footer">
+          <button
+            onClick={() => {
+              navigate("/user-home/shelf");
+              setIsOpen(false);
+            }}
+            className="notification-footer"
+          >
             View all transactions
-          </a>
+          </button>
         </div>
       )}
     </div>
