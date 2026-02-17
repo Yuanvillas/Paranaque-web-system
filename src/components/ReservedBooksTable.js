@@ -53,7 +53,12 @@ const ReservedBooksTable = () => {
   return (
     <div className="pending-container">
       <div className="header-row">
-        <h2 style={{ fontWeight: '600', fontSize: '25px', marginTop: "5px" }}>📝 Reserved Books</h2>
+        <h2 style={{ fontWeight: '600', fontSize: '25px', marginTop: "5px" }}>
+          📝 Reserved Books
+          <span style={{ fontSize: '0.75em', color: '#666', marginLeft: '15px', fontWeight: 'normal' }}>
+            (Total: {reservedBooks.length})
+          </span>
+        </h2>
 
         <div className="search-container ">
           <input type="text" placeholder="Search analytics..." onChange={(e) => setSearchTerm(e.target.value)} />

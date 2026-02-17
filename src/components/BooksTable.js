@@ -292,7 +292,12 @@ const BooksTable = () => {
   return (
     <div className="pending-container">
       <div className="header-row">
-        <h2 className="page-title">📗 Books</h2>
+        <h2 className="page-title">
+          📗 Books 
+          <span style={{ fontSize: '0.75em', color: '#666', marginLeft: '15px', fontWeight: 'normal' }}>
+            (Total: {books.length})
+          </span>
+        </h2>
 
         <div className="search-container ">
           <input type="text" placeholder="Search by any field: title, author, subject, category, publisher, accession #, call #, collection type, source of funds, year, stock, shelf..." onChange={(e) => setSearchTerm(e.target.value)} />
