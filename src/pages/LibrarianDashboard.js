@@ -64,6 +64,8 @@ const LibrarianDashboard = () => {
   const [categoriesData, setCategoriesData] = useState([]);
   const [loadingModals, setLoadingModals] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
   const resourceOptions = [
     "All Books",
@@ -1393,32 +1395,92 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : todayEntriesData.length === 0 ? (
                   <p style={{ color: '#999' }}>No entries found for today.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Action</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Date & Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {todayEntriesData.map((entry, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{entry.userEmail}</td>
-                            <td style={{ padding: '10px', color: '#00BFA5' }}>{entry.action}</td>
-                            <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(todayEntriesData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = todayEntriesData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {todayEntriesData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Action</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Date & Time</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((entry, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{entry.userEmail}</td>
+                                <td style={{ padding: '10px', color: '#00BFA5' }}>{entry.action}</td>
+                                <td style={{ padding: '10px' }}>{new Date(entry.timestamp).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1468,32 +1530,92 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : activeUsersData.length === 0 ? (
                   <p style={{ color: '#999' }}>No active users found for today.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeUsersData.map((user, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{user.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
-                            <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(activeUsersData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = activeUsersData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {activeUsersData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                              <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((user, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{user.email}</td>
+                                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#00BFA5' }}>{user.loginCount}</td>
+                                <td style={{ padding: '10px' }}>{new Date(user.lastLogin).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1542,32 +1664,92 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : activeAdminsData.length === 0 ? (
                   <p style={{ color: '#999' }}>No active admins found for today.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeAdminsData.map((admin, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{admin.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#FF6F00' }}>{admin.loginCount}</td>
-                            <td style={{ padding: '10px' }}>{new Date(admin.lastLogin).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(activeAdminsData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = activeAdminsData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {activeAdminsData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                              <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((admin, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{admin.email}</td>
+                                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#FF6F00' }}>{admin.loginCount}</td>
+                                <td style={{ padding: '10px' }}>{new Date(admin.lastLogin).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1616,32 +1798,92 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : activeLibrariansData.length === 0 ? (
                   <p style={{ color: '#999' }}>No active librarians found for today.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeLibrariansData.map((librarian, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{librarian.email}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#8B5CF6' }}>{librarian.loginCount}</td>
-                            <td style={{ padding: '10px' }}>{new Date(librarian.lastLogin).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(activeLibrariansData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = activeLibrariansData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {activeLibrariansData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                              <th style={{ padding: '10px', textAlign: 'center' }}>Login Count</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Last Login</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((librarian, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{librarian.email}</td>
+                                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#8B5CF6' }}>{librarian.loginCount}</td>
+                                <td style={{ padding: '10px' }}>{new Date(librarian.lastLogin).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1712,34 +1954,94 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : booksData.length === 0 ? (
                   <p style={{ color: '#999' }}>No books found.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Title</th>
-                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Author</th>
-                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Category</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#333' }}>Stock</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {booksData.map((book, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee', hover: { backgroundColor: '#f9f9f9' } }}>
-                            <td style={{ padding: '12px' }}>{book.title}</td>
-                            <td style={{ padding: '12px' }}>{book.author}</td>
-                            <td style={{ padding: '12px' }}>{book.category || '-'}</td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>{book.quantity || 0}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(booksData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = booksData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {booksData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Title</th>
+                              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Author</th>
+                              <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#333' }}>Category</th>
+                              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#333' }}>Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((book, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee', hover: { backgroundColor: '#f9f9f9' } }}>
+                                <td style={{ padding: '12px' }}>{book.title}</td>
+                                <td style={{ padding: '12px' }}>{book.author}</td>
+                                <td style={{ padding: '12px' }}>{book.category || '-'}</td>
+                                <td style={{ padding: '12px', textAlign: 'center' }}>{book.quantity || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1806,34 +2108,94 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : issuedData.length === 0 ? (
                   <p style={{ color: '#999' }}>No issued books found.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Issue Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {issuedData.map((item, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
-                            <td style={{ padding: '10px' }}>{item.type}</td>
-                            <td style={{ padding: '10px' }}>{new Date(item.issuedDate || item.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(issuedData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = issuedData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {issuedData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Issue Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((item, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                                <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                                <td style={{ padding: '10px' }}>{item.type}</td>
+                                <td style={{ padding: '10px' }}>{new Date(item.issuedDate || item.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1900,34 +2262,94 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : returnedData.length === 0 ? (
                   <p style={{ color: '#999' }}>No returned books found.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>Fine</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {returnedData.map((item, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
-                            <td style={{ padding: '10px' }}>{new Date(item.returnedDate || item.updatedAt).toLocaleDateString()}</td>
-                            <td style={{ padding: '10px', textAlign: 'center' }}>₱{item.fine || 0}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(returnedData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = returnedData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {returnedData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Return Date</th>
+                              <th style={{ padding: '10px', textAlign: 'center' }}>Fine</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((item, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                                <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                                <td style={{ padding: '10px' }}>{new Date(item.returnedDate || item.updatedAt).toLocaleDateString()}</td>
+                                <td style={{ padding: '10px', textAlign: 'center' }}>₱{item.fine || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1994,34 +2416,94 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : requestsData.length === 0 ? (
                   <p style={{ color: '#999' }}>No pending requests found.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Request Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {requestsData.map((item, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{item.userEmail}</td>
-                            <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
-                            <td style={{ padding: '10px' }}>{item.type}</td>
-                            <td style={{ padding: '10px' }}>{new Date(item.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(requestsData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = requestsData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {requestsData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>User Email</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Book Title</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Request Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((item, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{item.userEmail}</td>
+                                <td style={{ padding: '10px' }}>{item.bookTitle || item.title || '-'}</td>
+                                <td style={{ padding: '10px' }}>{item.type}</td>
+                                <td style={{ padding: '10px' }}>{new Date(item.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -2088,30 +2570,90 @@ const LibrarianDashboard = () => {
                   <p>Loading...</p>
                 ) : categoriesData.length === 0 ? (
                   <p style={{ color: '#999' }}>No categories found.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Category Name</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Description</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {categoriesData.map((category, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{category.name}</td>
-                            <td style={{ padding: '10px' }}>{category.description || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                ) : (() => {
+                  const totalPages = Math.ceil(categoriesData.length / pageSize);
+                  const startIndex = (currentPage - 1) * pageSize;
+                  const endIndex = startIndex + pageSize;
+                  const paginatedData = categoriesData.slice(startIndex, endIndex);
+
+                  if (currentPage > totalPages && totalPages > 0) {
+                    setCurrentPage(1);
+                  }
+
+                  return (
+                    <>
+                      {totalPages > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '20px',
+                          padding: '15px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '5px'
+                        }}>
+                          <button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === 1 ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                            Page {currentPage} of {totalPages} (Showing {paginatedData.length} of {categoriesData.length})
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            style={{
+                              padding: '10px 16px',
+                              backgroundColor: currentPage === totalPages ? '#ccc' : '#2196F3',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px'
+                        }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Category Name</th>
+                              <th style={{ padding: '10px', textAlign: 'left' }}>Description</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((category, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '10px' }}>{category.name}</td>
+                                <td style={{ padding: '10px' }}>{category.description || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
