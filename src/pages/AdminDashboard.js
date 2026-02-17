@@ -24,6 +24,7 @@ import PendingRequestTable from "../components/PendingRequestTable";
 import UploadAvatar from "../components/UploadAvatar";
 import UserEntryMonitor from "../components/UserEntryMonitor";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
+import Analytics from "./Analytics";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -63,7 +64,12 @@ const AdminDashboard = () => {
         navigate("/admin/user-management");
       }
     } else if (name === "Analytics") {
-      navigate("/admin/analytics");
+      if (selectedResource === "Analytics") {
+        setSelectedResource(null);
+        setSelectedSubResource(null);
+      } else {
+        setSelectedResource("Analytics");
+      }
     } else if (name === "Log Activities") {
       navigate("/admin/logs");
     } else if (name === "Resource Management") {
@@ -975,6 +981,13 @@ const AdminDashboard = () => {
 
           {selectedSubResource === "All Books" && (
             <BooksTable />
+          )}
+
+          {selectedResource === "Analytics" && (
+            <Analytics onClose={() => {
+              setSelectedResource(null);
+              setSelectedSubResource(null);
+            }} />
           )}
 
           {/* Entry Monitor Modal */}

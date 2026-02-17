@@ -11,7 +11,7 @@ import BooksAddedTodayChart from "../components/BooksAddedTodayChart";
 import BorrowReturnChart from "../components/BorrowReturnChart";
 import MostBorrowedBooksChart from "../components/MostBorrowedBooksChart";
 
-const Analytics = () => {
+const Analytics = ({ onClose }) => {
   const reportRef = useRef();
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
@@ -219,6 +219,7 @@ const Analytics = () => {
 
   return (
     <div className="dashboard">
+      {!onClose && (
       <aside className="sidebar">
         <div className="logo2">
           <img style={{ width: '50px' }} src={logo} alt="School" />
@@ -230,10 +231,33 @@ const Analytics = () => {
           </button>
         </nav>
       </aside>
+      )}
 
-      <main className="main-content">
+      <main className="main-content" style={onClose ? { width: '100%', marginLeft: 0 } : {}}>
 
         <section className="content" ref={reportRef} style={{ marginTop: "40px" }}>
+          {onClose && (
+            <button 
+              onClick={onClose}
+              style={{
+                marginBottom: '20px',
+                padding: '10px 16px',
+                backgroundColor: '#666',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+              Close Analytics
+            </button>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2 className="page-title" style={{marginTop: "0px"}}>Analytics Overview</h2>
             {monthlyUsers.length === 0 && (
