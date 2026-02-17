@@ -701,7 +701,7 @@ const AdminDashboard = () => {
         </header>
 
         <section className="content">
-          <h1 style={{ fontWeight: '600', fontSize: '25px', marginTop: "-5px" }}>Dashboard Overview</h1>
+          {!selectedResource && <h1 style={{ fontWeight: '600', fontSize: '25px', marginTop: "-5px" }}>Dashboard Overview</h1>}
 
           {!selectedResource && (
             <>

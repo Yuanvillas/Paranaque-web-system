@@ -233,33 +233,11 @@ const Analytics = ({ onClose }) => {
       </aside>
       )}
 
-      <main className="main-content" style={onClose ? { width: '100%', marginLeft: 0 } : {}}>
+      <main className="main-content" style={onClose ? { width: '100%', marginLeft: 0, padding: '0', backgroundColor: 'transparent' } : {}}>
 
-        <section className="content" ref={reportRef} style={{ marginTop: "40px" }}>
-          {onClose && (
-            <button 
-              onClick={onClose}
-              style={{
-                marginBottom: '20px',
-                padding: '10px 16px',
-                backgroundColor: '#666',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              Close Analytics
-            </button>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 className="page-title" style={{marginTop: "0px"}}>Analytics Overview</h2>
+        <section className="content" ref={reportRef} style={{ marginTop: "10px", padding: onClose ? "0 15px" : "0 30px" }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <h2 className="page-title" style={{marginTop: "0px", fontSize: '28px'}}>Analytics Overview</h2>
             {monthlyUsers.length === 0 && (
               <button 
                 onClick={migrateUserTimestamps}
