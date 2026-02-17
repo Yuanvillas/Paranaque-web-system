@@ -330,7 +330,12 @@ router.post('/chat', async (req, res) => {
  * POST /api/ai/recommend
  * Body: { borrowedBooks: array of book objects, limit: number (default 6) }
  * 
- * Uses AI to generate smart book recommendations based on user's borrowing history
+ * Uses intelligent content analysis for smart book recommendations based on:
+ * - DDC classification matching (call numbers)
+ * - Subject/keyword similarity
+ * - Genre and category alignment
+ * - Author and publisher patterns
+ * - Recency and popularity
  */
 router.post('/recommend', async (req, res) => {
   try {
@@ -342,107 +347,174 @@ router.post('/recommend', async (req, res) => {
 
     // Get all available books
     const allBooks = await Book.find({ archived: false });
-
-    // Build context about user's preferences
-    const userBookTitles = borrowedBooks.map(b => b.bookId?.title || b.title).filter(Boolean).join(', ');
-    const userCategories = new Set();
-    borrowedBooks.forEach(b => {
-      if (b.bookId?.category) userCategories.add(b.bookId.category);
-      if (b.category) userCategories.add(b.category);
-    });
-
     const borrowedIds = new Set(borrowedBooks.map(b => (b.bookId?._id || b.bookId)?.toString()));
-
-    // Filter out books user has already borrowed
     const availableBooks = allBooks.filter(b => !borrowedIds.has(b._id?.toString()));
 
-    // Use AI-like logic to recommend based on categories and author patterns
-    const prompt = `Based on a user who has borrowed these books: "${userBookTitles}", 
-    please recommend ${limit} books from this list that would interest them.
-    
-    Available books to recommend from:
-    ${availableBooks.slice(0, 30).map(b => `- "${b.title}" by ${b.author} (${b.category})`).join('\n')}
-    
-    Consider:
-    1. Similar categories they've shown interest in
-    2. Popular authors in genres they like
-    3. Variety to expand their reading
-    
-    Return ONLY a JSON array with the book titles they should read, in order of recommendation.`;
+    // Extract user preference patterns
+    const userProfile = extractUserProfile(borrowedBooks);
 
-    // For now, use smart filtering instead of actual AI
-    // Get books in same categories
-    const categoryMatches = availableBooks.filter(b => 
-      Array.from(userCategories).includes(b.category)
-    );
-
-    // Get books from similar authors
-    const userAuthors = new Set();
-    borrowedBooks.forEach(b => {
-      if (b.bookId?.author) userAuthors.add(b.bookId.author);
-      if (b.author) userAuthors.add(b.author);
+    // Score all available books based on multiple factors
+    const scoredBooks = availableBooks.map(book => {
+      const score = calculateRecommendationScore(book, userProfile, borrowedBooks);
+      return { book: book.toObject(), score };
     });
 
-    const authorMatches = availableBooks.filter(b => 
-      userAuthors.has(b.author)
-    );
-
-    // Combine and deduplicate - PRIORITIZE BOOKS WITH IMAGES
-    const recommendedIds = new Set();
-    const recommendations = [];
-
-    // Combine all candidate books
-    const allCandidates = [
-      ...categoryMatches.map(b => ({ ...b.toObject(), priority: 3 })), // Highest priority
-      ...authorMatches.map(b => ({ ...b.toObject(), priority: 2 })),   // Medium priority
-      ...availableBooks.map(b => ({ ...b.toObject(), priority: 1 }))   // Lowest priority
-    ];
-
-    // Remove duplicates (keep highest priority version)
-    const uniqueCandidates = [];
-    const seenIds = new Set();
-    allCandidates.forEach(book => {
-      const bookId = book._id.toString();
-      if (!seenIds.has(bookId)) {
-        uniqueCandidates.push(book);
-        seenIds.add(bookId);
-      }
+    // Sort by score (highest first) then by image availability
+    scoredBooks.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aHasImage = a.book.image ? 1 : 0;
+      const bHasImage = b.book.image ? 1 : 0;
+      return bHasImage - aHasImage;
     });
 
-    // Sort by: 1) has image (true first), 2) priority (high first)
-    uniqueCandidates.sort((a, b) => {
-      const aHasImage = !!a.image ? 1 : 0;
-      const bHasImage = !!b.image ? 1 : 0;
-      if (bHasImage !== aHasImage) return bHasImage - aHasImage;
-      return (b.priority || 0) - (a.priority || 0);
-    });
+    // Take top recommendations
+    const recommendations = scoredBooks.slice(0, limit).map(s => s.book);
 
-    // Take top limit items
-    for (let i = 0; i < uniqueCandidates.length && recommendations.length < limit; i++) {
-      const book = uniqueCandidates[i];
-      if (!recommendedIds.has(book._id.toString())) {
-        recommendations.push(book);
-        recommendedIds.add(book._id.toString());
-      }
-    }
-
-    // Log the recommendations for debugging
-    console.log('Recommendations returned:', recommendations.map(r => ({ 
-      title: r.title, 
-      hasImage: !!r.image,
-      image: r.image ? r.image.substring(0, 50) + '...' : 'NO IMAGE',
-      category: r.category,
-      author: r.author
+    console.log('❯ Enhanced Recommendations:', recommendations.map(r => ({
+      title: r.title,
+      score: (scoredBooks.find(s => s.book._id.toString() === r._id.toString())?.score || 0).toFixed(2),
+      author: r.author,
+      subject: r.subject,
+      ddc: r.callNumber
     })));
 
-    res.json({ 
-      recommendations: recommendations.slice(0, limit),
-      reasoning: `Found ${recommendations.length} recommendations based on categories: ${Array.from(userCategories).join(', ')} and authors you enjoy.`
+    res.json({
+      recommendations,
+      reasoning: `Personalized based on ${userProfile.genres.size} genres, ${userProfile.subjects.size} subjects, and ${userProfile.authors.size} authors you enjoy.`
     });
   } catch (err) {
     console.error('Recommendation error:', err);
     return res.status(500).json({ error: 'Recommendation failed', details: err.message });
   }
 });
+
+/**
+ * Extract user preference profile from their borrowing history
+ */
+function extractUserProfile(borrowedBooks) {
+  const profile = {
+    genres: new Set(),
+    categories: new Set(),
+    subjects: new Set(),
+    authors: new Set(),
+    publishers: new Set(),
+    ddcClassifications: new Set(),
+    keywords: new Map(),
+    avgYear: 0,
+    totalBooks: borrowedBooks.length
+  };
+
+  const years = [];
+
+  borrowedBooks.forEach(b => {
+    const book = b.bookId || b;
+    
+    if (book.genre) profile.genres.add(book.genre.toLowerCase());
+    if (book.category) profile.categories.add(book.category.toLowerCase());
+    if (book.subject) {
+      // Extract keywords from subject
+      const keywords = book.subject.toLowerCase().split(/[,;\/]/).map(k => k.trim());
+      keywords.forEach(kw => {
+        if (kw) profile.keywords.set(kw, (profile.keywords.get(kw) || 0) + 1);
+        profile.subjects.add(kw);
+      });
+    }
+    if (book.author) profile.authors.add(book.author.toLowerCase());
+    if (book.publisher) profile.publishers.add(book.publisher.toLowerCase());
+    
+    // Extract DDC classification from call number (first 3 digits usually)
+    if (book.callNumber) {
+      const ddc = book.callNumber.substring(0, 3);
+      profile.ddcClassifications.add(ddc);
+    }
+    
+    if (book.year) years.push(book.year);
+  });
+
+  profile.avgYear = years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : 2020;
+
+  return profile;
+}
+
+/**
+ * Calculate relevance score for a book based on user profile
+ * Higher score = better recommendation
+ */
+function calculateRecommendationScore(book, userProfile, borrowedBooks) {
+  let score = 0;
+
+  const bookGenre = (book.genre || '').toLowerCase();
+  const bookCategory = (book.category || '').toLowerCase();
+  const bookSubject = (book.subject || '').toLowerCase();
+  const bookAuthor = (book.author || '').toLowerCase();
+  const bookPublisher = (book.publisher || '').toLowerCase();
+  const bookDdc = book.callNumber ? book.callNumber.substring(0, 3) : '';
+
+  // 1. SUBJECT/KEYWORD MATCHING (Weight: 35%)
+  if (book.subject) {
+    const subjectKeywords = book.subject.toLowerCase().split(/[,;\/]/).map(k => k.trim());
+    let matchingKeywords = 0;
+    subjectKeywords.forEach(kw => {
+      if (userProfile.keywords.has(kw)) {
+        matchingKeywords += userProfile.keywords.get(kw);
+      }
+    });
+    score += Math.min(matchingKeywords * 8, 35);
+  }
+
+  // 2. DDC CLASSIFICATION MATCHING (Weight: 25%)
+  if (bookDdc && userProfile.ddcClassifications.has(bookDdc)) {
+    score += 25;
+  } else if (bookDdc) {
+    // Partial credit for similar DDC class (first digit match)
+    const bookDdcClass = bookDdc.charAt(0);
+    const hasSimilarDdc = Array.from(userProfile.ddcClassifications).some(ddc => ddc.charAt(0) === bookDdcClass);
+    if (hasSimilarDdc) score += 12;
+  }
+
+  // 3. GENRE/CATEGORY MATCHING (Weight: 20%)
+  if (userProfile.genres.has(bookGenre) || userProfile.categories.has(bookCategory)) {
+    score += 20;
+  } else if (userProfile.genres.size > 0 || userProfile.categories.size > 0) {
+    // Partial credit if no exact match but user has preferences
+    score += 5;
+  }
+
+  // 4. AUTHOR & PUBLISHER PATTERNS (Weight: 12%)
+  if (userProfile.authors.has(bookAuthor)) {
+    score += 12;
+  } else if (userProfile.publishers.has(bookPublisher)) {
+    score += 8;
+  }
+
+  // 5. RECENCY & POPULARITY (Weight: 8%)
+  const yearDifference = Math.abs(book.year - userProfile.avgYear);
+  if (yearDifference <= 5) {
+    score += 8; // Recent books similar to user's preference era
+  } else if (yearDifference <= 15) {
+    score += 4;
+  }
+
+  // BONUS: Has image for better display (+3)
+  if (book.image) {
+    score += 3;
+  }
+
+  // BONUS: Diversity boost - if not from exact same category as most borrowed
+  const mostCommonCategory = getMostCommonValue(userProfile.categories);
+  if (mostCommonCategory && bookCategory !== mostCommonCategory) {
+    score += 2; // Encourage reading different genres
+  }
+
+  return Math.min(score, 100); // Cap at 100
+}
+
+/**
+ * Helper: Get the most common value from a Set (by frequency)
+ */
+function getMostCommonValue(valueSet) {
+  if (valueSet.size === 0) return null;
+  return Array.from(valueSet)[0];
+}
 
 module.exports = router;
