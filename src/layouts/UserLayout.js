@@ -8,7 +8,8 @@ import {
   faBookOpen,
   faRightFromBracket,
   faUser,
-  faListCheck
+  faListCheck,
+  faHistory
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faBookmark,
@@ -16,6 +17,7 @@ import {
   faInfoCircle
 } from "@fortawesome/free-solid-svg-icons";
 import ChatPopup from "../pages/ChatPopup";
+import NotificationBell from "../components/NotificationBell";
 import "../components/App.css";
 import logo from "../imgs/liblogo.png";
 
@@ -118,6 +120,9 @@ const UserLayout = () => {
             <Link to="/user-home/holds">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faListCheck} /> <span>My Holds</span>
             </Link>
+            <Link to="/user-home/history">
+              <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHistory} /> <span>History</span>
+            </Link>
             <Link to="/user-home/faq">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faQuestionCircle} /> <span>FAQ</span>
             </Link>
@@ -140,9 +145,12 @@ const UserLayout = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Link to="/user-home/profile" className="profile-link">
-              <FontAwesomeIcon icon={faUser} />
-            </Link>
+            <div className="header-actions">
+              <NotificationBell />
+              <Link to="/user-home/profile" className="profile-link">
+                <FontAwesomeIcon icon={faUser} />
+              </Link>
+            </div>
           </header>
 
           <section className="content">
