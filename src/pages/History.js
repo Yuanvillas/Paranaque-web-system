@@ -21,8 +21,8 @@ function History() {
       <h1>History</h1>
 
       {(() => {
-        const userLogs = logs.filter(log => log.userEmail === viewUserLogs);
-userEmail
+        const userLogs = logs.filter(log => log.userEmail === userEmail);
+
         const relevantLogs = userLogs
           .filter(log =>
             log.action.includes("Requested to borrow book:") ||
