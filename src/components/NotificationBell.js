@@ -187,7 +187,7 @@ const NotificationBell = () => {
             )}
           </div>
 
-          <a href="/user-home/history" className="notification-footer">
+          <a href="/user-home/shelf" className="notification-footer">
             View all transactions
           </a>
         </div>
