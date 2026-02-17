@@ -53,7 +53,7 @@ function Register() {
       case "firstName":
       case "lastName":
         if (!value.trim()) error = "This field is required.";
-        else if (!/^[A-Za-z]+$/.test(value)) error = "Only letters are allowed.";
+        else if (!/^[a-zA-Z\s]+$/.test(value)) error = "Only letters and spaces are allowed.";
         break;
       case "contactNumber":
         if (!/^09\d{9}$/.test(value)) error = "Must be 11 digits and start with '09'.";
@@ -132,7 +132,7 @@ function Register() {
         case "firstName":
         case "lastName":
           if (!form[field].trim()) error = "This field is required.";
-          else if (!/^[A-Za-z]+$/.test(form[field])) error = "Only letters are allowed.";
+          else if (!/^[a-zA-Z\s]+$/.test(form[field])) error = "Only letters and spaces are allowed.";
           break;
         case "contactNumber":
           if (!/^09\d{9}$/.test(form[field])) error = "Must be 11 digits and start with '09'.";
