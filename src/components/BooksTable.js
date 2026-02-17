@@ -73,6 +73,7 @@ const BooksTable = () => {
         return aNum - bNum;
       })
       .map(book => ({
+        'Book ID': book.bookId || 'N/A',
         'Book Title': book.title,
         'Author': book.author,
         'Year': book.year,
@@ -103,6 +104,7 @@ const BooksTable = () => {
         return aNum - bNum;
       })
       .map(book => [
+        book.bookId || 'N/A',
         book.title,
         book.author,
         book.year,
@@ -117,7 +119,7 @@ const BooksTable = () => {
 
     const pdf = new jsPDF('l', 'mm', 'a4'); // landscape
     pdf.autoTable({
-      head: [['Title', 'Author', 'Year', 'Category', 'Accession #', 'Call #', 'Stock', 'Available', 'Location', 'Status']],
+      head: [['Book ID', 'Title', 'Author', 'Year', 'Category', 'Accession #', 'Call #', 'Stock', 'Available', 'Location', 'Status']],
       body: data,
       styles: {
         fontSize: 9,
@@ -557,6 +559,7 @@ const BooksTable = () => {
               <table className="styled-table">
                 <thead>
                   <tr>
+                    <th>Book ID</th>
                     <th>Image</th>
                     <th>Book Title</th>
                     <th>Year</th>
@@ -577,6 +580,9 @@ const BooksTable = () => {
                 <tbody>
                   {paginatedBooks.map((book) => (
                     <tr key={book._id}>
+                      <td style={{ fontWeight: '600', color: '#2e7d32', minWidth: '100px' }}>
+                        {book.bookId || 'N/A'}
+                      </td>
                       <td>
                         {book.image ? (
                           <img
