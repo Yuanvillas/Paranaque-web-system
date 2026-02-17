@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import "./NotificationBell.css";
 
 const NotificationBell = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -153,6 +155,11 @@ const NotificationBell = () => {
                     className="notification-item"
                     style={{
                       borderLeftColor: getStatusColor(transaction.status),
+                      cursor: "pointer"
+                    }}
+                    onClick={() => {
+                      navigate("/user-home/shelf");
+                      setIsOpen(false);
                     }}
                   >
                     <div className="notification-message">

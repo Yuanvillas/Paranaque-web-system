@@ -93,10 +93,11 @@
   border-bottom: 1px solid #f0f0f0;
   border-left: 4px solid #ddd;
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .notification-item:hover {
-  background-color: #f9f9f9;
+  background-color: #f0f5f0;
 }
 
 .notification-message {
