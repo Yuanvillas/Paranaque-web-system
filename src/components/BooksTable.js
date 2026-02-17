@@ -24,6 +24,12 @@ const BooksTable = () => {
   const [filterType, setFilterType] = useState("all"); // all, borrow, reserve
   const [filterStatus, setFilterStatus] = useState("all"); // all, active, completed, cancelled, etc
   const [searchHistoryTerm, setSearchHistoryTerm] = useState("");
+  
+  // Books table filters
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterBookStatus, setFilterBookStatus] = useState("all");
+  const [filterCollectionType, setFilterCollectionType] = useState("all");
 
   useEffect(() => {
     console.log("🔍 BooksTable state - showAddBookModal:", showAddBookModal);
@@ -148,7 +154,7 @@ const BooksTable = () => {
     const searchLower = searchTerm.toLowerCase();
     
     // Search across all fields - comprehensive search
-    return (
+    const matchesSearch = (
       (book.title?.toLowerCase().includes(searchLower) || false) ||
       (book.author?.toLowerCase().includes(searchLower) || false) ||
       (book.accessionNumber?.toLowerCase().includes(searchLower) || false) ||
@@ -168,6 +174,20 @@ const BooksTable = () => {
       (book.location?.level?.toString().includes(searchLower) || false) ||
       (book.reservedBy?.toLowerCase().includes(searchLower) || false)
     );
+    
+    // Apply category filter
+    const matchesCategory = filterCategory === "all" || (book.category || "").toLowerCase() === filterCategory.toLowerCase();
+    
+    // Apply year filter
+    const matchesYear = filterYear === "all" || book.year?.toString() === filterYear;
+    
+    // Apply status filter
+    const matchesBookStatus = filterBookStatus === "all" || (book.status || "Available").toLowerCase() === filterBookStatus.toLowerCase();
+    
+    // Apply collection type filter
+    const matchesCollectionType = filterCollectionType === "all" || (book.collectionType || "Circulation").toLowerCase() === filterCollectionType.toLowerCase();
+    
+    return matchesSearch && matchesCategory && matchesYear && matchesBookStatus && matchesCollectionType;
   });
 
   const archiveBook = async (bookId) => {
@@ -452,6 +472,122 @@ const BooksTable = () => {
 
       </div>
       {error && <div className="error-message">{error}</div>}
+      
+      {/* Filter Controls */}
+      <div style={{ 
+        margin: '15px 0', 
+        padding: '15px', 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: '8px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '10px',
+        alignItems: 'center'
+      }}>
+        <select 
+          value={filterCategory} 
+          onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="all">All Categories</option>
+          {[...new Set(books.map(b => b.category).filter(Boolean))].sort().map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+
+        <select 
+          value={filterYear} 
+          onChange={(e) => { setFilterYear(e.target.value); setCurrentPage(1); }}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="all">All Years</option>
+          {[...new Set(books.map(b => b.year).filter(Boolean))].sort((a, b) => b - a).map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+
+        <select 
+          value={filterBookStatus} 
+          onChange={(e) => { setFilterBookStatus(e.target.value); setCurrentPage(1); }}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="all">All Status</option>
+          {[...new Set(books.map(b => b.status || 'Available').filter(Boolean))].sort().map(status => (
+            <option key={status} value={status}>{status}</option>
+          ))}
+        </select>
+
+        <select 
+          value={filterCollectionType} 
+          onChange={(e) => { setFilterCollectionType(e.target.value); setCurrentPage(1); }}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="all">All Collections</option>
+          {[...new Set(books.map(b => b.collectionType || 'Circulation').filter(Boolean))].sort().map(col => (
+            <option key={col} value={col}>{col}</option>
+          ))}
+        </select>
+
+        <button
+          onClick={() => {
+            setFilterCategory('all');
+            setFilterYear('all');
+            setFilterBookStatus('all');
+            setFilterCollectionType('all');
+            setSearchTerm('');
+            setCurrentPage(1);
+          }}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: '#2e7d32',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#1b5e20'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#2e7d32'}
+        >
+          🔄 Clear Filters
+        </button>
+      </div>
+
+      {filteredBooks.length > 0 && (
+        <div style={{ fontSize: '13px', color: '#666', margin: '5px 0 10px 0' }}>
+          Showing {filteredBooks.length} of {books.length} books
+        </div>
+      )}
       
       {/* Add Book Modal - OUTSIDE table wrapper so it always renders */}
       {showAddBookModal && (
