@@ -37,16 +37,10 @@ function Register() {
       return "Email is required.";
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setEmailStatus("invalid");
       return "Please enter a valid email address.";
-    }
-
-    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    if (!gmailRegex.test(email)) {
-      setEmailStatus("not-gmail");
-      return "Only Gmail addresses are allowed.";
     }
 
     setEmailStatus("valid");
@@ -118,11 +112,9 @@ function Register() {
   const getEmailFeedback = () => {
     switch (emailStatus) {
       case "valid":
-        return <p style={{ color: "#4caf50", fontSize: "0.8rem" }}>✓ Valid Gmail address</p>;
+        return <p style={{ color: "#4caf50", fontSize: "0.8rem" }}>✓ Valid email address</p>;
       case "invalid":
         return <p style={{ color: "#f44336", fontSize: "0.8rem" }}>✗ Invalid email format</p>;
-      case "not-gmail":
-        return <p style={{ color: "#f44336", fontSize: "0.8rem" }}>✗ Only Gmail is accepted</p>;
       default:
         return null;
     }
@@ -340,7 +332,7 @@ function Register() {
             <input type="tel" name="contactNumber" placeholder="Contact Number" value={form.contactNumber} onChange={handleChange} />
             {errors.contactNumber && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.contactNumber}</p>}
 
-            <input type="email" name="email" placeholder="Email (Gmail only)" value={form.email} onChange={handleChange} style={getEmailInputStyle()} />
+            <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} style={getEmailInputStyle()} />
             {getEmailFeedback()}
             {errors.email && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.email}</p>}
 

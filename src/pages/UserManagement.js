@@ -170,14 +170,9 @@ const UserManagement = () => {
         if (!value) {
           error = "Email is required.";
         } else {
-          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             error = "Please enter a valid email address.";
-          } else {
-            const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-            if (!gmailRegex.test(value)) {
-              error = "Only Gmail addresses are allowed.";
-            }
           }
         }
         break;

@@ -43,9 +43,10 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Contact number must start with '09' and be 11 digits." });
     }
 
-    // ✅ Gmail-only validation
-    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
-      return res.status(400).json({ message: "Only Gmail addresses are allowed." });
+    // ✅ Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please enter a valid email address." });
     }
 
     // ✅ Password strength validation before hashing
@@ -896,8 +897,9 @@ router.post('/create-first-admin', async (req, res) => {
     }
 
     // Email validation
-    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
-      return res.status(400).json({ message: 'Only Gmail addresses are allowed.' });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
 
     // Password strength validation
