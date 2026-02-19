@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -27,16 +27,7 @@ const UserActivityLogs = () => {
 
   const userEmail = localStorage.getItem("userEmail");
 
-  useEffect(() => {
-    if (!userEmail) {
-      navigate("/login");
-      return;
-    }
-    fetchLogs();
-    fetchStats();
-  }, [userEmail, filterAction, currentPage]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const url =
@@ -59,9 +50,9 @@ const UserActivityLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userEmail, filterAction, currentPage, pageSize]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const res = await fetch(
         `https://paranaque-web-system.onrender.com/api/logs/stats/${userEmail}`
@@ -73,7 +64,16 @@ const UserActivityLogs = () => {
     } catch (err) {
       console.error("Error fetching stats:", err);
     }
-  };
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (!userEmail) {
+      navigate("/login");
+      return;
+    }
+    fetchLogs();
+    fetchStats();
+  }, [userEmail, fetchLogs, fetchStats, navigate]);
 
   const getActionIcon = (action) => {
     const iconMap = {
