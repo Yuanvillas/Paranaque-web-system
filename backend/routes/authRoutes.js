@@ -85,7 +85,15 @@ router.post("/register", async (req, res) => {
 
     await new Log({
       userEmail: email,
-      action: 'User registered successfully'
+      action: 'register',
+      actionType: 'account',
+      status: 'success',
+      description: `User ${firstName} ${lastName} registered successfully`,
+      details: {
+        firstName,
+        lastName,
+        role
+      }
     }).save();
 
     console.log("New user data:", newUser);
@@ -185,6 +193,8 @@ router.post('/login', async (req, res) => {
   console.log("/login/", req.body);
   try {
     const { email, password } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent');
 
     const user = await User.findOne({ email });
     console.log("/login/ - user:", user);
@@ -192,7 +202,12 @@ router.post('/login', async (req, res) => {
       // Log failed login attempt
       await new Log({
         userEmail: email,
-        action: 'Failed login attempt - User not found'
+        action: 'login',
+        actionType: 'auth',
+        status: 'failed',
+        description: 'User not found',
+        ipAddress,
+        userAgent
       }).save();
       return res.status(404).json({ message: 'User not found' });
     }
@@ -203,7 +218,12 @@ router.post('/login', async (req, res) => {
         // Log unverified login attempt
         await new Log({
           userEmail: email,
-          action: 'Failed login attempt - Email not verified'
+          action: 'login',
+          actionType: 'auth',
+          status: 'failed',
+          description: 'Email not verified',
+          ipAddress,
+          userAgent
         }).save();
         return res.status(401).json({ message: 'Please verify your email before logging in.' });
       }
@@ -215,7 +235,12 @@ router.post('/login', async (req, res) => {
       // Log invalid password attempt
       await new Log({
         userEmail: email,
-        action: 'Failed login attempt - Invalid password'
+        action: 'login',
+        actionType: 'auth',
+        status: 'failed',
+        description: 'Invalid password',
+        ipAddress,
+        userAgent
       }).save();
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -223,7 +248,17 @@ router.post('/login', async (req, res) => {
     // Log successful login
     await new Log({
       userEmail: email,
-      action: 'Successful login'
+      action: 'login',
+      actionType: 'auth',
+      status: 'success',
+      description: `${user.firstName} ${user.lastName} logged in successfully`,
+      ipAddress,
+      userAgent,
+      details: {
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
     }).save();
 
     console.log("User logged in:", user);
@@ -249,15 +284,28 @@ router.post('/login', async (req, res) => {
 router.post('/logout', async (req, res) => {
   try {
     const { email } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent');
 
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
     }
 
+    // Get user info for logging
+    const user = await User.findOne({ email });
+
     // Log user logout
     await new Log({
       userEmail: email,
-      action: 'User logged out'
+      action: 'logout',
+      actionType: 'auth',
+      status: 'success',
+      description: user ? `${user.firstName} ${user.lastName} logged out` : 'User logged out',
+      ipAddress,
+      userAgent,
+      details: {
+        role: user ? user.role : null
+      }
     }).save();
 
     return res.status(200).json({ message: 'Logout successful' });

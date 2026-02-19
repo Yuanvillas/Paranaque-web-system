@@ -16,6 +16,7 @@ import MyShelf from "./pages/MyShelf";
 import Bookmarks from "./pages/Bookmarks";
 import MyHolds from "./pages/MyHolds";
 import UserLayout from "./layouts/UserLayout";
+import UserActivityLogs from "./pages/UserActivityLogs";
 import Analytics from "./pages/Analytics";
 import VerifyNotice from "./pages/VerifyNotice";
 import VerificationSuccess from "./pages/VerificationSuccess";
@@ -65,6 +66,7 @@ function AppContent() {
           <Route path="shelf" element={<MyShelf />} />
           <Route path="bookmarks" element={<Bookmarks />} />
           <Route path="holds" element={<MyHolds />} />
+          <Route path="activity-logs" element={<UserActivityLogs />} />
           <Route path="faq" element={<FAQ />} />
           <Route path="about" element={<About />} />
         </Route>
