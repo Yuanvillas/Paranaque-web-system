@@ -70,6 +70,13 @@ const bookSchema = new mongoose.Schema({
     required: false,
     default: null,
   },
+  bookId: {
+    type: String,
+    required: false,
+    default: null,
+    unique: true,
+    sparse: true,
+  },
   callNumber: {
     type: String,
     required: false,
@@ -106,6 +113,7 @@ const bookSchema = new mongoose.Schema({
 bookSchema.index({ title: 1 });
 bookSchema.index({ genre: 1 });
 bookSchema.index({ accessionNumber: 1 });
+bookSchema.index({ bookId: 1 });
 bookSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to clean up expired reservations

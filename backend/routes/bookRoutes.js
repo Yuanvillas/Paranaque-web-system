@@ -51,6 +51,39 @@ const getNextAccessionNumber = async () => {
   }
 };
 
+// Function to get next book ID (BK-0001, BK-0002, etc.)
+const getNextBookId = async () => {
+  try {
+    console.log("📚 Generating next book ID using atomic Counter...");
+    
+    const counterName = 'bookId-global';
+    
+    // Use atomic Counter operation to prevent race conditions
+    const counter = await Counter.findOneAndUpdate(
+      { name: counterName },
+      { $inc: { value: 1 } },
+      { new: true, upsert: true }
+    );
+    
+    const nextNumber = counter.value;
+    console.log(`📈 Counter value for bookId after increment:`, nextNumber);
+    
+    // Format as BK-XXXX
+    const sequenceNumber = String(nextNumber).padStart(4, '0');
+    const bookId = `BK-${sequenceNumber}`;
+    
+    console.log(`✅ Generated book ID atomically: ${bookId}`);
+    return bookId;
+  } catch (err) {
+    console.error('❌ Error in getNextBookId:', err.message);
+    
+    // ALWAYS return a fallback - never return null/undefined
+    const fallback = `BK-${String(Date.now()).slice(-4)}`;
+    console.log('⚠️  Returning fallback book ID:', fallback);
+    return fallback;
+  }
+};
+
 // Multer storage setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -230,6 +263,29 @@ router.post('/', async (req, res) => {
       console.log(`📚 Using provided call number: ${generatedCallNumber}`);
     }
 
+    // Auto-generate book ID
+    console.log("📚 Generating book ID for:", title);
+    let generatedBookId;
+    try {
+      generatedBookId = await getNextBookId();
+      console.log("📚 Generated book ID:", generatedBookId);
+      
+      // Verify it's not empty
+      if (!generatedBookId || generatedBookId.trim() === '') {
+        throw new Error('Generated book ID is empty');
+      }
+    } catch (bookIdErr) {
+      console.error("❌ Failed to generate book ID:", bookIdErr.message);
+      generatedBookId = `BK-${Date.now().toString().slice(-4)}`;
+      console.log("⚠️ Using fallback book ID:", generatedBookId);
+    }
+    
+    // Final verification before saving
+    if (!generatedBookId) {
+      generatedBookId = `BK-${Date.now().toString().slice(-5)}`;
+      console.log("🚨 FINAL FALLBACK book ID:", generatedBookId);
+    }
+
     const newBook = new Book({
       title,
       year,
@@ -240,6 +296,7 @@ router.post('/', async (req, res) => {
       author,
       publisher,
       accessionNumber: generatedAccessionNumber,
+      bookId: generatedBookId,
       callNumber: generatedCallNumber,
       category,
       subject: subject || category,
