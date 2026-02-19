@@ -1805,7 +1805,7 @@ const CUTTER_TABLE = {
     'Retz': '441', 'Reu': '442', 'Reul': '443', 'Reum': '444', 'Reus': '445',
     'Reuss': '446', 'Reut': '447', 'Reuv': '448', 'Rev': '449', 'Revell': '451',
     'Rever': '452', 'Reves': '453', 'Revi': '454', 'Rex': '455', 'Rey': '456',
-    'Reyb': '457', 'Reym': '458', 'Reyn': '459', 'Reyni': '461', 'Reyno': '462',
+    'Reyes': '457', 'Reym': '458', 'Reyn': '459', 'Reyni': '461', 'Reyno': '462',
     'Reynolds, G.': '463', 'Reynolds, M.': '464', 'Reynolds, S.': '465', 'Reynolds, W.': '466', 'Rez': '467',
     'Rh': '468', 'Rhe': '469', 'Rhen': '471', 'Rhet': '472', 'Rhi': '473',
     'Rho': '474', 'Rhod': '475', 'Rhodes': '476', 'Rhodes, M.': '477', 'Rhodo': '478',
@@ -2558,7 +2558,7 @@ const getAuthorCutter = (author) => {
     
     // Check for exact match first
     for (const [key, value] of Object.entries(letterTable)) {
-      if (key.toLowerCase() === firstLetter.toLowerCase() + prefix) {
+      if (key.toLowerCase() === prefix) {
         return value;
       }
     }
