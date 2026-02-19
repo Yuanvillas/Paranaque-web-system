@@ -2553,7 +2553,7 @@ const getAuthorCutter = (author) => {
   
   // Try to find the best matching entry
   // Look for progressively shorter matches (e.g., "Smith" -> "Smith", "Smit", "Smi", "Sm", "S")
-  for (let i = Math.min(lastName.length, 4); i >= 2; i--) {
+  for (let i = Math.min(lastName.length, 6); i >= 2; i--) {
     const prefix = lastName.substring(0, i);
     
     // Check for exact match first
