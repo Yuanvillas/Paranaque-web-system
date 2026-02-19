@@ -2559,7 +2559,7 @@ const getAuthorCutter = (author) => {
     // Check for exact match first
     for (const [key, value] of Object.entries(letterTable)) {
       if (key.toLowerCase() === prefix) {
-        return value;
+        return `${firstLetter}${value}`;
       }
     }
   }
