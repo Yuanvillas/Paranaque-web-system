@@ -2544,28 +2544,33 @@ const getAuthorCutter = (author) => {
   const lastName = names[names.length - 1].toLowerCase();
   if (lastName.length === 0) return 'UNK';
   
-  // First letter uppercase
+  // Check if first letter is a vowel
   const firstLetter = lastName.charAt(0).toUpperCase();
+  const isVowel = 'AEIOU'.includes(firstLetter);
   
-  // Check if we have a Cutter table for this letter
+  // Get the prefix: 2 letters for vowels, 1 letter for consonants
+  const prefixLength = isVowel ? 2 : 1;
+  const cutterPrefix = lastName.substring(0, prefixLength);
+  
+  // Check if we have a Cutter table for the first letter
   const letterTable = CUTTER_TABLE[firstLetter];
-  if (!letterTable) return `${firstLetter}000`;
+  if (!letterTable) return `${cutterPrefix.toUpperCase()}000`;
   
   // Try to find the best matching entry
-  // Look for progressively shorter matches (e.g., "Smith" -> "Smith", "Smit", "Smi", "Sm", "S")
-  for (let i = Math.min(lastName.length, 6); i >= 2; i--) {
-    const prefix = lastName.substring(0, i);
+  // Look for progressively shorter matches
+  for (let i = Math.min(lastName.length, 6); i >= prefixLength; i--) {
+    const searchPrefix = lastName.substring(0, i);
     
     // Check for exact match first
     for (const [key, value] of Object.entries(letterTable)) {
-      if (key.toLowerCase() === prefix) {
-        return `${firstLetter}${value}`;
+      if (key.toLowerCase() === searchPrefix) {
+        return `${cutterPrefix.toUpperCase()}${value}`;
       }
     }
   }
   
-  // If no match found, return default
-  return `${firstLetter}000`;
+  // If no match found, return default with the vowel/consonant based prefix
+  return `${cutterPrefix.toUpperCase()}000`;
 };
 
 const generateLibraryCallNumber = (collectionType, subject, author, year) => {
