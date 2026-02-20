@@ -1114,7 +1114,7 @@ const CUTTER_TABLE = {
     'Kan': '16', 'Kap': '17', 'Kar': '18', 'Kas': '19', 'Kau': '21',
     'Kaw': '22', 'Kay': '23', 'Ke': '24', 'Keat': '25', 'Kee': '26',
     'Kei': '27', 'Keith': '28', 'Kel': '29', 'Kem': '31', 'Kemp': '32',
-    'Ken': '33', 'Kenn': '34', 'Kennedy': '35', 'Kennedy, M.': '36', 'Kent': '37',
+    'Ken': '33', 'Kenn': '34', 'Kennedy': '35', 'Kennedy, M.': '36', 'Kenny': '36', 'Kent': '37',
     'Kep': '38', 'Ker': '39', 'Kerr': '41', 'Kes': '42', 'Ket': '43',
     'Key': '44', 'Kh': '45', 'Ki': '46', 'Kie': '47', 'Kil': '48',
     'Kim': '49', 'Kin': '51', 'King': '52', 'King, J.': '53', 'King, P.': '54',
