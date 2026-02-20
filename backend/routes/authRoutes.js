@@ -458,7 +458,14 @@ router.put('/users/:id/update-role', async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    // Ensure account is always verified for any role change
+    // (prevents login blocks after role changes)
+    const updateData = { 
+      role,
+      isVerified: true
+    };
+    
+    const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
