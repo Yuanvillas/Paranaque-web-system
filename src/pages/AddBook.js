@@ -313,7 +313,7 @@ const CUTTER_TABLE = {
     'Cai': '133', 'Cail': '134', 'Cain': '135', 'Cair': '136', 'Cais': '137',
     'Caiu': '138', 'Caj': '139', 'Cal': '141', 'Calan': '142', 'Calas': '143',
     'Calc': '144', 'Cald': '145', 'Calde': '146', 'Caldw': '147', 'Cale': '148',
-    'Calen': '149', 'Calf': '151', 'Calh': '152', 'Cali': '153', 'Calin': '154',
+    'Calero': '149', 'Calen': '149', 'Calf': '151', 'Calh': '152', 'Cali': '153', 'Calin': '154',
     'Calk': '155', 'Call': '156', 'Calle': '157', 'Calli': '158', 'Callim': '159',
     'Callin': '161', 'Callis': '162', 'Callo': '163', 'Calm': '164', 'Calo': '165',
     'Calt': '166', 'Calv': '167', 'Calvi': '168', 'Calvo': '169', 'Calz': '171',
@@ -1856,7 +1856,7 @@ const CUTTER_TABLE = {
     'Rollin': '754', 'Rollo': '755', 'Rom': '756', 'Romai': '757', 'Roman': '758',
     'Romano': '759', 'Romanu': '761', 'Romb': '762', 'Rome': '763', 'Romey': '764',
     'Romi': '765', 'Romm': '766', 'Romu': '767', 'Ron': '768', 'Ronc': '769',
-    'Rond': '771', 'Rone': '772', 'Rong': '773', 'Rons': '774', 'Ronz': '775',
+    'Rond': '771', 'Rone': '772', 'Rong': '773', 'Ronquillo': '733', 'Rons': '774', 'Ronz': '775',
     'Roo': '776', 'Rook': '777', 'Roop': '778', 'Roor': '779', 'Roos': '781',
     'Root': '782', 'Root, M.': '783', 'Rop': '784', 'Ropes': '785', 'Roq': '786',
     'Ror': '787', 'Ros': '788', 'Rosar': '789', 'Rosc': '791', 'Rosco': '792',
@@ -2557,8 +2557,8 @@ const getAuthorCutter = (author) => {
   if (!letterTable) return `${cutterPrefix.toUpperCase()}000`;
   
   // Try to find the best matching entry
-  // Look for progressively shorter matches
-  for (let i = Math.min(lastName.length, 6); i >= prefixLength; i--) {
+  // Look for progressively shorter matches, starting from the full name
+  for (let i = Math.min(lastName.length, 20); i >= prefixLength; i--) {
     const searchPrefix = lastName.substring(0, i);
     
     // Check for exact match first
