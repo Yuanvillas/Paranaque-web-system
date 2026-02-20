@@ -663,10 +663,10 @@ body {
 
 .chat-input input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 14px 16px;
   border-radius: 20px;
   border: 1.5px solid #c8e6c9;
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -686,16 +686,16 @@ body {
   background: linear-gradient(135deg, #2e7d32, #1b5e20);
   color: white;
   border: none;
-  padding: 10px 14px;
+  padding: 6px 8px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
 }
 
 .chat-input button:hover:not(:disabled),

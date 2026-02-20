@@ -16,10 +16,56 @@ const User = require('../models/User');
  * - GOOGLE_API_KEY or OPENAI_API_KEY for API authentication
  */
 
+// Helper function to detect if query is library-related
+function isLibraryRelatedQuestion(query) {
+  const libraryKeywords = [
+    'book', 'books', 'read', 'reading', 'author', 'authors', 'novel', 'novels',
+    'genre', 'genres', 'fiction', 'non-fiction', 'mystery', 'romance', 'fantasy',
+    'science fiction', 'science-fiction', 'scifi', 'sci-fi', 'thriller', 'horror',
+    'biography', 'autobiography', 'history', 'educational', 'fiction',
+    'library', 'libraries', 'borrow', 'borrowing', 'return', 'returning',
+    'available', 'availability', 'stock', 'copies', 'edition', 'editions',
+    'recommend', 'recommendation', 'suggests', 'find', 'search', 'looking for',
+    'parañaledge', 'parañaque', 'collection', 'catalog', 'catalogue',
+    'shelf', 'shelves', 'publisher', 'published', 'publication',
+    'bestseller', 'bestsellers', 'award', 'awards', 'prize',
+    'pages', 'length', 'isbn', 'series', 'chapter',
+    'filipiniana', 'reference', 'circulation', 'section', 'category'
+  ];
+  
+  const queryLower = query.toLowerCase();
+  return libraryKeywords.some(keyword => queryLower.includes(keyword));
+}
+
+// Helper function to detect and extract section/collection type
+function extractCollectionType(query) {
+  const queryLower = query.toLowerCase();
+  
+  // Check for specific collection types
+  if (queryLower.includes('filipiniana')) return 'Filipiniana';
+  if (queryLower.includes('reference')) return 'Reference';
+  if (queryLower.includes('circulation')) return 'Circulation';
+  
+  return null;
+}
+
 // Helper function to search books in database
 async function searchBooksInDB(query) {
   try {
     console.log(`[searchBooksInDB] Searching for: "${query}"`);
+    
+    // Check if user is asking about a specific collection/section
+    const collectionType = extractCollectionType(query);
+    if (collectionType) {
+      console.log(`[searchBooksInDB] Searching for entire ${collectionType} collection`);
+      const sectionBooks = await Book.find({
+        archived: false,
+        collectionType: collectionType,
+        availableStock: { $gt: 0 }
+      }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
+      console.log(`[searchBooksInDB] Found ${sectionBooks.length} books in ${collectionType} section`);
+      return sectionBooks;
+    }
     
     // If no query or very short, return all available books
     if (!query || query.trim().length < 2) {
@@ -27,22 +73,37 @@ async function searchBooksInDB(query) {
       const books = await Book.find({
         archived: false,
         availableStock: { $gt: 0 }
-      }).limit(12).select('title author year availableStock publisher location genre').maxTimeMS(5000);
+      }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
       console.log(`[searchBooksInDB] Found ${books.length} books`);
       return books;
     }
 
     const queryLower = query.toLowerCase();
+    const isLibraryQuery = isLibraryRelatedQuestion(query);
+    console.log(`[searchBooksInDB] Library-related query: ${isLibraryQuery}`);
 
-    // If user asks for available books, show all available
-    if (queryLower.includes('available') || queryLower.includes('what') || 
-        queryLower.includes('show') || queryLower.includes('have') ||
-        queryLower.includes('list')) {
-      console.log('[searchBooksInDB] User asking for available books');
+    // If user asks about total number of books, show ALL books
+    if (queryLower.includes('how many') || queryLower.includes('total') || 
+        queryLower.includes('count') || queryLower.includes('all books') ||
+        queryLower.includes('entire collection') || queryLower.includes('everything')) {
+      console.log('[searchBooksInDB] User asking for all/total books - fetching complete collection');
       const books = await Book.find({
         archived: false,
         availableStock: { $gt: 0 }
-      }).limit(15).select('title author year availableStock publisher location genre').maxTimeMS(5000);
+      }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
+      console.log(`[searchBooksInDB] Found ${books.length} total books in collection`);
+      return books;
+    }
+
+    // If user asks for available books, show more available
+    if (queryLower.includes('available') || queryLower.includes('what') || 
+        queryLower.includes('show') || queryLower.includes('have') ||
+        queryLower.includes('list')) {
+      console.log('[searchBooksInDB] User asking for available books list');
+      const books = await Book.find({
+        archived: false,
+        availableStock: { $gt: 0 }
+      }).limit(50).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
       return books;
     }
 
@@ -50,19 +111,25 @@ async function searchBooksInDB(query) {
     const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
     console.log(`[searchBooksInDB] Search terms: ${searchTerms.join(', ')}`);
 
-    // Search by title, author, publisher, genre - use $regex operator
+    // For library queries, search more aggressively with higher limit
+    const searchLimit = isLibraryQuery ? 50 : 25;
+
+    // Search by title, author, publisher, genre, category, subject, and collectionType
     const orConditions = [];
     searchTerms.forEach(term => {
       orConditions.push({ title: { $regex: term, $options: 'i' } });
       orConditions.push({ author: { $regex: term, $options: 'i' } });
       orConditions.push({ publisher: { $regex: term, $options: 'i' } });
       orConditions.push({ genre: { $regex: term, $options: 'i' } });
+      orConditions.push({ category: { $regex: term, $options: 'i' } });
+      orConditions.push({ subject: { $regex: term, $options: 'i' } });
+      orConditions.push({ collectionType: { $regex: term, $options: 'i' } });
     });
 
     const books = await Book.find({
       archived: false,
       $or: orConditions
-    }).limit(15).select('title author year availableStock publisher location genre').maxTimeMS(5000);
+    }).limit(searchLimit).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
 
     console.log(`[searchBooksInDB] Initial search found ${books.length} books`);
 
@@ -71,15 +138,31 @@ async function searchBooksInDB(query) {
       return books.sort((a, b) => (b.availableStock || 0) - (a.availableStock || 0));
     }
 
-    // If no results, try partial matching
+    // If no results and it's a library query, try broader search with higher limit
+    if (isLibraryQuery) {
+      console.log('[searchBooksInDB] Library query with no results, trying broader search');
+      const broadBooks = await Book.find({
+        archived: false,
+        availableStock: { $gt: 0 }
+      }).limit(30).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
+      
+      if (broadBooks && broadBooks.length > 0) {
+        console.log(`[searchBooksInDB] Broad search found ${broadBooks.length} books`);
+        return broadBooks;
+      }
+    }
+
+    // If no results, try partial matching with higher limit
     console.log('[searchBooksInDB] No results from initial search, trying partial match');
     const partialBooks = await Book.find({
       archived: false,
       $or: [
         { title: { $regex: query, $options: 'i' } },
-        { author: { $regex: query, $options: 'i' } }
+        { author: { $regex: query, $options: 'i' } },
+        { category: { $regex: query, $options: 'i' } },
+        { subject: { $regex: query, $options: 'i' } }
       ]
-    }).limit(10).select('title author year availableStock publisher location genre').maxTimeMS(5000);
+    }).limit(30).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
 
     console.log(`[searchBooksInDB] Partial search found ${partialBooks ? partialBooks.length : 0} books`);
     return partialBooks || [];
@@ -90,35 +173,59 @@ async function searchBooksInDB(query) {
 }
 
 // Helper function to build system prompt with context
-function buildSystemPrompt(books) {
+function buildSystemPrompt(books, isLibraryQuery = false) {
   let prompt = `You are a helpful AI assistant for Parañaledge Library.
 
 YOUR PRIMARY ROLES:
 1. Help users find books in our library and answer library-related questions
 2. Answer general questions on any topic (like a regular AI assistant)
 
+LIBRARY INFORMATION:
+- Library Name: Parañaledge Library
+- Location: Parañaque City
+- Purpose: Comprehensive book collection for education and recreation
+- Collections: Filipiniana, Reference, Circulation
+
 LIBRARY BOOKS IN STOCK:
 `;
 
   if (books && books.length > 0) {
-    prompt += `We currently have ${books.length} books available:\n\n`;
+    // Check if all books are from the same collection
+    const collectionTypes = new Set(books.map(b => b.collectionType).filter(Boolean));
+    const singleCollection = collectionTypes.size === 1 ? Array.from(collectionTypes)[0] : null;
+    
+    if (singleCollection) {
+      prompt += `We currently have ${books.length} books in the ${singleCollection} section:\n\n`;
+    } else {
+      prompt += `We currently have ${books.length} books available:\n\n`;
+    }
+    
     books.forEach((book, i) => {
       const stock = book.availableStock || 0;
       const status = stock > 0 ? `✓ Available (${stock})` : `✗ Unavailable`;
       const author = book.author || 'Unknown';
       const year = book.year ? ` (${book.year})` : '';
-      prompt += `• "${book.title}" by ${author}${year} [${status}]\n`;
+      const genre = book.genre ? ` | Genre: ${book.genre}` : '';
+      const location = book.location ? ` | Location: ${book.location}` : '';
+      const collection = book.collectionType ? ` | Section: ${book.collectionType}` : '';
+      const category = book.category ? ` | Category: ${book.category}` : '';
+      prompt += `${i + 1}. "${book.title}" by ${author}${year} [${status}]${genre}${location}${collection}${category}\n`;
     });
   } else {
-    prompt += `(No books found matching this search)\n`;
+    prompt += isLibraryQuery 
+      ? `(Currently no books match this specific search, but we have a great collection available)\n`
+      : `(No books found matching this search)\n`;
   }
 
   prompt += `
 IMPORTANT GUIDELINES:
-- When users ask about books: ONLY mention books from the list above if they match their request
-- When users ask about books NOT in the list: Be honest and suggest alternatives from our inventory
-- When users ask general questions (not about books): Feel free to answer normally
-- Always be helpful, friendly, and accurate
+- When users ask about BOOKS: ONLY mention books from the list above if they match their request
+- When users ask about books NOT in the list: Be honest and suggest alternatives from our available inventory
+- When users ask about BORROWING, AVAILABILITY, or LIBRARY SERVICES: Provide helpful information
+- Always mention the book location, section, and availability status if showing books
+- When users ask about specific sections (Filipiniana, Reference, Circulation): Show ALL books from that section
+- When users ask general questions (not books/library): Feel free to answer normally
+- Always be helpful, friendly, accurate, and professional
 `;
   return prompt;
 }
@@ -128,9 +235,13 @@ router.post('/chat', async (req, res) => {
   if (!message) return res.status(400).json({ error: 'Missing message' });
 
   console.log(`[AI Chat] ✅ Received message: "${message}"`);
-  console.log('[AI Chat] 🚀 Using Groq AI or Mock Mode only - NO Google API');
+  console.log('[AI Chat] 🚀 Using smart database lookup with AI assistance');
   
   try {
+    // Detect if this is a library-related question
+    const isLibraryQuery = isLibraryRelatedQuestion(message);
+    console.log(`[AI Chat] Library-related query: ${isLibraryQuery}`);
+
     // Always search for books relevant to the query
     console.log('[AI Chat] Searching books in database...');
     let contextBooks = [];
@@ -138,7 +249,7 @@ router.post('/chat', async (req, res) => {
     contextBooks = await searchBooksInDB(message);
     console.log(`[AI Chat] Found ${contextBooks.length} context books`);
 
-    const systemPrompt = buildSystemPrompt(contextBooks);
+    const systemPrompt = buildSystemPrompt(contextBooks, isLibraryQuery);
 
     // Try Google Gemini API first (free tier: 50 req/min)
     const googleApiKey = process.env.GOOGLE_API_KEY;
