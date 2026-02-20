@@ -2688,10 +2688,10 @@ const generateLibraryCallNumber = (collectionType, subject, author, year) => {
   // Get collection type prefix
   const prefixMap = {
     'Filipiniana': 'F',
-    'Reference': 'REF',
-    'Circulation': 'CIR'
+    'Reference': 'R',
+    'Circulation': 'C'
   };
-  const prefix = prefixMap[collectionType] || 'CIR';
+  const prefix = prefixMap[collectionType] || 'C';
   
   // Get cutter number from author
   const cutter = getAuthorCutter(author);

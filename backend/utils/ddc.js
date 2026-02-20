@@ -148,22 +148,22 @@ const getAuthorCutter = (author) => {
 /**
  * Get collection type prefix
  * @param {string} collectionType - The collection type
- * @returns {string} - The prefix (F, REF, CIR)
+ * @returns {string} - The prefix (F, R, C)
  */
 const getCollectionTypePrefix = (collectionType) => {
   const prefixMap = {
     'Filipiniana': 'F',
-    'Reference': 'REF',
-    'Circulation': 'CIR'
+    'Reference': 'R',
+    'Circulation': 'C'
   };
   
-  return prefixMap[collectionType] || 'CIR';
+  return prefixMap[collectionType] || 'C';
 };
 
 /**
  * Generate a library call number in the format: PREFIX.DDC-CUTTER-YEAR
  * Format: Prefix.DDD-CCC-YYYY
- * - Prefix: Collection type (F=Filipiniana, REF=Reference, CIR=Circulation)
+ * - Prefix: Collection type (F=Filipiniana, R=Reference, C=Circulation)
  * - DDD: Dewey Decimal Classification code (e.g., 500 for Science)
  * - CCC: Cutter number (e.g., R33 for Reyes - first letter + numeric codes)
  * - YYYY: Publication year
