@@ -32,6 +32,8 @@ const UserHome = () => {
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   // Check for overdue books on component mount
   useEffect(() => {
@@ -499,10 +501,29 @@ const UserHome = () => {
     setReserveDate("");
   };
 
-  const filteredBooks = books.filter((book) =>
-    (book.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-    (book.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-  );
+  const filteredBooks = books.filter((book) => {
+    const matchesSearch = (book.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (book.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+    
+    const avail = book.availableStock ?? book.available ?? book.stock ?? 0;
+    let matchesAvailability = true;
+    
+    if (availabilityFilter === "available") {
+      matchesAvailability = avail > 0;
+    } else if (availabilityFilter === "unavailable") {
+      matchesAvailability = avail <= 0;
+    }
+
+    let matchesCategory = true;
+    if (categoryFilter !== "all" && categoryFilter !== "") {
+      matchesCategory = book.category === categoryFilter;
+    }
+
+    return matchesSearch && matchesAvailability && matchesCategory;
+  });
+
+  // Get unique categories for the category filter
+  const categories = [...new Set(books.map(book => book.category).filter(Boolean))].sort();
 
   const today = new Date().toISOString().split("T")[0];
   const maxDate = new Date();
@@ -628,72 +649,154 @@ const UserHome = () => {
         </div>
       </div>
 
-      {/* Pagination controls */}
+      {/* Pagination and Filters controls */}
       {totalPages > 1 && (
-        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, margin: '30px 0', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setPage((p) => Math.max(1, p - 1))} 
-            disabled={page <= 1}
-            style={{
-              padding: '10px 16px',
-              background: page <= 1 ? '#f5f5f5' : '#fff',
-              color: page <= 1 ? '#ccc' : '#1976d2',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              cursor: page <= 1 ? 'not-allowed' : 'pointer',
-              fontWeight: '500',
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-              boxShadow: page <= 1 ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
-              opacity: page <= 1 ? 0.6 : 1
-            }}
-          >
-            ← Prev
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '30px 10px', flexWrap: 'wrap', gap: '15px' }}>
+          {/* Pagination */}
+          <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <button 
-              key={i} 
-              onClick={() => setPage(i + 1)} 
+              onClick={() => setPage((p) => Math.max(1, p - 1))} 
+              disabled={page <= 1}
               style={{
-                padding: '10px 14px',
-                minWidth: '40px',
-                background: page === i + 1 ? '#1976d2' : '#fff',
-                color: page === i + 1 ? '#fff' : '#666',
-                border: page === i + 1 ? 'none' : '1px solid #e0e0e0',
+                padding: '10px 16px',
+                background: page <= 1 ? '#f5f5f5' : '#fff',
+                color: page <= 1 ? '#ccc' : '#1976d2',
+                border: '1px solid #e0e0e0',
                 borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: page === i + 1 ? '600' : '500',
+                cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                fontWeight: '500',
                 fontSize: '14px',
                 transition: 'all 0.3s ease',
-                boxShadow: page === i + 1 ? '0 4px 12px rgba(25, 118, 210, 0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                transform: page === i + 1 ? 'scale(1.05)' : 'scale(1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                boxShadow: page <= 1 ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+                opacity: page <= 1 ? 0.6 : 1
               }}
             >
-              {i + 1}
+              ← Prev
             </button>
-          ))}
-          <button 
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))} 
-            disabled={page >= totalPages}
-            style={{
-              padding: '10px 16px',
-              background: page >= totalPages ? '#f5f5f5' : '#fff',
-              color: page >= totalPages ? '#ccc' : '#1976d2',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-              fontWeight: '500',
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-              boxShadow: page >= totalPages ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
-              opacity: page >= totalPages ? 0.6 : 1
-            }}
-          >
-            Next →
-          </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button 
+                key={i} 
+                onClick={() => setPage(i + 1)} 
+                style={{
+                  padding: '10px 14px',
+                  minWidth: '40px',
+                  background: page === i + 1 ? '#1976d2' : '#fff',
+                  color: page === i + 1 ? '#fff' : '#666',
+                  border: page === i + 1 ? 'none' : '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: page === i + 1 ? '600' : '500',
+                  fontSize: '14px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: page === i + 1 ? '0 4px 12px rgba(25, 118, 210, 0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+                  transform: page === i + 1 ? 'scale(1.05)' : 'scale(1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button 
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))} 
+              disabled={page >= totalPages}
+              style={{
+                padding: '10px 16px',
+                background: page >= totalPages ? '#f5f5f5' : '#fff',
+                color: page >= totalPages ? '#ccc' : '#1976d2',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: '500',
+                fontSize: '14px',
+                transition: 'all 0.3s ease',
+                boxShadow: page >= totalPages ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+                opacity: page >= totalPages ? 0.6 : 1
+              }}
+            >
+              Next →
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333', whiteSpace: 'nowrap' }}>🔍 Status:</label>
+              <select 
+                value={availabilityFilter}
+                onChange={(e) => {
+                  setAvailabilityFilter(e.target.value);
+                  setPage(1);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  backgroundColor: '#fff',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                }}
+              >
+                <option value="all">All Books</option>
+                <option value="available">✓ Available</option>
+                <option value="unavailable">✗ Not Available</option>
+              </select>
+            </div>
+
+            {categories.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: '14px', fontWeight: '600', color: '#333', whiteSpace: 'nowrap' }}>📂 Category:</label>
+                <select 
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    backgroundColor: '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {(availabilityFilter !== "all" || categoryFilter !== "all") && (
+              <button 
+                onClick={() => {
+                  setAvailabilityFilter("all");
+                  setCategoryFilter("all");
+                  setPage(1);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  background: '#f5f5f5',
+                  color: '#666',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '13px',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                ✕ Clear Filters
+              </button>
+            )}
+          </div>
         </div>
       )}
 
