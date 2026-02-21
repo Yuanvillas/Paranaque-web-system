@@ -54,7 +54,24 @@ async function searchBooksInDB(query) {
   try {
     console.log(`[searchBooksInDB] Searching for: "${query}"`);
     
-    // Check if user is asking about a specific collection/section
+    const queryLower = query.toLowerCase();
+    const isLibraryQuery = isLibraryRelatedQuestion(query);
+    console.log(`[searchBooksInDB] Library-related query: ${isLibraryQuery}`);
+
+    // PRIORITY 1: If user asks about total number of books, show ALL books (before collection filtering)
+    if (queryLower.includes('how many') || queryLower.includes('total') || 
+        queryLower.includes('count') || queryLower.includes('all books') ||
+        queryLower.includes('entire collection') || queryLower.includes('everything')) {
+      console.log('[searchBooksInDB] User asking for all/total books - fetching complete collection');
+      const books = await Book.find({
+        archived: false,
+        availableStock: { $gt: 0 }
+      }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
+      console.log(`[searchBooksInDB] Found ${books.length} total books in collection`);
+      return books;
+    }
+    
+    // PRIORITY 2: Check if user is asking about a specific collection/section (only if not asking for total count)
     const collectionType = extractCollectionType(query);
     if (collectionType) {
       console.log(`[searchBooksInDB] Searching for entire ${collectionType} collection`);
@@ -75,23 +92,6 @@ async function searchBooksInDB(query) {
         availableStock: { $gt: 0 }
       }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
       console.log(`[searchBooksInDB] Found ${books.length} books`);
-      return books;
-    }
-
-    const queryLower = query.toLowerCase();
-    const isLibraryQuery = isLibraryRelatedQuestion(query);
-    console.log(`[searchBooksInDB] Library-related query: ${isLibraryQuery}`);
-
-    // If user asks about total number of books, show ALL books
-    if (queryLower.includes('how many') || queryLower.includes('total') || 
-        queryLower.includes('count') || queryLower.includes('all books') ||
-        queryLower.includes('entire collection') || queryLower.includes('everything')) {
-      console.log('[searchBooksInDB] User asking for all/total books - fetching complete collection');
-      const books = await Book.find({
-        archived: false,
-        availableStock: { $gt: 0 }
-      }).select('title author year availableStock publisher location genre category collectionType subject').maxTimeMS(5000);
-      console.log(`[searchBooksInDB] Found ${books.length} total books in collection`);
       return books;
     }
 
