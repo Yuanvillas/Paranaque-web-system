@@ -28,7 +28,7 @@ function Login() {
         if (userData.role === "admin" || userData.role === "librarian") {
           navigate("/admin-dashboard", { replace: true });
         } else {
-          navigate("/user-homepage", { replace: true });
+          navigate("/user-home", { replace: true });
         }
       } catch (e) {
         console.error("Error parsing user data:", e);
