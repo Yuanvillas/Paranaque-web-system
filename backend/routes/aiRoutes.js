@@ -386,23 +386,41 @@ router.post('/chat', async (req, res) => {
     if (contextBooks && contextBooks.length > 0) {
       console.log(`[AI Chat] Generating reply with ${contextBooks.length} books`);
       mockReply = `Welcome to Parañaledge Library.\n\n`;
-      mockReply += `AVAILABLE BOOKS (${contextBooks.length} found)\n`;
+      
+      // If there are many books, show summary and limit display
+      const MAX_BOOKS_TO_SHOW = 15; // Show max 15 books in chat to avoid truncation
+      const totalFound = contextBooks.length;
+      const booksToShow = contextBooks.slice(0, MAX_BOOKS_TO_SHOW);
+      const hasMore = totalFound > MAX_BOOKS_TO_SHOW;
+      
+      if (hasMore) {
+        mockReply += `📚 FOUND ${totalFound} BOOKS (showing first ${booksToShow.length})\n`;
+      } else {
+        mockReply += `📚 AVAILABLE BOOKS (${totalFound} found)\n`;
+      }
       mockReply += `${'='.repeat(70)}\n\n`;
       
-      contextBooks.forEach((book, index) => {
+      booksToShow.forEach((book, index) => {
         const stock = book.availableStock || 0;
-        const status = stock > 0 ? `Available (${stock})` : `Not Available`;
+        const status = stock > 0 ? `✓ (${stock})` : `✗ Out`;
         const author = book.author || 'Unknown Author';
         const year = book.year ? ` (${book.year})` : '';
-        const publisher = book.publisher ? `\n   Publisher: ${book.publisher}` : '';
         
-        mockReply += `${index + 1}. TITLE: "${book.title}"\n`;
-        mockReply += `   AUTHOR: ${author}${year}\n`;
-        mockReply += `   STATUS: ${status}${publisher}\n\n`;
+        mockReply += `${index + 1}. "${book.title}" by ${author}${year} [${status}]\n`;
       });
       
-      mockReply += `${'='.repeat(70)}\n`;
-      mockReply += `Would you like more information about any of these books?`;
+      mockReply += `\n${'='.repeat(70)}\n`;
+      
+      // If there are more books, let user know they can ask for specific ones
+      if (hasMore) {
+        mockReply += `\n📖 ${totalFound - booksToShow.length} more books available!\n`;
+        mockReply += `Try searching by:\n`;
+        mockReply += `  • Author name (e.g., "books by [author]")\n`;
+        mockReply += `  • Genre/Subject (e.g., "history books")\n`;
+        mockReply += `  • Title keywords (e.g., "programming")\n`;
+      } else {
+        mockReply += `Would you like more information about any of these books?`;
+      }
     } else {
       // If no books found, do a general search to show what's available
       const allBooks = await Book.find({ archived: false, availableStock: { $gt: 0 } }).limit(8).select('title author year availableStock');
