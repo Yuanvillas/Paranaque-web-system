@@ -127,7 +127,7 @@ const UserLayout = () => {
             <Link to="/user-home/activity-logs">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHistory} /> <span>Activity Logs</span>
             </Link>
-            <Link to="/user-home/history">
+            <Link to="/user-home/faq">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faQuestionCircle} /> <span>FAQ</span>
             </Link>
             <Link to="/user-home/about">
