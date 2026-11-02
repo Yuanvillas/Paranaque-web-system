@@ -495,6 +495,81 @@
   font-size: 16px;
 }
 
+.overdue-book-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.overdue-days-badge {
+  padding: 8px 12px;
+  background: #ffe5e5;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.overdue-days-badge p:first-child {
+  margin: 0;
+  color: #ff6b6b;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.overdue-days-badge p:last-child {
+  margin: 4px 0 0;
+  color: #ff6b6b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.overdue-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overdue-action-btn {
+  min-width: 76px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.overdue-action-btn.send {
+  background: #43a047;
+}
+
+.overdue-action-btn.remove {
+  background: #e05252;
+}
+
+.overdue-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.detail-action-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.detail-action-message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.detail-action-message.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .overdue-panel {
@@ -586,6 +661,18 @@
     top: 12px;
     right: 12px;
     font-size: 20px;
+  }
+
+  .overdue-book-actions {
+    flex-direction: column;
+  }
+
+  .overdue-action-buttons {
+    flex-direction: row;
+  }
+
+  .overdue-action-btn {
+    min-width: 64px;
   }
 }
 

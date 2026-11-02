@@ -38,7 +38,8 @@ async function checkAndNotifyOverdue(options = {}) {
     let query = {
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true }
     };
 
     // Optionally exclude previously notified transactions
@@ -188,7 +189,9 @@ async function checkAndNotifyOverdue(options = {}) {
         // Log the notification attempt
         await new Log({
           userEmail,
-          action: `Overdue notification processed for ${userOverdues.length} book(s) [${sendEmails ? 'SENT' : 'DRY_RUN'}]`
+          action: 'overdue_notification',
+          actionType: 'transaction',
+          description: `Overdue notification processed for ${userOverdues.length} book(s) [${sendEmails ? 'SENT' : 'DRY_RUN'}]`
         }).save();
       } catch (error) {
         console.error(`❌ Error processing ${userEmail}:`, error.message);
@@ -242,7 +245,8 @@ async function getOverdueStatistics() {
     const overdueTransactions = await Transaction.find({
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true }
     });
 
     stats.totalOverdue = overdueTransactions.length;

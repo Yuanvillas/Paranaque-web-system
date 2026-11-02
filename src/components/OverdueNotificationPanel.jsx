@@ -34,6 +34,8 @@ const OverdueNotificationPanel = () => {
   const [showReservationDetail, setShowReservationDetail] = useState(false);
   const [overdueBooks, setOverdueBooks] = useState([]);
   const [pendingReservations, setPendingReservations] = useState([]);
+  const [rowAction, setRowAction] = useState(null);
+  const [detailActionMessage, setDetailActionMessage] = useState(null);
 
   // Fetch statistics on component mount
   useEffect(() => {
@@ -147,6 +149,68 @@ const OverdueNotificationPanel = () => {
       });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSendSingleOverdueNotification = async (book) => {
+    if (!book.transactionId) {
+      setDetailActionMessage({
+        type: 'error',
+        text: 'Cannot send this reminder because the loan transaction ID is missing.'
+      });
+      return;
+    }
+
+    setRowAction({ transactionId: book.transactionId, type: 'send' });
+    setDetailActionMessage(null);
+
+    try {
+      await axios.post(
+        `https://paranaque-web-system.onrender.com/api/transactions/overdue/notify-book/${book.transactionId}`
+      );
+
+      setDetailActionMessage({
+        type: 'success',
+        text: `Reminder sent for "${book.bookTitle}" to ${book.userEmail}.`
+      });
+      await fetchStatistics();
+    } catch (err) {
+      console.error('Error sending single overdue notification:', err);
+      setDetailActionMessage({
+        type: 'error',
+        text: err.response?.data?.message || err.message || 'Failed to send reminder.'
+      });
+    } finally {
+      setRowAction(null);
+    }
+  };
+
+  const handleDismissOverdueBook = async (book) => {
+    const shouldDismiss = window.confirm(
+      `Remove "${book.bookTitle}" for ${book.userEmail} from overdue notifications? The loan record will not be deleted.`
+    );
+    if (!shouldDismiss) return;
+
+    setRowAction({ transactionId: book.transactionId, type: 'remove' });
+    setDetailActionMessage(null);
+
+    try {
+      await axios.post(
+        `https://paranaque-web-system.onrender.com/api/transactions/${book.transactionId}/dismiss`
+      );
+      setDetailActionMessage({
+        type: 'success',
+        text: `Removed "${book.bookTitle}" for ${book.userEmail} from overdue notifications.`
+      });
+      await fetchStatistics();
+    } catch (err) {
+      console.error('Error removing overdue notification:', err);
+      setDetailActionMessage({
+        type: 'error',
+        text: err.response?.data?.message || err.message || 'Failed to remove overdue notification.'
+      });
+    } finally {
+      setRowAction(null);
     }
   };
 
@@ -728,6 +792,14 @@ const OverdueNotificationPanel = () => {
               flexDirection: 'column',
               gap: '12px'
             }}>
+              {detailActionMessage && (
+                <p
+                  className={`detail-action-message ${detailActionMessage.type}`}
+                  role={detailActionMessage.type === 'error' ? 'alert' : 'status'}
+                >
+                  {detailActionMessage.text}
+                </p>
+              )}
               {overdueBooks.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
                   No overdue books found.
@@ -735,7 +807,7 @@ const OverdueNotificationPanel = () => {
               ) : (
                 overdueBooks.map((book, idx) => (
                   <div
-                    key={idx}
+                    key={book.transactionId || idx}
                     style={{
                       padding: '14px',
                       backgroundColor: '#f9f9f9',
@@ -743,7 +815,8 @@ const OverdueNotificationPanel = () => {
                       borderLeft: '4px solid #FF6B6B',
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'flex-start'
+                      alignItems: 'center',
+                      gap: '12px'
                     }}
                   >
                     <div style={{ flex: 1 }}>
@@ -770,29 +843,33 @@ const OverdueNotificationPanel = () => {
                         📅 Due Date: <strong>{new Date(book.dueDate).toLocaleDateString()}</strong>
                       </p>
                     </div>
-                    <div style={{
-                      padding: '8px 12px',
-                      backgroundColor: '#FFE5E5',
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      marginLeft: '10px'
-                    }}>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '24px',
-                        fontWeight: '700',
-                        color: '#FF6B6B'
-                      }}>
-                        {book.daysOverdue || 0}
-                      </p>
-                      <p style={{
-                        margin: '4px 0 0 0',
-                        fontSize: '11px',
-                        color: '#FF6B6B',
-                        fontWeight: '600'
-                      }}>
-                        Days Overdue
-                      </p>
+                    <div className="overdue-book-actions">
+                      <div className="overdue-days-badge">
+                        <p>{book.daysOverdue || 0}</p>
+                        <p>Days Overdue</p>
+                      </div>
+                      <div className="overdue-action-buttons">
+                        <button
+                          className="overdue-action-btn send"
+                          onClick={() => handleSendSingleOverdueNotification(book)}
+                          disabled={Boolean(rowAction) || !book.transactionId}
+                          title={book.reminderSent ? 'Click to resend a reminder for this book' : 'Send a reminder for this book only'}
+                        >
+                          {rowAction?.transactionId === book.transactionId && rowAction.type === 'send'
+                            ? 'Sending...'
+                            : book.reminderSent ? 'Sent' : 'Send'}
+                        </button>
+                        <button
+                          className="overdue-action-btn remove"
+                          onClick={() => handleDismissOverdueBook(book)}
+                          disabled={Boolean(rowAction)}
+                          title="Remove from overdue notifications without deleting the loan record"
+                        >
+                          {rowAction?.transactionId === book.transactionId && rowAction.type === 'remove'
+                            ? 'Removing...'
+                            : 'Remove'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

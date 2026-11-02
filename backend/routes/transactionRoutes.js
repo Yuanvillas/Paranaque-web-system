@@ -1168,7 +1168,8 @@ router.get('/overdue/all', async (req, res) => {
     const overdueTransactions = await Transaction.find({
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true }
     }).sort({ endDate: 1 });
 
     const overdueData = overdueTransactions.map(transaction => {
@@ -1205,7 +1206,8 @@ router.get('/overdue/user/:email', async (req, res) => {
       userEmail,
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true }
     }).sort({ endDate: 1 });
 
     const overdueData = overdueTransactions.map(transaction => {
@@ -1234,24 +1236,90 @@ router.get('/overdue/user/:email', async (req, res) => {
 });
 
 // Send overdue notification email to a specific user
+router.post('/overdue/notify-book/:transactionId', async (req, res) => {
+  try {
+    const now = new Date();
+    const transaction = await Transaction.findOne({
+      _id: req.params.transactionId,
+      type: 'borrow',
+      status: 'active',
+      endDate: { $lt: now },
+      dismissed: { $ne: true }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        message: 'This overdue book was not found or is no longer eligible for notification'
+      });
+    }
+
+    const daysOverdue = Math.floor(
+      (now - new Date(transaction.endDate)) / (1000 * 60 * 60 * 24)
+    );
+    const { sendOverdueNotificationEmail } = require('../utils/emailService');
+    const result = await sendOverdueNotificationEmail(
+      transaction.userEmail,
+      transaction.bookTitle,
+      transaction.endDate,
+      daysOverdue
+    );
+
+    if (result.error) {
+      return res.status(502).json({ message: result.error });
+    }
+
+    transaction.reminderSent = true;
+    await transaction.save();
+
+    await new Log({
+      userEmail: transaction.userEmail,
+      action: 'overdue_notification',
+      actionType: 'transaction',
+      bookId: transaction.bookId,
+      bookTitle: transaction.bookTitle,
+      transactionId: transaction._id,
+      description: `Overdue notification email sent for book: ${transaction.bookTitle}`
+    }).save();
+
+    return res.json({
+      message: `Overdue notification sent for "${transaction.bookTitle}"`,
+      overdueCount: 1,
+      emailsSent: 1,
+      emailResults: [result],
+      books: [{ title: transaction.bookTitle, dueDate: transaction.endDate }]
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 router.post('/overdue/notify/:email', async (req, res) => {
   try {
     const userEmail = req.params.email;
     const now = new Date();
     const { 
       sendEmail: shouldSendEmail = true,
-      markReminderSent = false 
+      markReminderSent = false,
+      transactionId
     } = req.body;
 
-    // Find all active borrow transactions for user where endDate has passed
+    // Send to one selected transaction when transactionId is supplied.
     const overdueTransactions = await Transaction.find({
+      ...(transactionId ? { _id: transactionId } : {}),
       userEmail,
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true },
+      ...(transactionId ? {} : { reminderSent: { $ne: true } })
     }).sort({ endDate: 1 });
 
     if (overdueTransactions.length === 0) {
+      if (transactionId) {
+        return res.status(404).json({
+          message: 'This overdue book was not found or is no longer eligible for notification'
+        });
+      }
       return res.json({ 
         message: 'No overdue books found for this user',
         emailsSent: 0
@@ -1276,6 +1344,9 @@ router.post('/overdue/notify/:email', async (req, res) => {
         transaction.endDate,
         daysOverdue
       );
+      if (result.error) {
+        return res.status(502).json({ message: result.error });
+      }
       emailResults.push(result);
 
       if (markReminderSent) {
@@ -1285,7 +1356,12 @@ router.post('/overdue/notify/:email', async (req, res) => {
 
       await new Log({
         userEmail,
-        action: `Overdue notification email sent for book: ${transaction.bookTitle}`
+        action: 'overdue_notification',
+        actionType: 'transaction',
+        bookId: transaction.bookId,
+        bookTitle: transaction.bookTitle,
+        transactionId: transaction._id,
+        description: `Overdue notification email sent for book: ${transaction.bookTitle}`
       }).save();
     } else if (overdueTransactions.length > 1 && shouldSendEmail) {
       // Multiple overdue books - send bulk notification
@@ -1299,6 +1375,9 @@ router.post('/overdue/notify/:email', async (req, res) => {
       });
 
       const result = await sendOverdueReminderEmail(userEmail, booksData);
+      if (result.error) {
+        return res.status(502).json({ message: result.error });
+      }
       emailResults.push(result);
 
       if (markReminderSent) {
@@ -1311,7 +1390,9 @@ router.post('/overdue/notify/:email', async (req, res) => {
 
       await new Log({
         userEmail,
-        action: `Bulk overdue notification email sent for ${overdueTransactions.length} book(s)`
+        action: 'overdue_notification',
+        actionType: 'transaction',
+        description: `Bulk overdue notification email sent for ${overdueTransactions.length} book(s)`
       }).save();
     }
 
@@ -1344,7 +1425,9 @@ router.post('/overdue/notify-all', async (req, res) => {
     const overdueTransactions = await Transaction.find({
       type: 'borrow',
       status: 'active',
-      endDate: { $lt: now }
+      endDate: { $lt: now },
+      dismissed: { $ne: true },
+      reminderSent: { $ne: true }
     });
 
     // Group by user email
@@ -1451,7 +1534,9 @@ router.post('/overdue/notify-all', async (req, res) => {
 
         await new Log({
           userEmail,
-          action: `Overdue notification sent for ${userOverdues.length} book(s)`
+          action: 'overdue_notification',
+          actionType: 'transaction',
+          description: `Overdue notification sent for ${userOverdues.length} book(s)`
         }).save();
       } catch (emailError) {
         console.error(`Error sending email to ${userEmail}:`, emailError.message);
@@ -1736,4 +1821,3 @@ router.get('/book-history/:bookId', async (req, res) => {
 });
 
 module.exports = router;
-
