@@ -108,7 +108,18 @@ if (!buildPath) {
 console.log(`📁 Final buildPath: ${buildPath}`);
 console.log(`📁 ========================================\n`);
 
-app.use(express.static(buildPath));
+app.use(express.static(buildPath, {
+  index: false,
+  setHeaders: (res, filePath) => {
+    const relativePath = path.relative(buildPath, filePath);
+    if (relativePath.startsWith(`static${path.sep}`)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.removeHeader('Pragma');
+      res.removeHeader('Expires');
+      res.removeHeader('Surrogate-Control');
+    }
+  }
+}));
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI)

@@ -1,35 +1,36 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import AddBook from "./pages/AddBook";
-import ArchivedBooks from "./pages/ArchivedBooks";
-import ArchivedUsers from "./pages/ArchivedUsers";
-import Genres from "./pages/Genres";
-import GenreBooks from "./pages/GenreBooks";
-import Profile from "./pages/Profile";
-import UserHome from "./pages/UserHome";
-import MyShelf from "./pages/MyShelf";
-import Bookmarks from "./pages/Bookmarks";
-import MyHolds from "./pages/MyHolds";
-import UserLayout from "./layouts/UserLayout";
-import UserActivityLogs from "./pages/UserActivityLogs";
-import Analytics from "./pages/Analytics";
-import VerifyNotice from "./pages/VerifyNotice";
-import VerificationSuccess from "./pages/VerificationSuccess";
-import FAQ from "./pages/FAQ";
-import About from "./pages/About";
-import ChatPopup from "./pages/ChatPopup";
 import "./components/App.css";
-import AdminLogs from "./pages/AdminLogs";
-import UserManagement from "./pages/UserManagement";
-import LibrarianUserManagement from "./pages/LibrarianUserManagement";
-import LibrarianDashboard from "./pages/LibrarianDashboard";
 import ProtectedRoute from "./utils/ProtectedRoute";
-import LandingPage from "./pages/LandingPage";
+
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AddBook = lazy(() => import("./pages/AddBook"));
+const ArchivedBooks = lazy(() => import("./pages/ArchivedBooks"));
+const ArchivedUsers = lazy(() => import("./pages/ArchivedUsers"));
+const Genres = lazy(() => import("./pages/Genres"));
+const GenreBooks = lazy(() => import("./pages/GenreBooks"));
+const Profile = lazy(() => import("./pages/Profile"));
+const UserHome = lazy(() => import("./pages/UserHome"));
+const MyShelf = lazy(() => import("./pages/MyShelf"));
+const Bookmarks = lazy(() => import("./pages/Bookmarks"));
+const MyHolds = lazy(() => import("./pages/MyHolds"));
+const UserLayout = lazy(() => import("./layouts/UserLayout"));
+const UserActivityLogs = lazy(() => import("./pages/UserActivityLogs"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const VerifyNotice = lazy(() => import("./pages/VerifyNotice"));
+const VerificationSuccess = lazy(() => import("./pages/VerificationSuccess"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const About = lazy(() => import("./pages/About"));
+const ChatPopup = lazy(() => import("./pages/ChatPopup"));
+const AdminLogs = lazy(() => import("./pages/AdminLogs"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const LibrarianUserManagement = lazy(() => import("./pages/LibrarianUserManagement"));
+const LibrarianDashboard = lazy(() => import("./pages/LibrarianDashboard"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 function AppContent() {
   const location = useLocation();
@@ -39,39 +40,41 @@ function AppContent() {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-success" element={<VerificationSuccess />} />
-        <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
-        <Route path="/admin/add-book" element={<ProtectedRoute element={<AddBook />} />} />
-        <Route path="/admin/archived-books" element={<ProtectedRoute element={<ArchivedBooks />} />} />
-        <Route path="/admin/archived-users" element={<ProtectedRoute element={<ArchivedUsers />} />} />
-        <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
-        <Route path="/verify-notice" element={<VerifyNotice />} />
-        <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
-        <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
-        <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
-        <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
-        <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
+      <Suspense fallback={<div role="status">Loading page...</div>}>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-success" element={<VerificationSuccess />} />
+          <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
+          <Route path="/admin/add-book" element={<ProtectedRoute element={<AddBook />} />} />
+          <Route path="/admin/archived-books" element={<ProtectedRoute element={<ArchivedBooks />} />} />
+          <Route path="/admin/archived-users" element={<ProtectedRoute element={<ArchivedUsers />} />} />
+          <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/verify-notice" element={<VerifyNotice />} />
+          <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
+          <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
+          <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
+          <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
 
-        <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
-          <Route index element={<UserHome />} />
-          <Route path="genres" element={<Genres />} />
-          <Route path="genres/:genre" element={<GenreBooks />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="shelf" element={<MyShelf />} />
-          <Route path="bookmarks" element={<Bookmarks />} />
-          <Route path="holds" element={<MyHolds />} />
-          <Route path="activity-logs" element={<UserActivityLogs />} />
-          <Route path="faq" element={<FAQ />} />
-          <Route path="about" element={<About />} />
-        </Route>
-      </Routes>
-      {showChat && <ChatPopup />}
+          <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
+            <Route index element={<UserHome />} />
+            <Route path="genres" element={<Genres />} />
+            <Route path="genres/:genre" element={<GenreBooks />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="shelf" element={<MyShelf />} />
+            <Route path="bookmarks" element={<Bookmarks />} />
+            <Route path="holds" element={<MyHolds />} />
+            <Route path="activity-logs" element={<UserActivityLogs />} />
+            <Route path="faq" element={<FAQ />} />
+            <Route path="about" element={<About />} />
+          </Route>
+        </Routes>
+      </Suspense>
+      <Suspense fallback={null}>{showChat && <ChatPopup />}</Suspense>
     </>
   );
 }
