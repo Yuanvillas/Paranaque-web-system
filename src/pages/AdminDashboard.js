@@ -1,12 +1,8 @@
 // src/pages/AdminDashboard.js
-import React, { useState, useEffect } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
-import BorrowedBooksTable from "../components/BorrowedBooksTable";
-import TransactionsTable from "../components/TransactionsTable";
-import ReservedBooksTable from "../components/ReservedBooksTable";
-import ArchiveBooksTable from "../components/ArchiveBooksTable";
 import logo from "../imgs/liblogo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -18,13 +14,18 @@ import {
   faUser,
   faHome
 } from "@fortawesome/free-solid-svg-icons";
-import BooksTable from "../components/BooksTable";
 import AdminDashboardTable from "../components/AdminDashboardTable";
-import PendingRequestTable from "../components/PendingRequestTable";
-import UploadAvatar from "../components/UploadAvatar";
-import UserEntryMonitor from "../components/UserEntryMonitor";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
-import Analytics from "./Analytics";
+
+const BorrowedBooksTable = lazy(() => import("../components/BorrowedBooksTable"));
+const TransactionsTable = lazy(() => import("../components/TransactionsTable"));
+const ReservedBooksTable = lazy(() => import("../components/ReservedBooksTable"));
+const ArchiveBooksTable = lazy(() => import("../components/ArchiveBooksTable"));
+const BooksTable = lazy(() => import("../components/BooksTable"));
+const PendingRequestTable = lazy(() => import("../components/PendingRequestTable"));
+const UploadAvatar = lazy(() => import("../components/UploadAvatar"));
+const UserEntryMonitor = lazy(() => import("../components/UserEntryMonitor"));
+const Analytics = lazy(() => import("./Analytics"));
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -448,15 +449,18 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    console.log("Stored User:", storedUser.profilePicture);
     if (!storedUser || (storedUser.role !== "admin" && storedUser.role !== "librarian")) {
-      navigate("/"); // redirect to homepage
+      navigate("/", { replace: true });
+      return;
     }
+
     // If librarian, redirect to librarian dashboard
-    if (storedUser && storedUser.role === "librarian") {
+    if (storedUser.role === "librarian") {
       navigate("/librarian-dashboard", { replace: true });
       return;
     }
+
+    console.log("Stored User:", storedUser.profilePicture);
     setUser({
       name: `${storedUser.firstName || ''} ${storedUser.lastName || ''}`.trim(),
       email: storedUser.email,
@@ -678,7 +682,9 @@ const AdminDashboard = () => {
                           />
                         ) : (
                           <div style={{ position: 'relative' }}>
-                            <UploadAvatar email={user.email} user={user} />
+                            <Suspense fallback={null}>
+                              <UploadAvatar email={user.email} user={user} />
+                            </Suspense>
                           </div>
                         )
                       }
@@ -960,34 +966,48 @@ const AdminDashboard = () => {
           {!selectedResource && <OverdueNotificationPanel />}
 
           {selectedSubResource === "Borrowed Books" && (
-            <BorrowedBooksTable />
+            <Suspense fallback={<div role="status">Loading borrowed books...</div>}>
+              <BorrowedBooksTable />
+            </Suspense>
           )}
 
           {selectedSubResource === "Transactions" && (
-            <TransactionsTable />
+            <Suspense fallback={<div role="status">Loading transactions...</div>}>
+              <TransactionsTable />
+            </Suspense>
           )}
 
           {selectedSubResource === "Pending Requests" && (
-            <PendingRequestTable />
+            <Suspense fallback={<div role="status">Loading pending requests...</div>}>
+              <PendingRequestTable />
+            </Suspense>
           )}
 
           {selectedSubResource === "Reserved Books" && (
-            <ReservedBooksTable />
+            <Suspense fallback={<div role="status">Loading reserved books...</div>}>
+              <ReservedBooksTable />
+            </Suspense>
           )}
 
           {selectedSubResource === "Archive Books" && (
-            <ArchiveBooksTable />
+            <Suspense fallback={<div role="status">Loading archived books...</div>}>
+              <ArchiveBooksTable />
+            </Suspense>
           )}
 
           {selectedSubResource === "All Books" && (
-            <BooksTable />
+            <Suspense fallback={<div role="status">Loading books...</div>}>
+              <BooksTable />
+            </Suspense>
           )}
 
           {selectedResource === "Analytics" && (
-            <Analytics onClose={() => {
-              setSelectedResource(null);
-              setSelectedSubResource(null);
-            }} />
+            <Suspense fallback={<div role="status">Loading analytics...</div>}>
+              <Analytics onClose={() => {
+                setSelectedResource(null);
+                setSelectedSubResource(null);
+              }} />
+            </Suspense>
           )}
 
           {/* Entry Monitor Modal */}
@@ -1030,7 +1050,9 @@ const AdminDashboard = () => {
                     ✕
                   </button>
                 </div>
-                <UserEntryMonitor />
+                <Suspense fallback={<div role="status">Loading entry monitor...</div>}>
+                  <UserEntryMonitor />
+                </Suspense>
               </div>
             </div>
           )}

@@ -616,8 +616,10 @@ const LibrarianDashboard = () => {
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser || storedUser.role !== "librarian") {
-      navigate("/"); // redirect to homepage
+      navigate("/", { replace: true });
+      return;
     }
+
     setUser({
       name: `${storedUser.firstName || ''} ${storedUser.lastName || ''}`.trim(),
       email: storedUser.email,

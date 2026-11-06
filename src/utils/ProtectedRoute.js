@@ -1,42 +1,29 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 /**
  * ProtectedRoute component that verifies user authentication
  * and prevents unauthorized access to protected pages
  */
 const ProtectedRoute = ({ element, requiredRole = null }) => {
-  const navigate = useNavigate();
+  const userEmail = localStorage.getItem("userEmail");
+  const storedUser = localStorage.getItem("user");
+  let userData = null;
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const userEmail = localStorage.getItem("userEmail");
-      const user = localStorage.getItem("user");
+  if (storedUser) {
+    try {
+      userData = JSON.parse(storedUser);
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+  }
 
-      // If no authentication data, redirect to login
-      if (!userEmail || !user) {
-        navigate("/", { replace: true });
-        return;
-      }
+  if (!userEmail || !userData || typeof userData !== "object" || Array.isArray(userData)) {
+    return <Navigate to="/" replace />;
+  }
 
-      // If a specific role is required, check it
-      if (requiredRole) {
-        try {
-          const userData = JSON.parse(user);
-          if (userData.role !== requiredRole) {
-            navigate("/", { replace: true });
-            return;
-          }
-        } catch (e) {
-          console.error("Error parsing user data:", e);
-          navigate("/", { replace: true });
-          return;
-        }
-      }
-    };
-
-    checkAuth();
-  }, [navigate, requiredRole]);
+  if (requiredRole && userData.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
 
   return element;
 };

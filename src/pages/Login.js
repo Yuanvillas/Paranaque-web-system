@@ -7,6 +7,7 @@ import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
 import OverdueModal from "../components/OverdueModal";
+import { clearAuthData } from "../utils/authHelper";
 
 function Login() {
   const navigate = useNavigate();
@@ -25,6 +26,11 @@ function Login() {
     if (userEmail && user) {
       try {
         const userData = JSON.parse(user);
+        if (!userData || typeof userData !== "object" || Array.isArray(userData)) {
+          clearAuthData();
+          return;
+        }
+
         if (userData.role === "admin" || userData.role === "librarian") {
           navigate("/admin-dashboard", { replace: true });
         } else {
