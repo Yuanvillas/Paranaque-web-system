@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
 
@@ -43,6 +43,7 @@ function AppContent() {
       <Suspense fallback={<div role="status">Loading page...</div>}>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

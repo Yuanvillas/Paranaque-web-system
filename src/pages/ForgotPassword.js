@@ -39,7 +39,7 @@ function ForgotPassword() {
       });
 
       setEmail("");
-      setTimeout(() => navigate("/Login"), 2000);
+      setTimeout(() => navigate("/", { replace: true }), 2000);
     } catch (err) {
       await Swal.fire({
         title: "Parañaledge",
