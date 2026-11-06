@@ -14,6 +14,35 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 
 library.add(faBookOpen, fasBookmark, farBookmark, faBook);
 
+const BookCover = ({ src, alt, compact = false }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const className = compact
+    ? "user-home-book-cover user-home-book-cover--compact"
+    : "user-home-book-cover";
+
+  if (!src || imageFailed) {
+    return (
+      <div
+        className={`${className} user-home-book-cover--placeholder`}
+        role="img"
+        aria-label={`${alt} cover unavailable`}
+      >
+        <FontAwesomeIcon icon={faBookOpen} aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => setImageFailed(true)}
+    />
+  );
+};
 
 const UserHome = () => {
   const [books, setBooks] = useState([]);
@@ -34,6 +63,9 @@ const UserHome = () => {
   const [allBooks, setAllBooks] = useState([]);
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const isBookmarked = (bookId) => bookmarks.some(
+    (bookmark) => bookmark?.book_id?._id === bookId || bookmark?.book_id === bookId
+  );
 
   // Check for overdue books on component mount
   useEffect(() => {
@@ -91,12 +123,18 @@ const UserHome = () => {
         headers: { "Content-Type": "application/json" }
       });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch bookmarks.");
+      }
+
       console.log("fetched:", data)
-      setBookmarks(data.bookmarks);
+      setBookmarks(Array.isArray(data.bookmarks) ? data.bookmarks : []);
     } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      setBookmarks([]);
       await Swal.fire({
         title: "Parañaledge",
-        text: "Error listing in booksmarks",
+        text: "Unable to load your bookmarks.",
         icon: "error",
         confirmButtonText: "OK"
       });
@@ -582,37 +620,7 @@ const UserHome = () => {
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  {book.image ? (
-                    <img 
-                      src={book.image} 
-                      alt={book.title} 
-                      style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '4px', marginBottom: '8px' }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        // Show placeholder instead
-                        const placeholder = e.target.nextElementSibling;
-                        if (placeholder) placeholder.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  {!book.image && (
-                    <div 
-                      style={{ 
-                        width: '100%', 
-                        height: '140px', 
-                        backgroundColor: '#f0f0f0', 
-                        borderRadius: '4px', 
-                        marginBottom: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '40px',
-                        color: '#ccc'
-                      }}
-                    >
-                      📖
-                    </div>
-                  )}
+                  <BookCover src={book.image} alt={book.title} compact />
                   <p style={{ fontSize: '12px', fontWeight: '600', margin: '8px 0 4px', color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</p>
                   <p style={{ fontSize: '11px', color: '#999', margin: '0 0 6px' }}>{book.author || 'Unknown Author'}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
@@ -629,12 +637,12 @@ const UserHome = () => {
                         cursor: 'pointer',
                         fontSize: '16px',
                         padding: '4px 8px',
-                        color: bookmarks.some((bookmark) => bookmark.book_id._id === book._id) ? '#2e7d32' : '#ccc',
+                        color: isBookmarked(book._id) ? '#2e7d32' : '#ccc',
                         transition: 'color 0.2s ease'
                       }}
                     >
                       <FontAwesomeIcon
-                        icon={bookmarks.some((bookmark) => bookmark.book_id._id === book._id) ? fasBookmark : farBookmark}
+                        icon={isBookmarked(book._id) ? fasBookmark : farBookmark}
                       />
                     </button>
                   </div>
@@ -815,31 +823,9 @@ const UserHome = () => {
                     <span className="out-of-stock-badge">Not Available</span>
                   ) : null;
                 })()}
-                {book.image ? (
-                  <img
-                    src={book.image}
-                    alt={book.title}
-                    className="book-image"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '180px',
-                    backgroundColor: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '60px',
-                    color: '#ccc'
-                  }}>
-                    📖
-                  </div>
-                )}
+                <BookCover src={book.image} alt={book.title} />
                 <div style={{ padding: '20px' }} className="book-footer">
-                  <h4 style={{ marginTop: book.image ? '-110px' : '0px', textAlign: 'left' }}>{book.title}</h4>
+                  <h4 style={{ textAlign: 'left' }}>{book.title}</h4>
                   <div className="book-info-actions">
                     <p>{book.year}</p>
                     <div className="book-actions">
@@ -874,7 +860,7 @@ const UserHome = () => {
                         title="Bookmark"
                       >
                         <FontAwesomeIcon
-                          icon={bookmarks.some((bookmark) => bookmark.book_id._id === book._id) ? fasBookmark : farBookmark}
+                          icon={isBookmarked(book._id) ? fasBookmark : farBookmark}
                         />
                       </button>
 
