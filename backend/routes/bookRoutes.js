@@ -348,6 +348,33 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/categories', async (req, res) => {
+  try {
+    const storedCategories = await Book.distinct('category', {
+      archived: { $ne: true },
+      category: { $exists: true, $nin: [null, ''] }
+    });
+
+    const categoriesByName = new Map();
+    storedCategories
+      .filter((category) => typeof category === 'string')
+      .map((category) => category.trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      .forEach((category) => {
+        const normalizedCategory = category.toLocaleLowerCase();
+        if (!categoriesByName.has(normalizedCategory)) {
+          categoriesByName.set(normalizedCategory, category);
+        }
+      });
+
+    res.status(200).json({ categories: [...categoriesByName.values()] });
+  } catch (err) {
+    console.error('Error fetching book categories:', err);
+    res.status(500).json({ error: 'Error fetching book categories' });
+  }
+});
+
 router.get("/", async (req, res) => {
   const { genre, status } = req.query;
   console.log("📚 api/books - GET called with genre:", genre, "status:", status);
@@ -2242,5 +2269,4 @@ router.post('/admin/process-holds/:bookId', async (req, res) => {
 });
 
 module.exports = router;
-
 

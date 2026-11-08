@@ -4,22 +4,30 @@ import { Link } from "react-router-dom";
 const Genres = () => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Fetch all books, then extract unique genres
-    setLoading(true);
-    fetch("https://paranaque-web-system.onrender.com/api/books")
-      .then((res) => res.json())
-      .then((data) => {
-        const allGenres = (data.books || [])
-          .map((book) => book.category)
-          .filter(Boolean);
-        const uniqueGenres = Array.from(new Set(allGenres)).sort();
-        setGenres(uniqueGenres);
-        console.log("Fetched genres:", uniqueGenres);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const fetchGenres = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch("https://paranaque-web-system.onrender.com/api/books/categories");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load catalogs.");
+        }
+
+        setGenres(data.categories || []);
+      } catch (err) {
+        console.error("Error fetching catalogs:", err);
+        setError("Unable to load catalogs. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGenres();
   }, []);
 
   return (
@@ -28,6 +36,8 @@ const Genres = () => {
       <div style={styles.catalogsGrid}>
         {loading ? (
           <p style={styles.loadingText}>Loading catalogs...</p>
+        ) : error ? (
+          <p style={styles.noDataText} role="alert">{error}</p>
         ) : genres.length > 0 ? (
           genres.map((g, idx) => (
             <Link
