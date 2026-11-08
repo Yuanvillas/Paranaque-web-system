@@ -680,10 +680,8 @@ const UserHome = () => {
       </div>
 
       {/* Pagination and Filters controls */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '30px 10px', flexWrap: 'wrap', gap: '15px' }}>
-          {/* Pagination */}
-          <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '30px 10px', flexWrap: 'wrap', gap: '15px' }}>
+        {totalPages > 1 && <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <button 
               onClick={() => setPage((p) => Math.max(1, p - 1))} 
               disabled={page <= 1}
@@ -747,7 +745,7 @@ const UserHome = () => {
             >
               Next →
             </button>
-          </div>
+        </div>}
 
           {/* Filters */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -826,8 +824,7 @@ const UserHome = () => {
               </button>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
       <div style={{ margin: "10px", marginTop: '-10px', borderTop: '1px #ccc solid' }} className="featured">
         <h2 style={{ margin: "30px", fontSize: '20px', fontWeight: '600', marginBottom: '-10px' }}>Latest Books Added</h2>
