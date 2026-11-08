@@ -825,7 +825,7 @@ const UserHome = () => {
                 })()}
                 <BookCover src={book.image} alt={book.title} />
                 <div style={{ padding: '20px' }} className="book-footer">
-                  <h4 style={{ textAlign: 'left' }}>{book.title}</h4>
+                  <h4 className="user-home-book-title" title={book.title} style={{ textAlign: 'left' }}>{book.title}</h4>
                   <div className="book-info-actions">
                     <p>{book.year}</p>
                     <div className="book-actions">
