@@ -376,8 +376,8 @@ router.get('/categories', async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const { genre, status } = req.query;
-  console.log("📚 api/books - GET called with genre:", genre, "status:", status);
+  const { genre, status, category } = req.query;
+  console.log("📚 api/books - GET called with genre:", genre, "category:", category, "status:", status);
 
   try {
     const now = new Date();
@@ -398,6 +398,11 @@ router.get("/", async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    const categoryFilter = category
+      ? { category }
+      : genre
+        ? { category: { $regex: new RegExp(genre, "i") } }
+        : {};
     let filter = null;
 
     if (status === "Available") {
@@ -407,18 +412,16 @@ router.get("/", async (req, res) => {
           { status: status },
           { status: null }
         ],
-        ...(genre ? { category: { $regex: new RegExp(genre, "i") } } : {}),
+        ...categoryFilter,
       };
 
     } else if (status != null) {
       filter = {
         status: { $eq: status },
-        ...(genre ? { category: { $regex: new RegExp(genre, "i") } } : {})
+        ...categoryFilter
       };
     } else {
-      filter = {
-        ...(genre ? { category: { $regex: new RegExp(genre, "i") } } : {}),
-      };
+      filter = categoryFilter;
     }
 
     console.log("📊 Filter:", filter);
@@ -2269,4 +2272,3 @@ router.post('/admin/process-holds/:bookId', async (req, res) => {
 });
 
 module.exports = router;
-

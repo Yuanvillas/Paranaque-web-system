@@ -63,6 +63,8 @@ const UserHome = () => {
   const [allBooks, setAllBooks] = useState([]);
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categories, setCategories] = useState([]);
+  const [categoriesError, setCategoriesError] = useState("");
   const isBookmarked = (bookId) => bookmarks.some(
     (bookmark) => bookmark?.book_id?._id === bookId || bookmark?.book_id === bookId
   );
@@ -106,7 +108,10 @@ const UserHome = () => {
     const limit = 24;
     // Add cache busting with timestamp
     const timestamp = new Date().getTime();
-    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}&_t=${timestamp}`)
+    const categoryQuery = categoryFilter !== "all"
+      ? `&category=${encodeURIComponent(categoryFilter)}`
+      : "";
+    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}&_t=${timestamp}`)
       .then((res) => res.json())
       .then((data) => {
         console.log("📚 Fetched books with images:", data.books?.map(b => ({ title: b.title, hasImage: !!b.image })));
@@ -114,7 +119,7 @@ const UserHome = () => {
         setTotalPages(data.totalPages || 1);
       })
       .catch(console.error);
-  }, [page]);
+  }, [page, categoryFilter]);
 
   const fetchBookmarks = useCallback(async () => {
     try {
@@ -219,6 +224,26 @@ const UserHome = () => {
   useEffect(() => {
     fetchBooks();
   }, [fetchBooks]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("https://paranaque-web-system.onrender.com/api/books/categories");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch categories");
+        }
+
+        setCategories(data.categories || []);
+        setCategoriesError("");
+      } catch (error) {
+        console.error("Error fetching book categories:", error);
+        setCategoriesError("Categories could not be loaded.");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (allBooks.length > 0 && borrowedBooks.length > 0) {
@@ -560,9 +585,6 @@ const UserHome = () => {
     return matchesSearch && matchesAvailability && matchesCategory;
   });
 
-  // Get unique categories for the category filter
-  const categories = [...new Set(books.map(book => book.category).filter(Boolean))].sort();
-
   const today = new Date().toISOString().split("T")[0];
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + 3);
@@ -754,8 +776,7 @@ const UserHome = () => {
               </select>
             </div>
 
-            {categories.length > 0 && (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <label style={{ fontSize: '14px', fontWeight: '600', color: '#333', whiteSpace: 'nowrap' }}>📂 Category:</label>
                 <select 
                   value={categoryFilter}
@@ -779,8 +800,8 @@ const UserHome = () => {
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
-              </div>
-            )}
+                {categoriesError && <span role="alert" style={{ color: '#b00020', fontSize: '12px' }}>{categoriesError}</span>}
+            </div>
 
             {(availabilityFilter !== "all" || categoryFilter !== "all") && (
               <button 
