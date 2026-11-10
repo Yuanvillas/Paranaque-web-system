@@ -20,6 +20,8 @@ const holdRoutes = require('./routes/holdRoutes');
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5050;
 
+app.disable('x-powered-by');
+
 // Middleware
 const corsOptions = {
   origin: function(origin, callback) {
@@ -34,6 +36,19 @@ const corsOptions = {
 // Allow CORS and handle preflight
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://paranaque-web-system.onrender.com https://rqseuhdpktquhlqojoqg.supabase.co https://psgc.gitlab.io https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+  );
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  next();
+});
 
 // Cache prevention middleware - prevents back button access to authenticated pages
 app.use((req, res, next) => {
