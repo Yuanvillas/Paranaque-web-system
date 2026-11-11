@@ -85,13 +85,7 @@ const LibrarianDashboard = () => {
     } else if (name === "Analytics") {
       navigate("/librarian/analytics");
     } else if (name === "Resources") {
-      if (selectedResource === "Resources") {
-        setSelectedResource(null);
-        setSelectedSubResource(null);
-      } else {
-        setSelectedResource("Resources");
-        setSelectedSubResource("All Books");
-      }
+      navigate("/librarian/resources");
     } else {
       Swal.fire({
         title: "Parañaledge",

@@ -21,6 +21,7 @@ const MyHolds = lazy(() => import("./pages/MyHolds"));
 const UserLayout = lazy(() => import("./layouts/UserLayout"));
 const UserActivityLogs = lazy(() => import("./pages/UserActivityLogs"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const Resources = lazy(() => import("./pages/Resources"));
 const VerifyNotice = lazy(() => import("./pages/VerifyNotice"));
 const VerificationSuccess = lazy(() => import("./pages/VerificationSuccess"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -54,11 +55,13 @@ function AppContent() {
           <Route path="/admin/archived-books" element={<ProtectedRoute element={<ArchivedBooks />} />} />
           <Route path="/admin/archived-users" element={<ProtectedRoute element={<ArchivedUsers />} />} />
           <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/admin/resources" element={<ProtectedRoute element={<Resources dashboardPath="/admin-dashboard" analyticsPath="/admin/analytics" />} />} />
           <Route path="/verify-notice" element={<VerifyNotice />} />
           <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
           <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
           <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
           <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/librarian/resources" element={<ProtectedRoute element={<Resources dashboardPath="/librarian-dashboard" analyticsPath="/librarian/analytics" />} />} />
           <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
 
           <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>

@@ -25,7 +25,6 @@ const BooksTable = lazy(() => import("../components/BooksTable"));
 const PendingRequestTable = lazy(() => import("../components/PendingRequestTable"));
 const UploadAvatar = lazy(() => import("../components/UploadAvatar"));
 const UserEntryMonitor = lazy(() => import("../components/UserEntryMonitor"));
-const Analytics = lazy(() => import("./Analytics"));
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -65,22 +64,11 @@ const AdminDashboard = () => {
         navigate("/admin/user-management");
       }
     } else if (name === "Analytics") {
-      if (selectedResource === "Analytics") {
-        setSelectedResource(null);
-        setSelectedSubResource(null);
-      } else {
-        setSelectedResource("Analytics");
-      }
+      navigate("/admin/analytics");
     } else if (name === "Log Activities") {
       navigate("/admin/logs");
     } else if (name === "Resource Management") {
-      if (selectedResource === "Resource Management") {
-        setSelectedResource(null);
-        setSelectedSubResource(null);
-      } else {
-        setSelectedResource("Resource Management");
-        setSelectedSubResource("All Books"); // Show All Books by default
-      }
+      navigate("/admin/resources");
     } else {
       Swal.fire({
         title: "Parañaledge",
@@ -998,15 +986,6 @@ const AdminDashboard = () => {
           {selectedSubResource === "All Books" && (
             <Suspense fallback={<div role="status">Loading books...</div>}>
               <BooksTable />
-            </Suspense>
-          )}
-
-          {selectedResource === "Analytics" && (
-            <Suspense fallback={<div role="status">Loading analytics...</div>}>
-              <Analytics onClose={() => {
-                setSelectedResource(null);
-                setSelectedSubResource(null);
-              }} />
             </Suspense>
           )}
 
