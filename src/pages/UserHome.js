@@ -896,9 +896,17 @@ const UserHome = () => {
       </div>
 
       {showModal && selectedBook && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">{selectedBook.title}</h2>
+        <div className="modal-overlay user-home-book-modal-overlay" onClick={closeModal}>
+          <div className="modal-content user-home-book-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="user-home-book-modal-close"
+              onClick={closeModal}
+              aria-label="Close book details"
+            >
+              ×
+            </button>
+            <h2 className="modal-title user-home-book-modal-title">{selectedBook.title}</h2>
 
             <div className="modal-details">
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
@@ -911,28 +919,13 @@ const UserHome = () => {
               {selectedBook.reserveUntil && <p><strong>Reserve Until:</strong> {new Date(selectedBook.reserveUntil).toLocaleString()}</p>}
             </div>
 
-            <div className="modal-body-flex">
-              <div className="image-info-container">
-                {selectedBook.image ? (
-                  <div className="modal-image-wrapper" style={{ minWidth: '300px', minHeight: '400px' }}>
-                    <img
-                      src={selectedBook.image}
-                      alt={selectedBook.title}
-                      className="modal-image"
-                      style={{ minWidth: '300px', minHeight: '400px', objectFit: 'cover', borderRadius: '8px' }}
-                      onError={(e) => {
-                        console.log("Image failed to load:", selectedBook.image);
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{ minWidth: '300px', minHeight: '400px', backgroundColor: '#f0f0f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ color: '#999' }}>No image available</p>
-                  </div>
-                )}
+            <div className="modal-body-flex user-home-book-modal-body">
+              <div className="image-info-container user-home-book-image-info">
+                <div className="modal-image-wrapper user-home-book-image-wrapper">
+                  <BookCover key={selectedBook._id} src={selectedBook.image} alt={selectedBook.title} />
+                </div>
 
-                <div className="modal-right">
+                <div className="modal-right user-home-book-details">
                   <div className="book-details-grid">
                     <p className="book-info"><strong>Author:</strong> {selectedBook.author || "-"}</p>
                     <p className="book-info"><strong>Publisher:</strong> {selectedBook.publisher || "-"}</p>
@@ -952,7 +945,7 @@ const UserHome = () => {
                 </div>
               </div>
 
-              <div className="modal-inputs">
+              <div className="modal-inputs user-home-book-actions">
                 <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
                   <p style={{ margin: '0', fontSize: '13px', color: '#e65100', fontWeight: '500' }}>
                     📌 <strong>Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.
