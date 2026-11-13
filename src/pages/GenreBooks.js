@@ -110,6 +110,17 @@ const GenreBooks = () => {
         body: JSON.stringify({ bookId: selectedBook._id, userEmail }),
       });
       const data = await res.json();
+      if (res.ok && data.alreadyReserved) {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: data.message,
+          icon: "info",
+          confirmButtonText: "OK"
+        });
+        closeModal();
+        return;
+      }
+
       if (res.ok) {
         await Swal.fire({ title: "Parañaledge", text: "Book reserved successfully! Pending admin approval.", icon: "success", confirmButtonText: "OK" });
         closeModal();

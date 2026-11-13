@@ -2267,6 +2267,10 @@ input[type=password]::-ms-clear
   overflow-y: auto;
 }
 
+.swal2-container {
+  z-index: 12000 !important;
+}
+
 .user-home-book-modal {
   width: min(1100px, calc(100vw - 32px));
   min-width: 0;

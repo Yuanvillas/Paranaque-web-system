@@ -149,7 +149,13 @@ router.post('/reserve', async (req, res) => {
     });
 
     if (existingReservation) {
-      return res.status(400).json({ message: 'You have already reserved this book' });
+      return res.status(200).json({
+        message: existingReservation.status === 'pending'
+          ? 'Your reservation request is already pending admin approval.'
+          : 'You already have an active reservation for this book.',
+        alreadyReserved: true,
+        transaction: existingReservation
+      });
     }
     const transaction = new Transaction({
       bookId,
@@ -161,14 +167,21 @@ router.post('/reserve', async (req, res) => {
       bookTitle: book.title
     });
     
-    // Save transaction and log immediately
-    await Promise.all([
-      transaction.save(),
-      new Log({
+    await transaction.save();
+    try {
+      await new Log({
         userEmail,
-        action: `Reservation requested for book: ${book.title}`
-      }).save()
-    ]);
+        action: 'reserve',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Reservation requested for book: ${book.title}`,
+        status: 'pending'
+      }).save();
+    } catch (logError) {
+      console.error('Error logging reservation request:', logError);
+    }
 
     // Send email and create pending reserved book in the background (non-blocking)
     try {

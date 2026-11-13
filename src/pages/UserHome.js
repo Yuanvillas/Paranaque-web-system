@@ -359,6 +359,19 @@ const UserHome = () => {
       clearTimeout(timeoutId);
       
       const data = await res.json();
+      if (res.ok && data.alreadyReserved) {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: data.message,
+          icon: "info",
+          confirmButtonText: "OK"
+        });
+        fetchBooks();
+        fetchPendingReservations();
+        closeModal();
+        return;
+      }
+
       if (res.ok) {
         await Swal.fire({
           title: "Parañaledge",
