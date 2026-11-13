@@ -2703,6 +2703,7 @@ const generateLibraryCallNumber = (collectionType, subject, author, year) => {
 const AddBook = ({ onBookAdded }) => {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Book Added Successfully!");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [categories, setCategories] = useState([
@@ -3041,6 +3042,62 @@ const AddBook = ({ onBookAdded }) => {
     }
   };
 
+  const addCopiesToExistingBook = async () => {
+    const copiesToAdd = Number(book.stock);
+    const currentStock = Number(duplicateBook?.stock);
+
+    if (!duplicateBook?.id) {
+      alert("The existing book could not be identified. Please cancel and try again.");
+      return;
+    }
+
+    if (!Number.isInteger(copiesToAdd) || copiesToAdd < 1 || !Number.isInteger(currentStock) || currentStock < 0) {
+      alert("Could not determine the current stock or number of copies to add. Please cancel and try again.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/books/${duplicateBook.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: currentStock + copiesToAdd })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to update the existing book's stock");
+      }
+
+      setShowDuplicateModal(false);
+      setDuplicateBook(null);
+      setSuccessMessage(`${copiesToAdd} ${copiesToAdd === 1 ? "copy" : "copies"} added to the existing book.`);
+      setShowSuccessModal(true);
+      setBook({
+        title: "",
+        year: "",
+        genre: "",
+        category: book.category,
+        stock: "1",
+        location: { shelf: "", level: "" },
+        author: "",
+        publisher: "",
+        accessionNumber: "",
+        callNumber: "",
+        image: null
+      });
+      setPreview(null);
+      setBase64Image("");
+
+      if (onBookAdded) onBookAdded();
+    } catch (err) {
+      console.error("❌ Error adding copies to existing book:", err);
+      alert("Failed to add copies: " + (err.message || "Network error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submitBook = async () => {
     setLoading(true);
     console.log("🔄 Starting book submission...");
@@ -3083,6 +3140,7 @@ const AddBook = ({ onBookAdded }) => {
 
       if (res.ok) {
         console.log("✅ Book added successfully! Image URL:", data.book?.image);
+        setSuccessMessage("Book Added Successfully!");
         setShowSuccessModal(true);
         setShowDuplicateModal(false);
         setBook({
@@ -3251,7 +3309,7 @@ const AddBook = ({ onBookAdded }) => {
       {showSuccessModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
-            <h3>Book Added Successfully!</h3>
+            <h3>{successMessage}</h3>
             <button onClick={() => setShowSuccessModal(false)} style={styles.closeModalBtn}>
               Close
             </button>
@@ -3290,18 +3348,15 @@ const AddBook = ({ onBookAdded }) => {
               </p>
             </div>
             <p style={{color: '#856404', fontSize: '13px', fontStyle: 'italic'}}>
-              Do you want to proceed with adding another copy, or cancel?
+              Add {book.stock} {Number(book.stock) === 1 ? "copy" : "copies"} to this book's stock, or cancel?
             </p>
             <div style={{ display: "flex", gap: "10px", marginTop: "15px", justifyContent: 'center' }}>
               <button 
-                onClick={() => {
-                  setShowDuplicateModal(false);
-                  submitBook();
-                }} 
+                onClick={addCopiesToExistingBook}
                 style={{...styles.submitBtn, background: '#ff9800'}}
                 disabled={loading}
               >
-                {loading ? "Adding..." : "Proceed Anyway"}
+                {loading ? "Adding..." : "Add Copies"}
               </button>
               <button 
                 onClick={() => { 
