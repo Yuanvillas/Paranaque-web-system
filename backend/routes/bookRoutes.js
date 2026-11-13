@@ -654,7 +654,11 @@ router.put('/archive/:id', async (req, res) => {
     try {
       await new Log({
         userEmail: req.body.userEmail || 'admin',
-        action: `Archived book: ${book.title} (Accession: ${book.accessionNumber})`
+        action: 'archive_book',
+        actionType: 'transaction',
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Archived book (Accession: ${book.accessionNumber})`
       }).save();
     } catch (logErr) {
       console.warn("⚠️ Log creation failed (non-critical):", logErr.message);
@@ -894,7 +898,12 @@ router.put('/return/:id', async (req, res) => {
     // Log the action
     await new Log({
       userEmail: transaction.userEmail,
-      action: `Returned book: ${book.title}`
+      action: 'return',
+      actionType: 'transaction',
+      transactionId: transaction._id,
+      bookId: book._id,
+      bookTitle: book.title,
+      description: `Returned book: ${book.title}`
     }).save();
 
     // Update book status - increment availableStock since it was borrowed
@@ -1069,7 +1078,12 @@ router.put('/borrow/:id', async (req, res) => {
       book.save(),
       new Log({
         userEmail,
-        action: `Borrowed book: ${book.title}`
+        action: 'borrow',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Borrowed book: ${book.title}`
       }).save()
     ]);
 
@@ -1117,7 +1131,12 @@ router.post('/reserve/:id', async (req, res) => {
       transaction.save(),
       new Log({
         userEmail,
-        action: `Reserved book: ${book.title}`
+        action: 'reserve',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Reserved book: ${book.title}`
       }).save(),
       (async () => {
         try {
@@ -1170,7 +1189,12 @@ router.put('/cancel-reservation/:id', async (req, res) => {
     // Log the cancellation
     await new Log({
       userEmail,
-      action: `Cancelled reservation for book: ${book.title}`
+      action: 'cancel_reservation',
+      actionType: 'transaction',
+      transactionId: reservation._id,
+      bookId: book._id,
+      bookTitle: book.title,
+      description: `Cancelled reservation for book: ${book.title}`
     }).save();
 
     res.json({
@@ -1710,7 +1734,12 @@ router.put('/borrow-reserved/:id', async (req, res) => {
       book.save(),
       new Log({
         userEmail,
-        action: `Borrowed reserved book: ${book.title}`
+        action: 'borrow',
+        actionType: 'transaction',
+        transactionId: borrowTransaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Borrowed reserved book: ${book.title}`
       }).save()
     ]);
 
@@ -1766,7 +1795,12 @@ router.post('/cleanup/return-deleted-users', async (req, res) => {
         // Log the action
         await new Log({
           userEmail: 'system',
-          action: `Auto-returned book from deleted user: ${transaction.bookTitle} (was borrowed by ${transaction.userEmail})`
+          action: 'return',
+          actionType: 'transaction',
+          transactionId: transaction._id,
+          bookId: transaction.bookId,
+          bookTitle: transaction.bookTitle,
+          description: `Auto-returned book from deleted user (was borrowed by ${transaction.userEmail})`
         }).save();
 
         returnedCount++;

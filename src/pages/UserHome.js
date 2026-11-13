@@ -352,7 +352,7 @@ const UserHome = () => {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/reserve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: selectedBook._id, userEmail }),
+        body: JSON.stringify({ bookId: selectedBook._id, userEmail, reserveDate }),
         signal: controller.signal
       });
       

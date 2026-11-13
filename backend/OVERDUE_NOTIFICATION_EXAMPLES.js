@@ -86,9 +86,9 @@ cron.schedule('0 9 * * *', async () => {
 
 // You can also run:
 // - Every Monday and Thursday at 9 AM: '0 9 * * 1,4'
-// - Every 6 hours: '0 */6 * * *'
+// - Every 6 hours: '0 0/6 * * *'
 // - Every day at 9 AM and 3 PM: '0 9,15 * * *'
-// - Every 30 minutes: '*/30 * * * *'
+// - Every 30 minutes: '0/30 * * * *'
 */
 
 // ============================================================================

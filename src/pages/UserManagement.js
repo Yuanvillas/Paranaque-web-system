@@ -812,16 +812,18 @@ const UserManagement = () => {
                   const userLogs = logs.filter(log => log.userEmail === viewUserLogs);
 
                   const relevantLogs = userLogs
-                    .filter(log =>
-                      log.action.includes("Requested to borrow book:") ||
-                      log.action.includes("Returned book:") ||
-                      log.action.includes("Reservation approved by") ||
-                      log.action.includes("Reservation requested for book:")
-                    )
+                    .filter(log => {
+                      const action = (log.action || '').toLowerCase();
+                      const description = (log.description || '').toLowerCase();
+                      return ['borrow', 'reserve', 'return', 'cancel_reservation', 'cancel_transaction', 'approve_transaction', 'reject_transaction'].includes(action) ||
+                        description.includes('borrow') ||
+                        description.includes('return') ||
+                        description.includes('reserv');
+                    })
                     .filter(log => {
                       if (!historySearchQuery) return true;
                       const searchLower = historySearchQuery.toLowerCase();
-                      return log.action.toLowerCase().includes(searchLower);
+                      return `${log.action || ''} ${log.description || ''}`.toLowerCase().includes(searchLower);
                     })
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -833,7 +835,7 @@ const UserManagement = () => {
                     <div className="history-container">
                       {relevantLogs.map((log, idx) => (
                         <div key={idx} className="history-item">
-                          <p className="history-action">{log.action}</p>
+                          <p className="history-action">{log.description || log.action}</p>
                           <p className="history-date">
                             {new Date(log.timestamp).toLocaleString("en-US", {
                               year: "numeric",

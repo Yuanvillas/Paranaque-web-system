@@ -60,8 +60,9 @@ const LibrarianUserManagement = () => {
   const isBorrowRelatedAction = (action) => {
     if (!action) return false;
     const lowerAction = action.toLowerCase();
-    return lowerAction.includes('borrow') || 
-           lowerAction.includes('returned') || 
+    return ['borrow', 'return', 'reserve', 'cancel_reservation', 'cancel_transaction', 'approve_transaction', 'reject_transaction'].includes(lowerAction) ||
+           lowerAction.includes('borrow') ||
+           lowerAction.includes('returned') ||
            lowerAction.includes('return') ||
            lowerAction.includes('reserve') ||
            lowerAction.includes('reservation');
@@ -73,7 +74,7 @@ const LibrarianUserManagement = () => {
     .filter(log => {
       if (!historySearchQuery) return true;
       const searchLower = historySearchQuery.toLowerCase();
-      return log.action.toLowerCase().includes(searchLower);
+      return `${log.action || ''} ${log.description || ''}`.toLowerCase().includes(searchLower);
     });
 
   return (
@@ -426,7 +427,7 @@ const LibrarianUserManagement = () => {
                       }}
                     >
                       <p style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>
-                        {log.action}
+                        {log.description || log.action}
                       </p>
                       <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
                         {new Date(log.timestamp).toLocaleString()}

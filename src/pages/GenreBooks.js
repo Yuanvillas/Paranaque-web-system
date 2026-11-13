@@ -107,7 +107,7 @@ const GenreBooks = () => {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/reserve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: selectedBook._id, userEmail }),
+        body: JSON.stringify({ bookId: selectedBook._id, userEmail, reserveDate }),
       });
       const data = await res.json();
       if (res.ok && data.alreadyReserved) {

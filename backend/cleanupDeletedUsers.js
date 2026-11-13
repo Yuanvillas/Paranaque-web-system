@@ -75,7 +75,12 @@ async function cleanupDeletedUsers() {
         // Log the action
         await new Log({
           userEmail: 'system',
-          action: `Auto-returned book from deleted user: ${transaction.bookTitle} (was borrowed by ${transaction.userEmail})`
+          action: 'return',
+          actionType: 'transaction',
+          transactionId: transaction._id,
+          bookId: transaction.bookId,
+          bookTitle: transaction.bookTitle,
+          description: `Auto-returned book from deleted user (was borrowed by ${transaction.userEmail})`
         }).save();
 
         returnedCount++;

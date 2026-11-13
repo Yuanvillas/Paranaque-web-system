@@ -91,11 +91,59 @@ const UserActivityLogs = () => {
         bg: "#f3e5f5",
         label: "Reserve",
       },
+      cancel_reservation: {
+        icon: faCalendarAlt,
+        color: "#c62828",
+        bg: "#ffebee",
+        label: "Reservation Cancelled",
+      },
+      cancel_transaction: {
+        icon: faCalendarAlt,
+        color: "#c62828",
+        bg: "#ffebee",
+        label: "Request Cancelled",
+      },
+      approve_transaction: {
+        icon: faCheckCircle,
+        color: "#2e7d32",
+        bg: "#e8f5e9",
+        label: "Request Approved",
+      },
+      reject_transaction: {
+        icon: faTimesCircle,
+        color: "#c62828",
+        bg: "#ffebee",
+        label: "Request Rejected",
+      },
       add_book: {
         icon: faBook,
         color: "#2e7d32",
         bg: "#e8f5e9",
         label: "Book Added",
+      },
+      archive_book: {
+        icon: faBook,
+        color: "#666",
+        bg: "#f5f5f5",
+        label: "Book Archived",
+      },
+      archive_user: {
+        icon: faHistory,
+        color: "#666",
+        bg: "#f5f5f5",
+        label: "User Archived",
+      },
+      restore_user: {
+        icon: faHistory,
+        color: "#2e7d32",
+        bg: "#e8f5e9",
+        label: "User Restored",
+      },
+      create_admin: {
+        icon: faCheckCircle,
+        color: "#2e7d32",
+        bg: "#e8f5e9",
+        label: "Admin Created",
       },
       return: { icon: faBook, color: "#c62828", bg: "#ffebee", label: "Return" },
       register: {
@@ -103,6 +151,30 @@ const UserActivityLogs = () => {
         color: "#2e7d32",
         bg: "#e8f5e9",
         label: "Register",
+      },
+      password_change: {
+        icon: faHistory,
+        color: "#1976d2",
+        bg: "#e3f2fd",
+        label: "Password Changed",
+      },
+      password_reset: {
+        icon: faHistory,
+        color: "#1976d2",
+        bg: "#e3f2fd",
+        label: "Password Reset",
+      },
+      profile_update: {
+        icon: faHistory,
+        color: "#1976d2",
+        bg: "#e3f2fd",
+        label: "Profile Updated",
+      },
+      overdue_notification: {
+        icon: faHistory,
+        color: "#ff6f00",
+        bg: "#fff3e0",
+        label: "Overdue Notification",
       },
     };
 

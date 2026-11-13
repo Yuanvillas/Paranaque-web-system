@@ -504,7 +504,9 @@ router.delete('/users/:id', async (req, res) => {
     // Save archive log
     await new Log({
       userEmail: user.email,
-      action: `User account archived by admin`
+      action: 'archive_user',
+      actionType: 'account',
+      description: 'User account archived by admin'
     }).save();
 
     // Delete the user from active users
@@ -560,7 +562,10 @@ router.put('/users/:id', async (req, res) => {
 
     await new Log({
       userEmail: updatedUser.email,
-      action: "User profile updated" + (updates.password ? " (password changed)" : "")
+      action: 'profile_update',
+      actionType: 'account',
+      description: 'User profile updated',
+      details: { passwordChanged: Boolean(updates.password) }
     }).save();
 
     res.json({
@@ -628,7 +633,9 @@ router.put('/archived-users/:id/restore', async (req, res) => {
 
     await new Log({
       userEmail: archivedUser.email,
-      action: `Archived user restored to active users`
+      action: 'restore_user',
+      actionType: 'account',
+      description: 'Archived user restored to active users'
     }).save();
 
     // Delete from archived
@@ -733,7 +740,10 @@ router.post('/forgot-password', async (req, res) => {
     // Log the action
     await new Log({
       userEmail: email,
-      action: 'Password reset email sent'
+      action: 'password_reset',
+      actionType: 'auth',
+      description: 'Password reset email sent',
+      status: 'success'
     }).save().catch(err => console.error("Log save error:", err));
 
     res.json({ 
@@ -746,7 +756,10 @@ router.post('/forgot-password', async (req, res) => {
     // Log the error
     await new Log({
       userEmail: req.body.email,
-      action: `Failed to send password reset email: ${err.message}`
+      action: 'password_reset',
+      actionType: 'auth',
+      description: `Failed to send password reset email: ${err.message}`,
+      status: 'failed'
     }).save().catch(e => console.log("Log save error:", e));
     
     res.status(500).json({ message: 'Failed to send email. Please try again later.' });
@@ -843,7 +856,10 @@ router.post('/reset-password', async (req, res) => {
     // Log the action
     await new Log({
       userEmail: user.email,
-      action: 'Password reset via email link'
+      action: 'password_change',
+      actionType: 'auth',
+      description: 'Password reset via email link',
+      status: 'success'
     }).save().catch(err => console.error("Log save error:", err));
 
     console.log(`🔑 ===========================================================\n`);
@@ -992,7 +1008,10 @@ router.post('/create-first-admin', async (req, res) => {
     // Log admin creation
     await new Log({
       userEmail: email,
-      action: 'First admin account created'
+      action: 'create_admin',
+      actionType: 'account',
+      description: 'First admin account created',
+      status: 'success'
     }).save();
 
     console.log('✅ First admin account created:', email);

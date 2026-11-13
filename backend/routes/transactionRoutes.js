@@ -83,7 +83,12 @@ router.post('/borrow', async (req, res) => {
       book.save(),
       new Log({
         userEmail,
-        action: `Borrowed book: ${book.title}`
+        action: 'borrow',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Borrowed book: ${book.title}`
       }).save()
     ]);
 
@@ -134,11 +139,31 @@ router.post('/borrow', async (req, res) => {
 // Reserve a book
 router.post('/reserve', async (req, res) => {
   try {
-    const { bookId, userEmail } = req.body;
+    const { bookId, userEmail, reserveDate } = req.body;
     console.log("/reserve", bookId, userEmail);
     const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Book not found' });
+    }
+
+    let reservationStartDate = new Date();
+    if (reserveDate !== undefined) {
+      if (typeof reserveDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(reserveDate)) {
+        return res.status(400).json({ message: 'Invalid reservation date' });
+      }
+
+      const selectedDate = new Date(`${reserveDate}T00:00:00.000Z`);
+      if (Number.isNaN(selectedDate.getTime()) || selectedDate.toISOString().slice(0, 10) !== reserveDate) {
+        return res.status(400).json({ message: 'Invalid reservation date' });
+      }
+
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        return res.status(400).json({ message: 'Reservation date cannot be in the past' });
+      }
+
+      reservationStartDate = selectedDate;
     }
 
     // Check if book is already reserved by this user
@@ -162,7 +187,7 @@ router.post('/reserve', async (req, res) => {
       userEmail,
       type: 'reserve',
       status: 'pending', // Start as pending, waiting for admin approval
-      startDate: new Date(),
+      startDate: reservationStartDate,
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days for admin to approve
       bookTitle: book.title
     });
@@ -236,7 +261,12 @@ router.post('/return/:transactionId', async (req, res) => {
       book.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Returned book: ${book.title}`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Returned book: ${book.title}`
       }).save()
     ]);
 
@@ -336,7 +366,12 @@ router.post('/cancel-reservation/:transactionId', async (req, res) => {
       transaction.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Cancelled reservation for: ${transaction.bookTitle}`
+        action: 'cancel_reservation',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: transaction.bookId,
+        bookTitle: transaction.bookTitle,
+        description: `Cancelled reservation for: ${transaction.bookTitle}`
       }).save()
     ]);
 
@@ -363,7 +398,12 @@ router.post('/cancel-pending/:transactionId', async (req, res) => {
       transaction.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Cancelled pending ${transaction.type} request for: ${transaction.bookTitle}`
+        action: 'cancel_transaction',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: transaction.bookId,
+        bookTitle: transaction.bookTitle,
+        description: `Cancelled pending ${transaction.type} request for: ${transaction.bookTitle}`
       }).save()
     ]);
 
@@ -473,12 +513,15 @@ router.post('/approve-reservation/:id', async (req, res) => {
     // Create log entry and send notification
     await Promise.all([
       new Log({
-        action: 'RESERVATION_APPROVED',
+        action: 'approve_transaction',
+        actionType: 'transaction',
         userEmail: transaction.userEmail,
-        adminEmail,
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
-        details: `Reservation approved by ${adminEmail}`
+        transactionId: transaction._id,
+        description: `Reservation approved by ${adminEmail}`,
+        details: { adminEmail },
+        status: 'success'
       }).save()
     ]);
 
@@ -528,12 +571,15 @@ router.post('/reject-reservation/:id', async (req, res) => {
 
     await Promise.all([
       new Log({
-        action: 'RESERVATION_REJECTED',
+        action: 'reject_transaction',
+        actionType: 'transaction',
         userEmail: transaction.userEmail,
-        adminEmail,
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
-        details: `Reservation rejected by ${adminEmail}. Reason: ${rejectionReason}`
+        transactionId: transaction._id,
+        description: `Reservation rejected by ${adminEmail}. Reason: ${rejectionReason}`,
+        details: { adminEmail, rejectionReason },
+        status: 'success'
       }).save()
     ]);
 
@@ -843,7 +889,13 @@ router.post('/borrow-request', async (req, res) => {
     await transaction.save();
     await new Log({
       userEmail,
-      action: `Requested to borrow book: ${book.title}`
+      action: 'borrow',
+      actionType: 'transaction',
+      transactionId: transaction._id,
+      bookId: book._id,
+      bookTitle: book.title,
+      description: `Requested to borrow book: ${book.title}`,
+      status: 'pending'
     }).save();
 
     // Send email notification to user about their borrow request (async, don't wait)
@@ -929,7 +981,13 @@ router.post('/request-return/:transactionId', async (req, res) => {
       returnRequest.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Submitted return request for book: ${book.title}`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Submitted return request for book: ${book.title}`,
+        status: 'pending'
       }).save()
     ]);
 
@@ -1029,7 +1087,12 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
       book.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Returned book: ${book.title} (Approved by ${approvedBy || 'Librarian'})`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Returned book: ${book.title} (Approved by ${approvedBy || 'Librarian'})`
       }).save()
     ]);
 
@@ -1144,7 +1207,14 @@ router.put('/return-requests/:requestId/reject', async (req, res) => {
       returnRequest.save(),
       new Log({
         userEmail: returnRequest.userEmail,
-        action: `Return request rejected for book: ${returnRequest.bookTitle}. Reason: ${rejectionReason || 'No reason provided'}`
+        action: 'reject_transaction',
+        actionType: 'transaction',
+        transactionId: returnRequest.transactionId,
+        bookId: returnRequest.bookId,
+        bookTitle: returnRequest.bookTitle,
+        description: `Return request rejected for book: ${returnRequest.bookTitle}. Reason: ${rejectionReason || 'No reason provided'}`,
+        details: { approvedBy, rejectionReason: rejectionReason || 'No reason provided' },
+        status: 'success'
       }).save()
     ]);
 

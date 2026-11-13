@@ -8,7 +8,7 @@ const logSchema = new mongoose.Schema({
   },
   action: {
     type: String,
-    enum: ['login', 'logout', 'borrow', 'reserve', 'return', 'cancel_reservation', 'approve_transaction', 'reject_transaction', 'create_hold', 'cancel_hold', 'register', 'password_change', 'profile_update', 'overdue_notification', 'add_book'],
+    enum: ['login', 'logout', 'borrow', 'reserve', 'return', 'cancel_reservation', 'cancel_transaction', 'approve_transaction', 'reject_transaction', 'create_hold', 'cancel_hold', 'register', 'create_admin', 'password_change', 'password_reset', 'profile_update', 'archive_book', 'archive_user', 'restore_user', 'overdue_notification', 'add_book'],
     required: true
   },
   actionType: {
