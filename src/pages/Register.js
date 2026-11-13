@@ -7,12 +7,17 @@ import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
 
+const STREET_SUGGESTIONS_KEY = "registerStreetSuggestions";
+const MAX_STREET_SUGGESTIONS = 20;
+
 function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     suffix: "", 
+    street: "",
+    barangay: "",
     contactNumber: "",
     address: "",
     email: "",
@@ -22,6 +27,8 @@ function Register() {
   });
   const [errors, setErrors] = useState({});
   const [emailStatus, setEmailStatus] = useState("");
+  const [streetSuggestions, setStreetSuggestions] = useState([]);
+  const [streetSuggestionError, setStreetSuggestionError] = useState("");
 
   const [regions, setRegions] = useState([]);
   const [cities, setCities] = useState([]);
@@ -30,6 +37,23 @@ function Register() {
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [showTermsModal, setShowTermsModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedSuggestions = localStorage.getItem(STREET_SUGGESTIONS_KEY);
+      if (!savedSuggestions) return;
+
+      const parsedSuggestions = JSON.parse(savedSuggestions);
+      if (!Array.isArray(parsedSuggestions) || !parsedSuggestions.every((value) => typeof value === "string")) {
+        throw new Error("Saved street suggestions have an invalid format.");
+      }
+
+      setStreetSuggestions(parsedSuggestions.filter((value) => value.trim().length >= 2).slice(0, MAX_STREET_SUGGESTIONS));
+    } catch (error) {
+      console.error("Failed to load saved street suggestions:", error);
+      setStreetSuggestionError("Saved street suggestions could not be loaded from this device.");
+    }
+  }, []);
 
   const validateEmail = (email) => {
     if (!email) {
@@ -53,7 +77,12 @@ function Register() {
       case "firstName":
       case "lastName":
         if (!value.trim()) error = "This field is required.";
+        else if (value.trim().length < 2) error = "Must be at least 2 characters.";
         else if (!/^[a-zA-Z\s]+$/.test(value)) error = "Only letters and spaces are allowed.";
+        break;
+      case "street":
+        if (!value.trim()) error = "Street is required.";
+        else if (value.trim().length < 2) error = "Must be at least 2 characters.";
         break;
       case "contactNumber":
         if (!/^09\d{9}$/.test(value)) error = "Must be 11 digits and start with '09'.";
@@ -73,6 +102,7 @@ function Register() {
         break;
       case "address":
         if (!value.trim()) error = "Address is required.";
+        else if (value.trim().length < 2) error = "Address must be at least 2 characters.";
         break;
       case "termsAccepted":
         if (!value) error = "You must accept the terms.";
@@ -132,6 +162,7 @@ function Register() {
         case "firstName":
         case "lastName":
           if (!form[field].trim()) error = "This field is required.";
+          else if (form[field].trim().length < 2) error = "Must be at least 2 characters.";
           else if (!/^[a-zA-Z\s]+$/.test(form[field])) error = "Only letters and spaces are allowed.";
           break;
         case "contactNumber":
@@ -150,6 +181,7 @@ function Register() {
           break;
         case "street":
           if (!form[field].trim()) error = "Street is required.";
+          else if (form[field].trim().length < 2) error = "Must be at least 2 characters.";
           break;
         case "barangay":
           if (!form[field]) error = "Please select a barangay.";
@@ -187,9 +219,24 @@ function Register() {
   try {
     const { confirmPassword, termsAccepted, ...finalData } = dataToSend;
     const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/register", finalData);
+    let registrationMessage = res.data.message;
+    const street = form.street.trim();
+    const updatedSuggestions = [
+      street,
+      ...streetSuggestions.filter((suggestion) => suggestion.toLowerCase() !== street.toLowerCase()),
+    ].slice(0, MAX_STREET_SUGGESTIONS);
+    try {
+      localStorage.setItem(STREET_SUGGESTIONS_KEY, JSON.stringify(updatedSuggestions));
+      setStreetSuggestions(updatedSuggestions);
+      setStreetSuggestionError("");
+    } catch (storageError) {
+      console.error("Failed to save street suggestion on this device:", storageError);
+      registrationMessage += " Your street entry could not be saved for future suggestions on this device.";
+      setStreetSuggestionError("Your street entry could not be saved for future suggestions on this device.");
+    }
     await Swal.fire({
       title: "Parañaledge",
-      text: res.data.message,
+      text: registrationMessage,
       icon: "success",
       confirmButtonText: "OK"
     });
@@ -272,8 +319,18 @@ function Register() {
               placeholder="House No., Street, Subdivision"
               value={form.street}
               onChange={handleChange}
+              list="street-suggestions"
             />
+            <datalist id="street-suggestions">
+              {streetSuggestions.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+            <p style={{ fontSize: "0.75rem", color: "#666" }}>
+              Previous street entries are saved in this browser for suggestions. Avoid using this on a shared device.
+            </p>
             {errors.street && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.street}</p>}
+            {streetSuggestionError && <p style={{ color: "red", fontSize: "0.8rem" }}>{streetSuggestionError}</p>}
             
             <div className="register-form-row">
               <select

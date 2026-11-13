@@ -37,6 +37,13 @@ router.post("/register", async (req, res) => {
     if (!/^[a-zA-Z\s]+$/.test(firstName) || !/^[a-zA-Z\s]+$/.test(lastName)) {
       return res.status(400).json({ message: "Names must contain only letters." });
     }
+    if (firstName.trim().length < 2 || lastName.trim().length < 2) {
+      return res.status(400).json({ message: "Names must be at least 2 characters long." });
+    }
+
+    if (typeof address !== 'string' || address.trim().length < 2) {
+      return res.status(400).json({ message: "Address must be at least 2 characters long." });
+    }
 
     // ✅ Contact number must start with 09 and be exactly 11 digits
     if (!/^09\d{9}$/.test(contactNumber)) {
