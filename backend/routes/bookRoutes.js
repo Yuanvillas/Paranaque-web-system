@@ -10,6 +10,7 @@ const ReservedBook = require('../models/ReservedBook');
 const Counter = require('../models/Counter');
 const { uploadBase64ToSupabase, getFullImageUrl } = require('../utils/upload');
 const { generateLibraryCallNumber } = require('../utils/ddc');
+const bookSubjects = require('../../src/data/bookSubjects.json');
 
 const router = express.Router();
 
@@ -354,13 +355,24 @@ router.post('/', async (req, res) => {
 
 router.get('/categories', async (req, res) => {
   try {
-    const storedCategories = await Book.distinct('category', {
-      archived: { $ne: true },
-      category: { $exists: true, $nin: [null, ''] }
-    });
+    const activeBooks = { archived: { $ne: true } };
+    const [storedCategories, storedSubjects, storedGenres] = await Promise.all([
+      Book.distinct('category', {
+        ...activeBooks,
+        category: { $exists: true, $nin: [null, ''] }
+      }),
+      Book.distinct('subject', {
+        ...activeBooks,
+        subject: { $exists: true, $nin: [null, ''] }
+      }),
+      Book.distinct('genre', {
+        ...activeBooks,
+        genre: { $exists: true, $nin: [null, ''] }
+      })
+    ]);
 
     const categoriesByName = new Map();
-    storedCategories
+    [...bookSubjects, ...storedCategories, ...storedSubjects, ...storedGenres]
       .filter((category) => typeof category === 'string')
       .map((category) => category.trim())
       .filter(Boolean)
@@ -402,28 +414,42 @@ router.get("/", async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    const escapedGenre = typeof genre === 'string'
+      ? genre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      : '';
+    const genrePattern = { $regex: escapedGenre, $options: 'i' };
+    const exactGenrePattern = { $regex: `^${escapedGenre}$`, $options: 'i' };
     const categoryFilter = category
       ? { category }
-      : genre
-        ? { category: { $regex: new RegExp(genre, "i") } }
+      : escapedGenre
+        ? {
+          $or: [
+            { subject: exactGenrePattern },
+            { category: genrePattern },
+            { genre: genrePattern }
+          ]
+        }
         : {};
-    let filter = null;
+    const hasCategoryFilter = Object.keys(categoryFilter).length > 0;
+    let filter;
 
     if (status === "Available") {
       console.log("Filtering for available books");
-      filter = {
+      const availableFilter = {
         $or: [
           { status: status },
           { status: null }
-        ],
-        ...categoryFilter,
+        ]
       };
+      filter = hasCategoryFilter
+        ? { $and: [availableFilter, categoryFilter] }
+        : availableFilter;
 
     } else if (status != null) {
-      filter = {
-        status: { $eq: status },
-        ...categoryFilter
-      };
+      const statusFilter = { status: { $eq: status } };
+      filter = hasCategoryFilter
+        ? { $and: [statusFilter, categoryFilter] }
+        : statusFilter;
     } else {
       filter = categoryFilter;
     }

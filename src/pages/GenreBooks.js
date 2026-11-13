@@ -153,8 +153,8 @@ const GenreBooks = () => {
   if (!genre || typeof genre !== "string" || genre.length === 0) {
     return (
       <div style={{ padding: "20px" }}>
-        <h2>Invalid genre or loading...</h2>
-        <Link to="/user-home/genres" style={{ color: "#007bff" }}>← Back to Genres</Link>
+        <h2>Invalid catalog or loading...</h2>
+        <Link to="/user-home/genres" style={{ color: "#007bff" }}>← Back to Catalogs</Link>
       </div>
     );
   }
@@ -202,7 +202,7 @@ const GenreBooks = () => {
             </div>
           ))
         ) : (
-          <p style={{ fontSize: "16px", marginTop: "20px" }}>No books found in this genre.</p>
+          <p style={{ fontSize: "16px", marginTop: "20px" }}>No books found in this catalog.</p>
         )}
       </div>
 

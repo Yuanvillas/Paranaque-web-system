@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import logo from "../imgs/liblogo.png";
+import bookSubjects from "../data/bookSubjects.json";
 
 // Library Call Number Utility (mirrored from backend)
 // Format: PREFIX.DDC-CUTTER-YEAR
@@ -2706,110 +2707,7 @@ const AddBook = ({ onBookAdded }) => {
   const [successMessage, setSuccessMessage] = useState("Book Added Successfully!");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
-  const [categories, setCategories] = useState([
-    // DDC Classification System
-    '000 Computer science, knowledge & systems',
-    '010 Bibliographies',
-    '020 Library & information sciences',
-    '030 Encyclopedias & books of facts',
-    '050 Magazines, journals & serials',
-    '060 Associations, organizations & museums',
-    '070 News media, journalism & publishing',
-    '080 Quotations',
-    '090 Manuscripts & rare books',
-    '100 Philosophy',
-    '110 Metaphysics',
-    '120 Epistemology',
-    '130 Parapsychology & occultism',
-    '140 Philosophical schools of thought',
-    '150 Psychology',
-    '160 Logic',
-    '170 Ethics',
-    '180 Ancient, medieval & eastern philosophy',
-    '190 Modern western philosophy',
-    '200 Religion',
-    '210 Philosophy & theory of religion',
-    '220 The Bible',
-    '230 Christianity & Christian theology',
-    '240 Christian practice & observance',
-    '250 Christian pastoral practice & religious orders',
-    '260 Christian organization, social work & worship',
-    '270 History of Christianity',
-    '280 Christian denominations',
-    '290 Other religions',
-    '300 Social sciences, sociology & anthropology',
-    '310 Statistics',
-    '320 Political science',
-    '330 Economics',
-    '340 Law',
-    '350 Public administration & military science',
-    '360 Social problems & social services',
-    '370 Education',
-    '380 Commerce, communications & transportation',
-    '390 Customs, etiquette & folklore',
-    '400 Language',
-    '410 Linguistics',
-    '420 English & Old English languages',
-    '430 German & related languages',
-    '440 French & related languages',
-    '450 Italian, Romanian & related languages',
-    '460 Spanish & Portuguese languages',
-    '470 Latin & Italic languages',
-    '480 Classical & modern Greek languages',
-    '490 Other languages',
-    '500 Science',
-    '510 Mathematics',
-    '520 Astronomy',
-    '530 Physics',
-    '540 Chemistry',
-    '550 Earth sciences & geology',
-    '560 Fossils & prehistoric life',
-    '570 Life sciences; biology',
-    '580 Plants (Botany)',
-    '590 Animals (Zoology)',
-    '600 Technology',
-    '610 Medicine & health',
-    '620 Engineering',
-    '630 Agriculture',
-    '640 Home & family management',
-    '650 Management & public relations',
-    '660 Chemical engineering',
-    '670 Manufacturing',
-    '680 Manufacture for specific uses',
-    '690 Building & construction',
-    '700 Arts',
-    '710 Landscaping & area planning',
-    '720 Architecture',
-    '730 Sculpture, ceramics & metalwork',
-    '740 Drawing & decorative arts',
-    '750 Painting',
-    '760 Graphic arts',
-    '770 Photography & computer art',
-    '780 Music',
-    '790 Sports, games & entertainment',
-    '800 Literature, rhetoric & criticism',
-    '810 American literature in English',
-    '820 English & Old English literatures',
-    '830 German & related literatures',
-    '840 French & related literatures',
-    '850 Italian, Romanian & related literatures',
-    '860 Spanish & Portuguese literatures',
-    '870 Latin & Italic literatures',
-    '880 Classical & modern Greek literatures',
-    '890 Other literatures',
-    '900 History',
-    '910 Geography & travel',
-    '920 Biography & genealogy',
-    '930 History of ancient world (to ca. 499)',
-    '940 History of Europe',
-    '950 History of Asia',
-    '960 History of Africa',
-    '970 History of North America',
-    '980 History of South America',
-    '990 History of other areas',
-    // Legacy support
-    'Science', 'Math', 'Filipino', 'English', 'Fiction'
-  ]);
+  const [categories, setCategories] = useState(bookSubjects);
   const [nextAccessionNumber, setNextAccessionNumber] = useState("Calculating...");
   const [nextCallNumber, setNextCallNumber] = useState("PREFIX.DDD-CCC-YYYY");
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -2946,12 +2844,13 @@ const AddBook = ({ onBookAdded }) => {
   const handleAddCategory = () => {
     if (newCategory.trim()) {
       if (!categories.includes(newCategory.trim())) {
-        setCategories([...categories, newCategory.trim()]);
-        setBook({ ...book, category: newCategory.trim() });
+        const subject = newCategory.trim();
+        setCategories([...categories, subject]);
+        setBook({ ...book, category: subject, subject });
         setNewCategory("");
         setShowCategoryModal(false);
       } else {
-        alert("Category already exists!");
+        alert("Subject already exists!");
       }
     }
   };
@@ -3289,14 +3188,14 @@ const AddBook = ({ onBookAdded }) => {
             <h3>Add New Subject</h3>
             <input
               type="text"
-              placeholder="Enter category name"
+              placeholder="Enter subject name"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               style={styles.input}
             />
             <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
               <button onClick={handleAddCategory} style={styles.submitBtn}>
-                Add Category
+                Add Subject
               </button>
               <button onClick={() => { setShowCategoryModal(false); setNewCategory(""); }} style={styles.cancelBtn}>
                 Cancel
