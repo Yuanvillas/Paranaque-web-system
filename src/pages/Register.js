@@ -234,7 +234,7 @@ function Register() {
   }, [selectedCity]);
 
   return (
-    <div className="auth-container">
+    <div className="auth-container register-page">
       <div className="auth-wrapper">
         <div className="auth-image">
           <img src={schoolImage} alt="School" />
@@ -246,14 +246,13 @@ function Register() {
             <input type="text" name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} />
             {errors.firstName && <p style={{ color: "red", fontSize: "0.8rem"}}>{errors.firstName}</p>}
             
-            <div className="d-flex gap-3">
+            <div className="register-form-row register-name-row">
               <input type="text" name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} />
               <select
                 name="suffix"
                 value={form.suffix}
                 onChange={handleChange}
                 className="form-control input-field"
-                style={{ width: "50%"}}
               >
                 <option value="">Suffix</option>
                 <option value="Sr.">Sr.</option>
@@ -276,7 +275,7 @@ function Register() {
             />
             {errors.street && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.street}</p>}
             
-            <div className="d-flex gap-3">
+            <div className="register-form-row">
               <select
                 name="region"
                 value={selectedRegion}
@@ -312,22 +311,19 @@ function Register() {
               </select>
             </div>
 
-            <div className="d-flex gap-3">
-              <select
-                name="barangay"
-                value={form.barangay}
-                onChange={handleChange}
-                className="form-control"
-              >
-                <option value="">Select Barangay</option>
-                {barangays.map(brgy => (
-                  <option key={brgy.code} value={brgy.name}>
-                    {brgy.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            <select
+              name="barangay"
+              value={form.barangay}
+              onChange={handleChange}
+              className="form-control"
+            >
+              <option value="">Select Barangay</option>
+              {barangays.map(brgy => (
+                <option key={brgy.code} value={brgy.name}>
+                  {brgy.name}
+                </option>
+              ))}
+            </select>
 
             <input type="tel" name="contactNumber" placeholder="Contact Number" value={form.contactNumber} onChange={handleChange} />
             {errors.contactNumber && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.contactNumber}</p>}

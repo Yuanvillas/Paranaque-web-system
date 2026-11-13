@@ -265,3 +265,125 @@ input[type=password]::-ms-clear
 {
     display: none;
 }
+
+.register-page {
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    align-items: stretch;
+}
+
+.register-page .auth-wrapper {
+    min-height: 100vh;
+    height: auto;
+    align-items: stretch;
+}
+
+.register-page .auth-image {
+    height: auto;
+    min-height: 100vh;
+}
+
+.register-page .auth-card {
+    width: 50%;
+    min-height: 100vh;
+    height: auto;
+    padding: 2rem clamp(1.5rem, 4vw, 4rem);
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.register-page .auth-form {
+    width: 100%;
+    max-width: 430px;
+    gap: 0.75rem;
+}
+
+.register-page .auth-form input:not([type="checkbox"]),
+.register-page .auth-form select {
+    width: 100%;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.register-page .register-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.register-page .register-name-row {
+    grid-template-columns: minmax(0, 2fr) minmax(90px, 1fr);
+}
+
+.register-page .auth-form > p {
+    margin: 0;
+}
+
+.register-page .terms-text {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.6rem;
+    margin: 0.25rem 0;
+    text-align: left;
+}
+
+.register-page .terms-text input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 16px;
+}
+
+.register-page .auth-form button.terms-link {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+}
+
+@media (max-width: 1024px) {
+    .register-page {
+        min-height: 100vh;
+        height: auto;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .register-page .auth-wrapper {
+        min-height: calc(100vh - 40px);
+        height: auto;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .register-page .auth-card {
+        width: 100%;
+        max-width: 560px;
+        min-height: auto;
+        padding: 2rem;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-page {
+        padding: 10px;
+    }
+
+    .register-page .auth-wrapper {
+        min-height: calc(100vh - 20px);
+    }
+
+    .register-page .auth-card {
+        padding: 1.25rem;
+    }
+}
