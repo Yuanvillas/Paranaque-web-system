@@ -392,7 +392,7 @@ function Register() {
             <PasswordInput type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} />
             {errors.password && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.password}</p>}
 
-            <PasswordInput type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} />
+            <PasswordInput type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} preventClipboard />
             {errors.confirmPassword && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>}
 
             <label className="terms-text d-flex justify-content-center align-items-center">
