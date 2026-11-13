@@ -2889,6 +2889,10 @@ const AddBook = ({ onBookAdded }) => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
+    if (name === "year" && value !== "" && !/^\d+$/.test(value)) {
+      return;
+    }
+
     if (name === "image") {
       const file = files[0];
       
@@ -2975,7 +2979,7 @@ const AddBook = ({ onBookAdded }) => {
       return;
     }
     
-    if (!book.year || isNaN(book.year) || book.year < 1000 || book.year > new Date().getFullYear() + 10) {
+    if (!book.year || !Number.isInteger(Number(book.year)) || book.year < 1000 || book.year > new Date().getFullYear() + 10) {
       alert("Please enter a valid year (between 1000 and " + (new Date().getFullYear() + 10) + ")");
       return;
     }
@@ -3153,7 +3157,17 @@ const AddBook = ({ onBookAdded }) => {
 
         <Input label="Publisher (Optional)" name="publisher" value={book.publisher} onChange={handleChange} />
 
-        <Input label="Year Published" type="number" name="year" value={book.year} onChange={handleChange} required />
+        <Input
+          label="Year Published"
+          type="number"
+          name="year"
+          min="1000"
+          max={new Date().getFullYear() + 10}
+          step="1"
+          value={book.year}
+          onChange={handleChange}
+          required
+        />
 
         <Input label="Number of Copies" type="number" name="stock" min="1" value={book.stock} onChange={(e) => {
           const value = e.target.value;
@@ -3307,7 +3321,7 @@ const AddBook = ({ onBookAdded }) => {
   );
 };
 
-const Input = ({ label, name, value, onChange, type = "text", required = false, disabled = false, small = false, min = undefined }) => (
+const Input = ({ label, name, value, onChange, type = "text", required = false, disabled = false, small = false, min = undefined, max = undefined, step = undefined }) => (
   <div style={{ marginBottom: "15px", width: small ? "48%" : "100%" }}>
     <label style={styles.label}>{label}</label>
     <input
@@ -3320,6 +3334,8 @@ const Input = ({ label, name, value, onChange, type = "text", required = false, 
       aria-label={label}
       style={styles.input}
       min={min}
+      max={max}
+      step={step}
     />
   </div>
 );
