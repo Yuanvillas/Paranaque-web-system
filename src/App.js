@@ -17,7 +17,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const UserHome = lazy(() => import("./pages/UserHome"));
 const MyShelf = lazy(() => import("./pages/MyShelf"));
 const Bookmarks = lazy(() => import("./pages/Bookmarks"));
-const MyHolds = lazy(() => import("./pages/MyHolds"));
 const UserLayout = lazy(() => import("./layouts/UserLayout"));
 const UserActivityLogs = lazy(() => import("./pages/UserActivityLogs"));
 const Analytics = lazy(() => import("./pages/Analytics"));
@@ -71,7 +70,7 @@ function AppContent() {
             <Route path="profile" element={<Profile />} />
             <Route path="shelf" element={<MyShelf />} />
             <Route path="bookmarks" element={<Bookmarks />} />
-            <Route path="holds" element={<MyHolds />} />
+            <Route path="holds" element={<Navigate to="/user-home" replace />} />
             <Route path="activity-logs" element={<UserActivityLogs />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
