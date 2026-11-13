@@ -322,7 +322,11 @@ router.post('/', async (req, res) => {
     // Log book addition
     await new Log({
       userEmail: userEmail || 'admin',
-      action: `Added new book: ${title} (Accession: ${generatedAccessionNumber})`
+      action: 'add_book',
+      actionType: 'transaction',
+      bookId: savedBook._id,
+      bookTitle: savedBook.title,
+      description: `Added new book (Accession: ${generatedAccessionNumber})`
     }).save();
 
     res.status(201).json({ message: 'Book added successfully!', book: savedBook });

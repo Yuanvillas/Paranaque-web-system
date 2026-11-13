@@ -91,6 +91,12 @@ const UserActivityLogs = () => {
         bg: "#f3e5f5",
         label: "Reserve",
       },
+      add_book: {
+        icon: faBook,
+        color: "#2e7d32",
+        bg: "#e8f5e9",
+        label: "Book Added",
+      },
       return: { icon: faBook, color: "#c62828", bg: "#ffebee", label: "Return" },
       register: {
         icon: faCheckCircle,
