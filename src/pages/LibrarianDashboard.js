@@ -104,87 +104,14 @@ const LibrarianDashboard = () => {
   useEffect(() => {
     const fetchEntryStats = async () => {
       try {
-        const [logsResponse, usersResponse] = await Promise.all([
-          fetch('https://paranaque-web-system.onrender.com/api/logs'),
-          fetch('https://paranaque-web-system.onrender.com/api/auth/users')
-        ]);
-        
-        const logsData = await logsResponse.json();
-        const usersData = await usersResponse.json();
-        
-        if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
-          const logs = logsData.logs;
-          const today = new Date().toDateString();
-          
-          const todayLogs = logs.filter(log => 
-            new Date(log.timestamp).toDateString() === today
-          );
-          
-          // Create a map of user roles
-          const userRoles = {};
-          usersData.users.forEach(user => {
-            userRoles[user.email] = user.role;
-          });
-          
-          // Count unique regular users who are STILL logged in
-          const userLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'user' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!userLastActions[log.userEmail] || new Date(log.timestamp) > new Date(userLastActions[log.userEmail].timestamp)) {
-                userLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueUsersToday = new Set(
-            Object.values(userLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          // Count unique admins who are STILL logged in
-          const adminLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'admin' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!adminLastActions[log.userEmail] || new Date(log.timestamp) > new Date(adminLastActions[log.userEmail].timestamp)) {
-                adminLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueAdminsToday = new Set(
-            Object.values(adminLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          // Count unique librarians who are STILL logged in
-          const librarianLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'librarian' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!librarianLastActions[log.userEmail] || new Date(log.timestamp) > new Date(librarianLastActions[log.userEmail].timestamp)) {
-                librarianLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueLibrariansToday = new Set(
-            Object.values(librarianLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          setEntryStats({
-            totalEntries: logs.length,
-            todayEntries: todayLogs.length,
-            activeUsers: uniqueUsersToday.size,
-            activeAdmins: uniqueAdminsToday.size,
-            activeLibrarians: uniqueLibrariansToday.size
-          });
-        }
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const response = await fetch(
+          `https://paranaque-web-system.onrender.com/api/logs/dashboard-stats?start=${encodeURIComponent(startOfDay.toISOString())}`
+        );
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch entry statistics');
+        setEntryStats(data);
       } catch (err) {
         console.error('Error fetching entry stats:', err);
       }
@@ -626,24 +553,27 @@ const LibrarianDashboard = () => {
   useEffect(() => {
     const fetchPendingRequestsCount = async () => {
       try {
-        const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
-        const returnResponse = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
-        const data = await response.json();
-        const returnData = await returnResponse.json();
-        if (response.ok && returnResponse.ok) {
-          const allRequests = data.transactions || [];
-          const allReturnRequests = returnData.requests || [];
-          const borrowRequests = allRequests.filter(req => req.type === 'borrow');
-          const reserveRequests = allRequests.filter(req => req.type === 'reserve');
-          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
-          setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
+        const [response, returnResponse] = await Promise.all([
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests')
+        ]);
+        const [data, returnData] = await Promise.all([response.json(), returnResponse.json()]);
+        if (!response.ok || !returnResponse.ok) {
+          throw new Error('Failed to fetch pending request counts');
         }
+
+        const allRequests = data.transactions || [];
+        const allReturnRequests = returnData.requests || [];
+        const borrowRequests = allRequests.filter(req => req.type === 'borrow');
+        const reserveRequests = allRequests.filter(req => req.type === 'reserve');
+        const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
+        setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
       } catch (err) {
         console.error('Error fetching pending requests count:', err);
       }
     };
 
-    const interval = setInterval(fetchPendingRequestsCount, 5000);
+    const interval = setInterval(fetchPendingRequestsCount, 30000);
     fetchPendingRequestsCount();
 
     return () => clearInterval(interval);

@@ -1,6 +1,8 @@
 // src/pages/Analytics.js
 import React, { useEffect, useState, useRef } from "react";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import { autoTable } from "jspdf-autotable";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -34,11 +36,118 @@ const Analytics = ({ onClose }) => {
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationMessage, setMigrationMessage] = useState(null);
 
-  const exportToExcel = (data, filename) => {
-    const ws = XLSX.utils.json_to_sheet(data);
+  const borrowedCount = borrowedBooks.length;
+  const returnedCount = books.length - borrowedCount;
+  const filteredMostBorrowedBooks = mostBorrowedBooks.filter(book =>
+    (book.title?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false) ||
+    (book.author?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false)
+  );
+  const borrowReturnExportData = borrowedBooks.map(book => ({
+    "Book Title": book.title || "-",
+    Borrower: book.borrowedBy || "N/A",
+    "Borrow Date": book.borrowedAt ? new Date(book.borrowedAt).toLocaleDateString() : "N/A",
+    "Due Date": book.dueDate ? new Date(book.dueDate).toLocaleDateString() : "N/A",
+    "Returned Date": book.returnedAt ? new Date(book.returnedAt).toLocaleDateString() : "Not Returned",
+    Status: book.returnedAt ? "Returned" : "Borrowed"
+  }));
+  const borrowReturnExportRows = borrowReturnExportData.map(book => Object.values(book));
+  const mostBorrowedExportData = filteredMostBorrowedBooks.map(book => ({
+    Title: book.title || "-",
+    Author: book.author || "-",
+    Category: book.category || "-",
+    Year: book.year || "-",
+    "Times Borrowed": book.borrowCount || 0,
+    Stock: book.stock ?? "-",
+    Available: book.availableStock ?? "-"
+  }));
+  const reportExportButtonStyle = {
+    padding: "8px 14px",
+    backgroundColor: "#2e7d32",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "bold"
+  };
+
+  const exportWorkbook = (sheets, filename) => {
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `${filename}_${new Date().toLocaleDateString()}.xlsx`);
+    sheets.forEach(({ name, data }) => {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), name);
+    });
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const exportToExcel = (data, filename) => {
+    exportWorkbook([{ name: "Report", data }], filename);
+  };
+
+  const exportToPDF = (title, filename, headers, rows, summaryRows = []) => {
+    const doc = new jsPDF("landscape", "mm", "a4");
+    doc.setFontSize(14);
+    doc.text(title, 14, 12);
+
+    let startY = 20;
+    if (summaryRows.length > 0) {
+      autoTable(doc, {
+        head: [["Metric", "Count"]],
+        body: summaryRows,
+        startY,
+        styles: { fontSize: 9, cellPadding: 2 }
+      });
+      startY = doc.lastAutoTable.finalY + 8;
+    }
+
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY,
+      margin: { left: 10, right: 10, bottom: 12 },
+      styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" }
+    });
+    doc.save(`${filename}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportBorrowReturnToExcel = () => {
+    exportWorkbook([
+      {
+        name: "Summary",
+        data: [
+          { Metric: "Borrowed", Count: borrowedCount },
+          { Metric: "Returned", Count: returnedCount },
+          { Metric: "Total", Count: books.length }
+        ]
+      },
+      { name: "Borrow Details", data: borrowReturnExportData }
+    ], "Borrow_vs_Return_Report");
+  };
+
+  const exportBorrowReturnToPDF = () => {
+    exportToPDF(
+      "Borrow vs Return Summary",
+      "Borrow_vs_Return_Report",
+      ["Book Title", "Borrower", "Borrow Date", "Due Date", "Returned Date", "Status"],
+      borrowReturnExportRows,
+      [
+        ["Borrowed", borrowedCount],
+        ["Returned", returnedCount],
+        ["Total", books.length]
+      ]
+    );
+  };
+
+  const exportMostBorrowedToExcel = () => {
+    exportToExcel(mostBorrowedExportData, "Most_Borrowed_Books_Report");
+  };
+
+  const exportMostBorrowedToPDF = () => {
+    exportToPDF(
+      "Most Borrowed Books",
+      "Most_Borrowed_Books_Report",
+      ["Title", "Author", "Category", "Year", "Times Borrowed", "Stock", "Available"],
+      mostBorrowedExportData.map(book => Object.values(book))
+    );
   };
 
   const migrateUserTimestamps = async () => {
@@ -462,20 +571,30 @@ const Analytics = ({ onClose }) => {
                 <button onClick={() => setSelectedModal(null)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
-                <h2 style={{ marginBottom: '20px' }}>Borrow vs Return Summary</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingRight: '45px', marginBottom: '20px' }}>
+                  <h2 style={{ margin: 0 }}>Borrow vs Return Summary</h2>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button type="button" onClick={exportBorrowReturnToPDF} style={reportExportButtonStyle}>
+                      Export PDF
+                    </button>
+                    <button type="button" onClick={exportBorrowReturnToExcel} style={reportExportButtonStyle}>
+                      Export Excel
+                    </button>
+                  </div>
+                </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '30px' }}>
                   <div style={{ backgroundColor: '#ffebee', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
                     <h3 style={{ color: '#c62828', margin: '0 0 10px 0' }}>Borrowed</h3>
-                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#c62828', margin: 0 }}>{borrowedBooks.filter(b => !b.returnedAt).length}</p>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#c62828', margin: 0 }}>{borrowedCount}</p>
                   </div>
                   <div style={{ backgroundColor: '#e8f5e9', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
                     <h3 style={{ color: '#2e7d32', margin: '0 0 10px 0' }}>Returned</h3>
-                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2e7d32', margin: 0 }}>{borrowedBooks.filter(b => b.returnedAt).length}</p>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2e7d32', margin: 0 }}>{returnedCount}</p>
                   </div>
                   <div style={{ backgroundColor: '#f3e5f5', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
                     <h3 style={{ color: '#6a1b9a', margin: '0 0 10px 0' }}>Total</h3>
-                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6a1b9a', margin: 0 }}>{borrowedBooks.length}</p>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6a1b9a', margin: 0 }}>{books.length}</p>
                   </div>
                 </div>
 
@@ -770,10 +889,27 @@ const Analytics = ({ onClose }) => {
                 <button onClick={() => setSelectedModal(null)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
-                <h2>Most Borrowed Books ({mostBorrowedBooks.filter(b => 
-                  (b.title?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false) ||
-                  (b.author?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false)
-                ).length})</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingRight: '45px' }}>
+                  <h2 style={{ margin: 0 }}>Most Borrowed Books ({filteredMostBorrowedBooks.length})</h2>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={exportMostBorrowedToPDF}
+                      disabled={filteredMostBorrowedBooks.length === 0}
+                      style={{ ...reportExportButtonStyle, opacity: filteredMostBorrowedBooks.length === 0 ? 0.6 : 1, cursor: filteredMostBorrowedBooks.length === 0 ? 'not-allowed' : 'pointer' }}
+                    >
+                      Export PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportMostBorrowedToExcel}
+                      disabled={filteredMostBorrowedBooks.length === 0}
+                      style={{ ...reportExportButtonStyle, opacity: filteredMostBorrowedBooks.length === 0 ? 0.6 : 1, cursor: filteredMostBorrowedBooks.length === 0 ? 'not-allowed' : 'pointer' }}
+                    >
+                      Export Excel
+                    </button>
+                  </div>
+                </div>
                 <input 
                   type="text" 
                   placeholder="Search by title or author..." 
@@ -781,10 +917,7 @@ const Analytics = ({ onClose }) => {
                   onChange={(e) => setSearchMostBorrowed(e.target.value)}
                   style={{ width: '100%', padding: '10px', marginTop: '15px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ddd' }}
                 />
-                {mostBorrowedBooks.filter(b => 
-                  (b.title?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false) ||
-                  (b.author?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false)
-                ).length === 0 ? (
+                {filteredMostBorrowedBooks.length === 0 ? (
                   <p style={{ marginTop: '20px', color: '#999' }}>No books found</p>
                 ) : (
                   <table className="styled-table" style={{ marginTop: '20px' }}>
@@ -801,10 +934,7 @@ const Analytics = ({ onClose }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {mostBorrowedBooks.filter(b => 
-                        (b.title?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false) ||
-                        (b.author?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false)
-                      ).map((book) => (
+                      {filteredMostBorrowedBooks.map((book) => (
                         <tr key={book._id}>
                           <td>{book.image ? <img src={book.image} alt={book.title} style={{ width: '50px', height: 'auto' }} /> : 'No Image'}</td>
                           <td>{book.title}</td>

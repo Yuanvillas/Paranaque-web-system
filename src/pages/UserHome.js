@@ -59,8 +59,8 @@ const UserHome = () => {
   const [bookmarks, setBookmarks] = useState([]);
   const [userHolds, setUserHolds] = useState([]);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
-  const [allBooks, setAllBooks] = useState([]);
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [categories, setCategories] = useState([]);
@@ -106,15 +106,12 @@ const UserHome = () => {
   const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
     const limit = 24;
-    // Add cache busting with timestamp
-    const timestamp = new Date().getTime();
     const categoryQuery = categoryFilter !== "all"
       ? `&category=${encodeURIComponent(categoryFilter)}`
       : "";
-    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}&_t=${timestamp}`)
+    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("📚 Fetched books with images:", data.books?.map(b => ({ title: b.title, hasImage: !!b.image })));
         setBooks(data.books || []);
         setTotalPages(data.totalPages || 1);
       })
@@ -146,17 +143,6 @@ const UserHome = () => {
     }
   }, [userEmail]);
 
-  const fetchAllBooksForRecommendations = useCallback(async () => {
-    try {
-      const timestamp = new Date().getTime();
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/books?limit=10000&_t=${timestamp}`);
-      const data = await res.json();
-      setAllBooks(data.books || []);
-    } catch (error) {
-      console.error("Error fetching all books:", error);
-    }
-  }, []);
-
   const fetchPendingReservations = useCallback(async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) return;
@@ -179,26 +165,36 @@ const UserHome = () => {
     }
   }, []);
 
-  const fetchBorrowedBooks = useCallback(async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) return;
+  const fetchUserTransactions = useCallback(async () => {
+    if (!userEmail) {
+      setTransactionsLoaded(true);
+      return;
+    }
 
     try {
       const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
       const data = await response.json();
-      
-      if (response.ok && data.transactions && Array.isArray(data.transactions)) {
-        let borrowed = data.transactions.filter(t => 
-          (t.type === 'borrow' || t.transactionType === 'borrow')
-        );
-        
-        console.log("All borrow transactions found:", borrowed.length, borrowed);
-        setBorrowedBooks(borrowed);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch user transactions");
       }
+
+      const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+      setPendingReservations(transactions.filter(transaction =>
+        transaction.type === "reserve" &&
+        ["pending", "approved"].includes(transaction.status)
+      ));
+      setBorrowedBooks(transactions.filter(transaction =>
+        (
+          transaction.type === "borrow" ||
+          transaction.transactionType === "borrow"
+        )
+      ));
     } catch (error) {
-      console.error("Error fetching borrowed books:", error);
+      console.error("Error fetching user transactions:", error);
+    } finally {
+      setTransactionsLoaded(true);
     }
-  }, []);
+  }, [userEmail]);
 
   // Fetch user's holds
   const fetchUserHolds = useCallback(async () => {
@@ -214,12 +210,10 @@ const UserHome = () => {
 
   // useEffect hooks
   useEffect(() => {
-    fetchPendingReservations();
+    fetchUserTransactions();
     fetchBookmarks();
-    fetchBorrowedBooks();
-    fetchAllBooksForRecommendations();
     fetchUserHolds();
-  }, [fetchBookmarks, fetchPendingReservations, fetchBorrowedBooks, fetchAllBooksForRecommendations, fetchUserHolds]);
+  }, [fetchBookmarks, fetchUserTransactions, fetchUserHolds]);
 
   useEffect(() => {
     fetchBooks();
@@ -246,12 +240,10 @@ const UserHome = () => {
   }, []);
 
   useEffect(() => {
-    if (allBooks.length > 0 && borrowedBooks.length > 0) {
+    if (transactionsLoaded) {
       generateRecommendations(borrowedBooks, bookmarks, pendingReservations);
-    } else if (allBooks.length > 0) {
-      setRecommendedBooks([]);
     }
-  }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
+  }, [transactionsLoaded, borrowedBooks, bookmarks, pendingReservations]);
 
   const handleBorrow = async () => {
     const avail = selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0;
