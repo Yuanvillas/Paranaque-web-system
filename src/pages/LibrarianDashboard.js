@@ -22,6 +22,7 @@ import TransactionsTable from "../components/TransactionsTable";
 import ArchiveBooksTable from "../components/ArchiveBooksTable";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
 import { clearAuthData } from "../utils/authHelper";
+import ChangePasswordButton from "../components/ChangePasswordButton";
 
 const LibrarianDashboard = () => {
   const navigate = useNavigate();
@@ -764,6 +765,7 @@ const LibrarianDashboard = () => {
                     <div style={{ fontSize: "0.95rem", color: "#444" }}>
                       <strong>Role:</strong> {user.role}
                     </div>
+                    <ChangePasswordButton email={user.email} />
                   </div>
                 </div>
               </div>

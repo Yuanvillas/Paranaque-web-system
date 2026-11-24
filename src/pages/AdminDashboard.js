@@ -17,6 +17,7 @@ import {
 import AdminDashboardTable from "../components/AdminDashboardTable";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
 import { clearAuthData } from "../utils/authHelper";
+import ChangePasswordButton from "../components/ChangePasswordButton";
 
 const BorrowedBooksTable = lazy(() => import("../components/BorrowedBooksTable"));
 const TransactionsTable = lazy(() => import("../components/TransactionsTable"));
@@ -572,6 +573,7 @@ const AdminDashboard = () => {
                     <div style={{ fontSize: "0.95rem", color: "#444" }}>
                       <strong>Role:</strong> {user.role}
                     </div>
+                    <ChangePasswordButton email={user.email} />
                   </div>
                 </div>
               </div>

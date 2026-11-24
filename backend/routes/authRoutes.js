@@ -420,7 +420,6 @@ router.put('/profile/upload-image/:email', async (req, res) => {
 
 
 router.put("/change-password", async (req, res) => {
-  console.log("/change-password/", req.body)
   const { email, currentPassword, newPassword } = req.body;
 
   // Password strength validation (same as register)
