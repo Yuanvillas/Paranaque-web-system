@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { autoTable } from 'jspdf-autotable';
 import './TransactionsTable.css';
 
 const TransactionsTable = () => {
@@ -147,7 +147,7 @@ const TransactionsTable = () => {
     doc.text('Transactions Report', 14, 12);
     doc.setFontSize(8);
     doc.text(`Records: ${filteredTransactions.length} | Filters: ${activeFilters.join(' | ') || 'None'}`, 14, 18);
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Book Title', 'User', 'Type', 'Status', 'Start Date', 'Due Date', 'Return Date']],
       body: data,
       startY: 23,
