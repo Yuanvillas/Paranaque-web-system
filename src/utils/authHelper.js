@@ -2,6 +2,19 @@
  * Utility functions for managing authentication state
  */
 
+const AUTH_SESSION_KEY = "authSession";
+const AUTH_SESSION_EMAIL_KEY = "authSessionEmail";
+
+export const beginAuthSession = (email) => {
+  sessionStorage.setItem(AUTH_SESSION_KEY, "active");
+  sessionStorage.setItem(AUTH_SESSION_EMAIL_KEY, email);
+};
+
+export const hasAuthSession = () => {
+  return sessionStorage.getItem(AUTH_SESSION_KEY) === "active" &&
+    sessionStorage.getItem(AUTH_SESSION_EMAIL_KEY) === localStorage.getItem("userEmail");
+};
+
 /**
  * Clear all authentication data from localStorage
  * Call this function whenever a user logs out to ensure complete session cleanup
@@ -11,6 +24,8 @@ export const clearAuthData = () => {
   localStorage.removeItem("userRole");
   localStorage.removeItem("user");
   localStorage.removeItem("token");
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  sessionStorage.removeItem(AUTH_SESSION_EMAIL_KEY);
 };
 
 /**
@@ -35,7 +50,7 @@ export const getStoredUser = () => {
 export const isAuthenticated = () => {
   const userEmail = localStorage.getItem("userEmail");
   const user = localStorage.getItem("user");
-  return !!(userEmail && user);
+  return hasAuthSession() && !!(userEmail && user);
 };
 
 /**

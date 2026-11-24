@@ -21,6 +21,7 @@ import PendingRequestTable from "../components/PendingRequestTable";
 import TransactionsTable from "../components/TransactionsTable";
 import ArchiveBooksTable from "../components/ArchiveBooksTable";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
+import { clearAuthData } from "../utils/authHelper";
 
 const LibrarianDashboard = () => {
   const navigate = useNavigate();
@@ -682,40 +683,11 @@ const LibrarianDashboard = () => {
       }
     }
     
-    // Clear ALL authentication data from local storage
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    clearAuthData();
     
     // Navigate to login page with replace to prevent back button access
     navigate('/', { replace: true });
   };
-
-  // Track logout when librarian closes browser/tab
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail) {
-        // Clear all auth data before closing
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        
-        // Attempt to log logout (may not complete before page closes)
-        navigator.sendBeacon('https://paranaque-web-system.onrender.com/api/auth/logout', 
-          JSON.stringify({ email: userEmail })
-        );
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
 
   return (
     <div className="dashboard">

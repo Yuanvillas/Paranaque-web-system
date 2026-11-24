@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { isAuthenticated } from "./authHelper";
 
 /**
  * ProtectedRoute component that verifies user authentication
@@ -17,7 +18,7 @@ const ProtectedRoute = ({ element, requiredRole = null }) => {
     }
   }
 
-  if (!userEmail || !userData || typeof userData !== "object" || Array.isArray(userData)) {
+  if (!isAuthenticated() || !userEmail || !userData || typeof userData !== "object" || Array.isArray(userData)) {
     return <Navigate to="/" replace />;
   }
 
