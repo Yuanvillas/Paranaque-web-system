@@ -1,4 +1,9 @@
-import { beginAuthSession, clearAuthData, isAuthenticated } from "./authHelper";
+import {
+  beginAuthSession,
+  clearAuthData,
+  isAuthenticated,
+  shouldExpireSessionOnRouterHistoryNavigation
+} from "./authHelper";
 
 describe("tab-scoped authentication", () => {
   beforeEach(() => {
@@ -20,5 +25,30 @@ describe("tab-scoped authentication", () => {
 
     clearAuthData();
     expect(isAuthenticated()).toBe(false);
+  });
+
+  test("keeps the session when Back returns to an authenticated route", () => {
+    localStorage.setItem("userEmail", "admin@example.com");
+    localStorage.setItem("user", JSON.stringify({ email: "admin@example.com", role: "admin" }));
+    beginAuthSession("admin@example.com");
+
+    expect(shouldExpireSessionOnRouterHistoryNavigation({
+      locationChanged: true,
+      navigationType: "POP",
+      pathname: "/admin-dashboard"
+    })).toBe(false);
+    expect(isAuthenticated()).toBe(true);
+  });
+
+  test("expires the session when Back returns to the login route", () => {
+    localStorage.setItem("userEmail", "admin@example.com");
+    localStorage.setItem("user", JSON.stringify({ email: "admin@example.com", role: "admin" }));
+    beginAuthSession("admin@example.com");
+
+    expect(shouldExpireSessionOnRouterHistoryNavigation({
+      locationChanged: true,
+      navigationType: "POP",
+      pathname: "/"
+    })).toBe(true);
   });
 });

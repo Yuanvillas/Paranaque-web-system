@@ -16,6 +16,17 @@ export const hasAuthSession = () => {
     sessionStorage.getItem(AUTH_SESSION_EMAIL_KEY) === localStorage.getItem("userEmail");
 };
 
+export const shouldExpireSessionOnRouterHistoryNavigation = ({
+  locationChanged,
+  navigationType,
+  pathname
+}) => (
+  locationChanged &&
+  navigationType === "POP" &&
+  pathname === "/" &&
+  hasAuthSession()
+);
+
 export const expireSessionOnBrowserHistoryNavigation = () => {
   if (historyNavigationChecked) return false;
   historyNavigationChecked = true;

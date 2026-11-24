@@ -2,7 +2,12 @@ import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
-import { clearAuthData, expireSessionOnBrowserHistoryNavigation, hasAuthSession } from "./utils/authHelper";
+import {
+  clearAuthData,
+  expireSessionOnBrowserHistoryNavigation,
+  hasAuthSession,
+  shouldExpireSessionOnRouterHistoryNavigation
+} from "./utils/authHelper";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -44,7 +49,11 @@ function AppContent() {
     previousLocationKey.current = location.key;
 
     const expiredFromDocumentHistory = expireSessionOnBrowserHistoryNavigation();
-    const expiredFromRouterHistory = locationChanged && navigationType === "POP" && hasAuthSession();
+    const expiredFromRouterHistory = shouldExpireSessionOnRouterHistoryNavigation({
+      locationChanged,
+      navigationType,
+      pathname: location.pathname
+    });
 
     if (expiredFromRouterHistory) clearAuthData();
 
