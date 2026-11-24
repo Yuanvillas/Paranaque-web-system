@@ -1,5 +1,5 @@
-import React, { lazy, Suspense, useEffect, useLayoutEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import { clearAuthData, expireSessionOnBrowserHistoryNavigation, hasAuthSession } from "./utils/authHelper";
@@ -36,20 +36,24 @@ const LandingPage = lazy(() => import("./pages/LandingPage"));
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const previousLocationKey = useRef(location.key);
 
   useLayoutEffect(() => {
-    if (expireSessionOnBrowserHistoryNavigation() && window.location.pathname !== "/") {
+    const locationChanged = previousLocationKey.current !== location.key;
+    previousLocationKey.current = location.key;
+
+    const expiredFromDocumentHistory = expireSessionOnBrowserHistoryNavigation();
+    const expiredFromRouterHistory = locationChanged && navigationType === "POP" && hasAuthSession();
+
+    if (expiredFromRouterHistory) clearAuthData();
+
+    if ((expiredFromDocumentHistory || expiredFromRouterHistory) && location.pathname !== "/") {
       navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [location.key, location.pathname, navigationType, navigate]);
 
   useEffect(() => {
-    const handleBackNavigation = () => {
-      if (!hasAuthSession()) return;
-
-      clearAuthData();
-      navigate("/", { replace: true });
-    };
     const handlePageShow = (event) => {
       if (!event.persisted) return;
 
@@ -62,10 +66,8 @@ function AppContent() {
       }
     };
 
-    window.addEventListener("popstate", handleBackNavigation);
     window.addEventListener("pageshow", handlePageShow);
     return () => {
-      window.removeEventListener("popstate", handleBackNavigation);
       window.removeEventListener("pageshow", handlePageShow);
     };
   }, [navigate]);
