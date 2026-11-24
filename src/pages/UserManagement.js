@@ -784,7 +784,7 @@ const UserManagement = () => {
                   ✕
                 </button>
 
-                <h2>User Borrowed & Reserved Books History</h2>
+                <h2>Book transaction record</h2>
 
                 {/* Search bar inside modal */}
                 <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', backgroundColor: '#f5f5f5' }}>
