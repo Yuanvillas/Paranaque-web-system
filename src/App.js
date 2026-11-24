@@ -1,8 +1,8 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
-import { clearAuthData, hasAuthSession } from "./utils/authHelper";
+import { clearAuthData, expireSessionOnBrowserHistoryNavigation, hasAuthSession } from "./utils/authHelper";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -37,6 +37,12 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  useLayoutEffect(() => {
+    if (expireSessionOnBrowserHistoryNavigation() && window.location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     const handleBackNavigation = () => {
       if (!hasAuthSession()) return;
@@ -44,9 +50,24 @@ function AppContent() {
       clearAuthData();
       navigate("/", { replace: true });
     };
+    const handlePageShow = (event) => {
+      if (!event.persisted) return;
+
+      if (hasAuthSession()) {
+        clearAuthData();
+      }
+
+      if (window.location.pathname !== "/") {
+        navigate("/", { replace: true });
+      }
+    };
 
     window.addEventListener("popstate", handleBackNavigation);
-    return () => window.removeEventListener("popstate", handleBackNavigation);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("popstate", handleBackNavigation);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
   }, [navigate]);
   
   // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password/landing)

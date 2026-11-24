@@ -4,6 +4,7 @@
 
 const AUTH_SESSION_KEY = "authSession";
 const AUTH_SESSION_EMAIL_KEY = "authSessionEmail";
+let historyNavigationChecked = false;
 
 export const beginAuthSession = (email) => {
   sessionStorage.setItem(AUTH_SESSION_KEY, "active");
@@ -13,6 +14,17 @@ export const beginAuthSession = (email) => {
 export const hasAuthSession = () => {
   return sessionStorage.getItem(AUTH_SESSION_KEY) === "active" &&
     sessionStorage.getItem(AUTH_SESSION_EMAIL_KEY) === localStorage.getItem("userEmail");
+};
+
+export const expireSessionOnBrowserHistoryNavigation = () => {
+  if (historyNavigationChecked) return false;
+  historyNavigationChecked = true;
+
+  const navigationEntry = window.performance.getEntriesByType("navigation")[0];
+  if (navigationEntry?.type !== "back_forward" || !hasAuthSession()) return false;
+
+  clearAuthData();
+  return true;
 };
 
 /**
