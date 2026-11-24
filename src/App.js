@@ -1,7 +1,8 @@
-import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import { clearAuthData, hasAuthSession } from "./utils/authHelper";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -34,6 +35,19 @@ const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleBackNavigation = () => {
+      if (!hasAuthSession()) return;
+
+      clearAuthData();
+      navigate("/", { replace: true });
+    };
+
+    window.addEventListener("popstate", handleBackNavigation);
+    return () => window.removeEventListener("popstate", handleBackNavigation);
+  }, [navigate]);
   
   // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password/landing)
   const showChat = !["/", "/register", "/verify-notice", "/verify-success", "/forgot-password", "/landing"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
