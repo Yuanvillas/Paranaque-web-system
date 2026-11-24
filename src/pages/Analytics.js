@@ -194,7 +194,7 @@ const Analytics = ({ onClose }) => {
     const fetchMonthlyUsers = async () => {
       try {
         const res = await fetch(
-          "https://paranaque-web-system.onrender.com/api/users/monthly-stats"
+          "https://paranaque-web-system.onrender.com/api/auth/monthly-stats"
         );
         const data = await res.json();
         if (res.ok) {
