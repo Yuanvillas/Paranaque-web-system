@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import './TransactionsTable.css';
 
 const TransactionsTable = () => {
   const [transactions, setTransactions] = useState([]);
@@ -194,65 +195,56 @@ const TransactionsTable = () => {
         </button>
       </div>
 
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '10px',
-        alignItems: 'end',
-        marginBottom: '18px',
-        padding: '15px',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '6px'
-      }}>
+      <div className="transaction-filter-bar">
         <input
           type="search"
+          className="transaction-filter-control transaction-filter-search"
           aria-label="Search book title or user email"
           placeholder="Search book title or user email"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ minWidth: '220px', flex: '1 1 220px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
         />
         <select
+          className="transaction-filter-control"
           aria-label="Filter by transaction type"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
         >
           <option value="all">All types</option>
           <option value="borrow">Borrow</option>
           <option value="reserve">Reserve</option>
         </select>
         <select
+          className="transaction-filter-control"
           aria-label="Filter by transaction status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
         >
           <option value="all">All statuses</option>
           {['active', 'pending', 'approved', 'completed', 'rejected', 'cancelled', 'expired'].map(status => (
             <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
           ))}
         </select>
-        <label style={{ display: 'grid', gap: '4px', fontSize: '12px', color: '#555' }}>
+        <label className="transaction-filter-label">
           Start date from
           <input
             type="date"
+            className="transaction-filter-control"
             aria-label="Start date from"
             value={dateFrom}
             max={dateTo || undefined}
             onChange={(e) => setDateFrom(e.target.value)}
-            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
           />
         </label>
-        <label style={{ display: 'grid', gap: '4px', fontSize: '12px', color: '#555' }}>
+        <label className="transaction-filter-label">
           Start date to
           <input
             type="date"
+            className="transaction-filter-control"
             aria-label="Start date to"
             value={dateTo}
             min={dateFrom || undefined}
             onChange={(e) => setDateTo(e.target.value)}
-            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
           />
         </label>
         <button
@@ -265,11 +257,11 @@ const TransactionsTable = () => {
             setDateTo('');
           }}
           disabled={activeFilters.length === 0}
-          style={{ padding: '10px 14px', border: '1px solid #ccc', borderRadius: '4px', cursor: activeFilters.length === 0 ? 'not-allowed' : 'pointer' }}
+          className="transaction-clear-filters"
         >
           Clear filters
         </button>
-        <span role="status" style={{ marginLeft: 'auto', color: '#555', fontSize: '14px' }}>
+        <span role="status" className="transaction-filter-count">
           {filteredTransactions.length} of {transactions.length} transactions
         </span>
       </div>
