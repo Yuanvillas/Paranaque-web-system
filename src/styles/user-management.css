@@ -41,6 +41,29 @@
   border-color: #4caf50;
 }
 
+.create-location-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.create-location-row .modal-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.create-location-row .modal-input:disabled,
+.create-account-modal > .modal-input:disabled {
+  background-color: #f5f5f5;
+  color: #777;
+}
+
+.street-suggestion-note {
+  color: #666;
+  font-size: 0.75rem;
+  margin: 0 0 8px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

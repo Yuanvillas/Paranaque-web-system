@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { authenticatedFetch } from "../utils/authHelper";
 import Swal from "sweetalert2";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import "../styles/user-management.css";
 import { isValidEmail } from "../utils/emailValidation";
+
+const STREET_SUGGESTIONS_KEY = "registerStreetSuggestions";
+const MAX_STREET_SUGGESTIONS = 20;
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -24,17 +28,94 @@ const UserManagement = () => {
     firstName: "",
     lastName: "",
     suffix: "",
+    street: "",
+    region: "",
+    city: "",
+    barangay: "",
     contactNumber: "",
-    address: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
   const [createErrors, setCreateErrors] = useState({});
   const [createTouched, setCreateTouched] = useState({});
+  const [createStreetSuggestions, setCreateStreetSuggestions] = useState([]);
+  const [createStreetSuggestionError, setCreateStreetSuggestionError] = useState("");
+  const [createLocationError, setCreateLocationError] = useState("");
+  const [createRegions, setCreateRegions] = useState([]);
+  const [createCities, setCreateCities] = useState([]);
+  const [createBarangays, setCreateBarangays] = useState([]);
   const navigate = useNavigate();
 
   const ADMIN_PASSCODE = "1234";
+  const getUserRole = (user) =>
+    typeof user.role === "string" ? user.role.trim().toLowerCase() : "user";
+  const countUsersByRole = (role) => users.filter((user) => getUserRole(user) === role).length;
+
+  useEffect(() => {
+    try {
+      const savedSuggestions = localStorage.getItem(STREET_SUGGESTIONS_KEY);
+      if (!savedSuggestions) return;
+
+      const parsedSuggestions = JSON.parse(savedSuggestions);
+      if (!Array.isArray(parsedSuggestions) || !parsedSuggestions.every((value) => typeof value === "string")) {
+        throw new Error("Saved street suggestions have an invalid format.");
+      }
+
+      setCreateStreetSuggestions(
+        parsedSuggestions.filter((value) => value.trim().length >= 2).slice(0, MAX_STREET_SUGGESTIONS)
+      );
+    } catch (loadError) {
+      console.error("Failed to load saved street suggestions:", loadError);
+      setCreateStreetSuggestionError("Saved street suggestions could not be loaded from this device.");
+    }
+  }, []);
+
+  useEffect(() => {
+    axios.get("https://psgc.gitlab.io/api/regions.json")
+      .then((res) => {
+        setCreateRegions(res.data);
+        setCreateLocationError("");
+      })
+      .catch((loadError) => {
+        console.error("Failed to load regions:", loadError);
+        setCreateLocationError("Could not load regions. Please try again later.");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!createForm.region) {
+      setCreateCities([]);
+      return;
+    }
+
+    axios.get(`https://psgc.gitlab.io/api/regions/${createForm.region}/cities.json`)
+      .then((res) => {
+        setCreateCities(res.data);
+        setCreateLocationError("");
+      })
+      .catch((loadError) => {
+        console.error("Failed to load cities:", loadError);
+        setCreateLocationError("Could not load cities for the selected region.");
+      });
+  }, [createForm.region]);
+
+  useEffect(() => {
+    if (!createForm.city) {
+      setCreateBarangays([]);
+      return;
+    }
+
+    axios.get(`https://psgc.gitlab.io/api/cities/${createForm.city}/barangays.json`)
+      .then((res) => {
+        setCreateBarangays(res.data);
+        setCreateLocationError("");
+      })
+      .catch((loadError) => {
+        console.error("Failed to load barangays:", loadError);
+        setCreateLocationError("Could not load barangays for the selected city.");
+      });
+  }, [createForm.city]);
 
   const fetchUsers = async () => {
     try {
@@ -183,9 +264,18 @@ const UserManagement = () => {
         if (!value) return "Please confirm your password.";
         if (value !== values.password) return "Passwords do not match.";
         return "";
-      case "address":
-        if (!value.trim()) return "Address is required.";
-        if (value.trim().length < 2) return "Address must be at least 2 characters.";
+      case "street":
+        if (!value.trim()) return "Street is required.";
+        if (value.trim().length < 2) return "Must be at least 2 characters.";
+        return "";
+      case "region":
+        if (!value) return "Please select a region.";
+        return "";
+      case "city":
+        if (!value) return "Please select a city.";
+        return "";
+      case "barangay":
+        if (!value) return "Please select a barangay.";
         return "";
       default:
         return "";
@@ -203,7 +293,10 @@ const UserManagement = () => {
       email: "Valid email address",
       password: "Password meets the requirements",
       confirmPassword: "Passwords match",
-      address: "Valid address",
+      street: "Valid street",
+      region: "Valid region",
+      city: "Valid city",
+      barangay: "Valid barangay",
     };
 
     return (
@@ -220,21 +313,37 @@ const UserManagement = () => {
   const handleCreateChange = (e) => {
     const { name, value } = e.target;
     const updatedForm = { ...createForm, [name]: value };
+    if (name === "region") {
+      updatedForm.city = "";
+      updatedForm.barangay = "";
+      setCreateCities([]);
+      setCreateBarangays([]);
+    } else if (name === "city") {
+      updatedForm.barangay = "";
+      setCreateBarangays([]);
+    }
     setCreateForm(updatedForm);
     setCreateTouched((prev) => ({ ...prev, [name]: true }));
-    setCreateErrors((prev) => ({
-      ...prev,
-      [name]: getCreateFieldError(name, value, updatedForm),
-      ...(name === "password" && createTouched.confirmPassword
-        ? {
-            confirmPassword: getCreateFieldError(
-              "confirmPassword",
-              updatedForm.confirmPassword,
-              updatedForm
-            ),
-          }
-        : {}),
-    }));
+    setCreateErrors((prev) => {
+      const updatedErrors = {
+        ...prev,
+        [name]: getCreateFieldError(name, value, updatedForm),
+      };
+      if (name === "region") {
+        updatedErrors.city = getCreateFieldError("city", "", updatedForm);
+        updatedErrors.barangay = getCreateFieldError("barangay", "", updatedForm);
+      } else if (name === "city") {
+        updatedErrors.barangay = getCreateFieldError("barangay", "", updatedForm);
+      }
+      if (name === "password" && createTouched.confirmPassword) {
+        updatedErrors.confirmPassword = getCreateFieldError(
+          "confirmPassword",
+          updatedForm.confirmPassword,
+          updatedForm
+        );
+      }
+      return updatedErrors;
+    });
   };
 
   const handleCreateBlur = (e) => {
@@ -250,7 +359,18 @@ const UserManagement = () => {
     e.preventDefault();
     
     // Validate all fields
-    const fieldsToValidate = ["firstName", "lastName", "contactNumber", "email", "password", "confirmPassword", "address"];
+    const fieldsToValidate = [
+      "firstName",
+      "lastName",
+      "street",
+      "region",
+      "city",
+      "barangay",
+      "contactNumber",
+      "email",
+      "password",
+      "confirmPassword",
+    ];
     const newErrors = fieldsToValidate.reduce((errors, field) => {
       errors[field] = getCreateFieldError(field, createForm[field]);
       return errors;
@@ -264,6 +384,16 @@ const UserManagement = () => {
       return;
     }
 
+    const selectedRegion = createRegions.find((region) => region.code === createForm.region);
+    const selectedCity = createCities.find((city) => city.code === createForm.city);
+    const selectedBarangay = createBarangays.find((barangay) => barangay.name === createForm.barangay);
+    const address = [
+      createForm.street.trim(),
+      selectedBarangay?.name,
+      selectedCity?.name,
+      selectedRegion?.name,
+    ].filter(Boolean).join(", ");
+
     try {
       const res = await fetch("https://paranaque-web-system.onrender.com/api/auth/register", {
         method: "POST",
@@ -274,15 +404,31 @@ const UserManagement = () => {
           contactNumber: createForm.contactNumber,
           email: createForm.email,
           password: createForm.password,
-          address: createForm.address,
+          address,
         }),
       });
       
       const data = await res.json();
       if (res.ok) {
+        let successMessage = "Account created successfully!";
+        const street = createForm.street.trim();
+        const updatedSuggestions = [
+          street,
+          ...createStreetSuggestions.filter(
+            (suggestion) => suggestion.toLowerCase() !== street.toLowerCase()
+          ),
+        ].slice(0, MAX_STREET_SUGGESTIONS);
+        try {
+          localStorage.setItem(STREET_SUGGESTIONS_KEY, JSON.stringify(updatedSuggestions));
+          setCreateStreetSuggestions(updatedSuggestions);
+          setCreateStreetSuggestionError("");
+        } catch (storageError) {
+          console.error("Failed to save street suggestion:", storageError);
+          successMessage += " The street suggestion could not be saved on this device.";
+        }
         Swal.fire({
           title: "Parañaledge",
-          text: "Account created successfully!",
+          text: successMessage,
           icon: "success",
           confirmButtonText: "OK"
         });
@@ -291,14 +437,19 @@ const UserManagement = () => {
           firstName: "",
           lastName: "",
           suffix: "",
+          street: "",
+          region: "",
+          city: "",
+          barangay: "",
           contactNumber: "",
-          address: "",
           email: "",
           password: "",
           confirmPassword: "",
         });
         setCreateErrors({});
         setCreateTouched({});
+        setCreateCities([]);
+        setCreateBarangays([]);
         fetchUsers();
       } else {
         Swal.fire({
@@ -324,14 +475,19 @@ const UserManagement = () => {
       firstName: "",
       lastName: "",
       suffix: "",
+      street: "",
+      region: "",
+      city: "",
+      barangay: "",
       contactNumber: "",
-      address: "",
       email: "",
       password: "",
       confirmPassword: "",
     });
     setCreateErrors({});
     setCreateTouched({});
+    setCreateCities([]);
+    setCreateBarangays([]);
   };
 
   const exportUsersToCSV = () => {
@@ -414,14 +570,19 @@ const UserManagement = () => {
                     firstName: "",
                     lastName: "",
                     suffix: "",
+                    street: "",
+                    region: "",
+                    city: "",
+                    barangay: "",
                     contactNumber: "",
-                    address: "",
                     email: "",
                     password: "",
                     confirmPassword: "",
                   });
                   setCreateErrors({});
                   setCreateTouched({});
+                  setCreateCities([]);
+                  setCreateBarangays([]);
                 }}>
                   + Create New Account
                 </button>
@@ -436,7 +597,10 @@ const UserManagement = () => {
                 type="text"
                 placeholder="Search by name, email, or contact number..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -453,7 +617,10 @@ const UserManagement = () => {
             <div className="um-filter-buttons" style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button 
                 className={`um-filter-btn ${filterRole === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterRole('all')}
+                onClick={() => {
+                  setFilterRole('all');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -468,7 +635,10 @@ const UserManagement = () => {
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'user' ? 'active' : ''}`}
-                onClick={() => setFilterRole('user')}
+                onClick={() => {
+                  setFilterRole('user');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -479,11 +649,14 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Regular Users ({users.filter(u => u.role === 'user').length})
+                Regular Users ({countUsersByRole('user')})
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'librarian' ? 'active' : ''}`}
-                onClick={() => setFilterRole('librarian')}
+                onClick={() => {
+                  setFilterRole('librarian');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -494,11 +667,14 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Librarians ({users.filter(u => u.role === 'librarian').length})
+                Librarians ({countUsersByRole('librarian')})
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'admin' ? 'active' : ''}`}
-                onClick={() => setFilterRole('admin')}
+                onClick={() => {
+                  setFilterRole('admin');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -509,7 +685,7 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Admins ({users.filter(u => u.role === 'admin').length})
+                Admins ({countUsersByRole('admin')})
               </button>
             </div>
 
@@ -518,7 +694,7 @@ const UserManagement = () => {
             ) : (() => {
               // Filter users based on role and search
               const filteredUsers = users
-                .filter(user => filterRole === 'all' || user.role === filterRole)
+                .filter(user => filterRole === 'all' || getUserRole(user) === filterRole)
                 .filter(user => {
                   const searchLower = searchQuery.toLowerCase();
                   const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
@@ -612,51 +788,53 @@ const UserManagement = () => {
                             </td>
                           </tr>
                         ) : (
-                          paginatedUsers.map((user, idx) => (
-                          <tr 
-                            key={idx} 
-                            className={`um-row um-row-${user.role}`}
-                            style={{
-                              borderLeft: user.role === 'admin' ? '4px solid #F44336' : 
-                                          user.role === 'librarian' ? '4px solid #FF9800' : 
-                                          '4px solid #2196F3',
-                              backgroundColor: user.role === 'admin' ? '#FFEBEE' : 
-                                              user.role === 'librarian' ? '#FFF3E0' : 
-                                              'transparent'
-                            }}
-                          >
-                            <td>{user.firstName} {user.lastName}</td>
-                            <td>{user.email}</td>
-                            <td>{user.contactNumber}</td>
-                            <td>{user.address}</td>
-
-                            <td>
-                              <select
-                                name="role"
-                                className="um-select"
-                                value={editForm.role}
-                                onChange={(e) => handleChangeUserRole(e, user._id)}
-                                defaultValue={user.role}
+                          paginatedUsers.map((user) => {
+                            const role = getUserRole(user);
+                            return (
+                              <tr
+                                key={user._id}
+                                className={`um-row um-row-${role}`}
                                 style={{
-                                  fontWeight: 'bold',
-                                  color: user.role === 'admin' ? '#F44336' : 
-                                         user.role === 'librarian' ? '#FF9800' : 
-                                         '#2196F3'
+                                  borderLeft: role === 'admin' ? '4px solid #F44336' :
+                                    role === 'librarian' ? '4px solid #FF9800' :
+                                      '4px solid #2196F3',
+                                  backgroundColor: role === 'admin' ? '#FFEBEE' :
+                                    role === 'librarian' ? '#FFF3E0' :
+                                      'transparent'
                                 }}
                               >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                                <option value="librarian">Librarian</option>
-                              </select>
-                            </td>
+                                <td>{user.firstName} {user.lastName}</td>
+                                <td>{user.email}</td>
+                                <td>{user.contactNumber}</td>
+                                <td>{user.address}</td>
 
-                            <td className="um-actions">
-                              <button onClick={() => startEdit(user)} className="um-btn um-edit">Edit</button>
-                              <button onClick={() => deleteUser(user._id)} className="um-btn um-delete">Archive</button>
-                              <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">History</button>
-                            </td>
-                          </tr>
-                        ))
+                                <td>
+                                  <select
+                                    name="role"
+                                    className="um-select"
+                                    value={role}
+                                    onChange={(e) => handleChangeUserRole(e, user._id)}
+                                    style={{
+                                      fontWeight: 'bold',
+                                      color: role === 'admin' ? '#F44336' :
+                                        role === 'librarian' ? '#FF9800' :
+                                          '#2196F3'
+                                    }}
+                                  >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="librarian">Librarian</option>
+                                  </select>
+                                </td>
+
+                                <td className="um-actions">
+                                  <button onClick={() => startEdit(user)} className="um-btn um-edit">Edit</button>
+                                  <button onClick={() => deleteUser(user._id)} className="um-btn um-delete">Archive</button>
+                                  <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">History</button>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -771,6 +949,87 @@ const UserManagement = () => {
 
                 <input
                   type="text"
+                  name="street"
+                  value={createForm.street}
+                  onChange={handleCreateChange}
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.street && createErrors.street)}
+                  aria-describedby="street-feedback"
+                  className={`modal-input ${createTouched.street ? (createErrors.street ? "is-invalid" : "is-valid") : ""}`}
+                  placeholder="House No., Street, Subdivision"
+                  list="create-user-street-suggestions"
+                />
+                <datalist id="create-user-street-suggestions">
+                  {createStreetSuggestions.map((suggestion) => (
+                    <option key={suggestion} value={suggestion} />
+                  ))}
+                </datalist>
+                <p className="street-suggestion-note">
+                  Previous street entries are saved in this browser for suggestions. Avoid using this on a shared device.
+                </p>
+                {getCreateFieldFeedback("street")}
+                {createStreetSuggestionError && (
+                  <p className="error-text">{createStreetSuggestionError}</p>
+                )}
+
+                <div className="create-location-row">
+                  <div>
+                    <select
+                      name="region"
+                      value={createForm.region}
+                      onChange={handleCreateChange}
+                      onBlur={handleCreateBlur}
+                      aria-invalid={Boolean(createTouched.region && createErrors.region)}
+                      aria-describedby="region-feedback"
+                      className={`modal-input ${createTouched.region ? (createErrors.region ? "is-invalid" : "is-valid") : ""}`}
+                    >
+                      <option value="">Select Region</option>
+                      {createRegions.map((region) => (
+                        <option key={region.code} value={region.code}>{region.name}</option>
+                      ))}
+                    </select>
+                    {getCreateFieldFeedback("region")}
+                  </div>
+                  <div>
+                    <select
+                      name="city"
+                      value={createForm.city}
+                      onChange={handleCreateChange}
+                      onBlur={handleCreateBlur}
+                      disabled={!createForm.region}
+                      aria-invalid={Boolean(createTouched.city && createErrors.city)}
+                      aria-describedby="city-feedback"
+                      className={`modal-input ${createTouched.city ? (createErrors.city ? "is-invalid" : "is-valid") : ""}`}
+                    >
+                      <option value="">Select City</option>
+                      {createCities.map((city) => (
+                        <option key={city.code} value={city.code}>{city.name}</option>
+                      ))}
+                    </select>
+                    {getCreateFieldFeedback("city")}
+                  </div>
+                </div>
+
+                <select
+                  name="barangay"
+                  value={createForm.barangay}
+                  onChange={handleCreateChange}
+                  onBlur={handleCreateBlur}
+                  disabled={!createForm.city}
+                  aria-invalid={Boolean(createTouched.barangay && createErrors.barangay)}
+                  aria-describedby="barangay-feedback"
+                  className={`modal-input ${createTouched.barangay ? (createErrors.barangay ? "is-invalid" : "is-valid") : ""}`}
+                >
+                  <option value="">Select Barangay</option>
+                  {createBarangays.map((barangay) => (
+                    <option key={barangay.code} value={barangay.name}>{barangay.name}</option>
+                  ))}
+                </select>
+                {getCreateFieldFeedback("barangay")}
+                {createLocationError && <p className="error-text">{createLocationError}</p>}
+
+                <input
+                  type="text"
                   name="contactNumber"
                   value={createForm.contactNumber}
                   onChange={handleCreateChange}
@@ -795,20 +1054,6 @@ const UserManagement = () => {
                   autoComplete="off"
                 />
                 {getCreateFieldFeedback("email")}
-
-                <input
-                  type="text"
-                  name="address"
-                  value={createForm.address}
-                  onChange={handleCreateChange}
-                  onBlur={handleCreateBlur}
-                  aria-invalid={Boolean(createTouched.address && createErrors.address)}
-                  aria-describedby="address-feedback"
-                  className={`modal-input ${createTouched.address ? (createErrors.address ? "is-invalid" : "is-valid") : ""}`}
-                  placeholder="Address"
-                  autoComplete="off"
-                />
-                {getCreateFieldFeedback("address")}
 
                 <input
                   type="password"
