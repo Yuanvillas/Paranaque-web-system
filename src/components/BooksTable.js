@@ -32,6 +32,7 @@ const BooksTable = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [filterBookStatus, setFilterBookStatus] = useState("all");
+  const [filterAvailability, setFilterAvailability] = useState("all");
   const [filterCollectionType, setFilterCollectionType] = useState("all");
 
   useEffect(() => {
@@ -186,11 +187,21 @@ const BooksTable = () => {
     
     // Apply status filter
     const matchesBookStatus = filterBookStatus === "all" || (book.status || "Available").toLowerCase() === filterBookStatus.toLowerCase();
+
+    const totalStock = Number(book.stock) || 0;
+    const availableStock = book.availableStock == null
+      ? totalStock
+      : Number(book.availableStock) || 0;
+    const hasAvailableCopies = availableStock > 0;
+    const hasBorrowedCopies = totalStock > availableStock || (book.status || "").toLowerCase() === "borrowed";
+    const matchesAvailability = filterAvailability === "all" ||
+      (filterAvailability === "available" && hasAvailableCopies) ||
+      (filterAvailability === "borrowed" && hasBorrowedCopies);
     
     // Apply collection type filter
     const matchesCollectionType = filterCollectionType === "all" || (book.collectionType || "Circulation").toLowerCase() === filterCollectionType.toLowerCase();
     
-    return matchesSearch && matchesCategory && matchesYear && matchesBookStatus && matchesCollectionType;
+    return matchesSearch && matchesCategory && matchesYear && matchesBookStatus && matchesAvailability && matchesCollectionType;
   });
 
   const archiveBook = async (bookId) => {
@@ -560,6 +571,24 @@ const BooksTable = () => {
           ))}
         </select>
 
+        <select
+          value={filterAvailability}
+          onChange={(e) => { setFilterAvailability(e.target.value); setCurrentPage(1); }}
+          aria-label="Filter books by availability"
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="all">All Availability</option>
+          <option value="available">Available to Borrow</option>
+          <option value="borrowed">Has Borrowed Copies</option>
+        </select>
+
         <select 
           value={filterCollectionType} 
           onChange={(e) => { setFilterCollectionType(e.target.value); setCurrentPage(1); }}
@@ -583,6 +612,7 @@ const BooksTable = () => {
             setFilterCategory('all');
             setFilterYear('all');
             setFilterBookStatus('all');
+            setFilterAvailability('all');
             setFilterCollectionType('all');
             setSearchTerm('');
             setCurrentPage(1);

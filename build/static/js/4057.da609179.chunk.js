@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkparanaledgeweb||=[]).push([[4057],{4057(a,e,b){a.exports=b.p+"static/media/liblogo.8209db199b59fda5f963.png"}}]);
