@@ -89,3 +89,10 @@ export const getUserEmail = () => {
 export const getUserRole = () => {
   return localStorage.getItem("userRole");
 };
+
+export const authenticatedFetch = (url, options = {}) => {
+  const headers = new Headers(options.headers || {});
+  const token = localStorage.getItem("token");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(url, { ...options, headers });
+};

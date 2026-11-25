@@ -1,4 +1,5 @@
 // src/pages/LibrarianDashboard.js
+import { authenticatedFetch } from "../utils/authHelper";
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -107,7 +108,7 @@ const LibrarianDashboard = () => {
       try {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `https://paranaque-web-system.onrender.com/api/logs/dashboard-stats?start=${encodeURIComponent(startOfDay.toISOString())}`
         );
         const data = await response.json();
@@ -202,7 +203,7 @@ const LibrarianDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
@@ -238,7 +239,7 @@ const LibrarianDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
@@ -298,7 +299,7 @@ const LibrarianDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
@@ -356,7 +357,7 @@ const LibrarianDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
