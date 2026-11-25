@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const Log = require('../models/Log');
 const User = require('../models/User');
+const { authenticateLogRequest, requireStaff, requireLogOwnerOrStaff } = require('../utils/logAuth');
+
+router.use(authenticateLogRequest);
 
 // Add a log entry
-router.post('/add', async (req, res) => {
+router.post('/add', requireStaff, async (req, res) => {
   try {
     const log = new Log(req.body);
     await log.save();
@@ -15,7 +18,7 @@ router.post('/add', async (req, res) => {
 });
 
 // Get all logs (for admin)
-router.get('/', async (req, res) => {
+router.get('/', requireStaff, async (req, res) => {
   try {
     const logs = await Log.find().sort({ timestamp: -1 });
     return res.json({ logs });
@@ -24,7 +27,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/dashboard-stats', async (req, res) => {
+router.get('/dashboard-stats', requireStaff, async (req, res) => {
   if (req.query.start && typeof req.query.start !== 'string') {
     return res.status(400).json({ message: 'Invalid start date' });
   }
@@ -79,7 +82,7 @@ router.get('/dashboard-stats', async (req, res) => {
 });
 
 // Get user-specific logs with pagination
-router.get('/user/:email', async (req, res) => {
+router.get('/user/:email', requireLogOwnerOrStaff, async (req, res) => {
   try {
     const { email } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -127,7 +130,7 @@ router.get('/user/:email', async (req, res) => {
 });
 
 // Get log statistics for user
-router.get('/stats/:email', async (req, res) => {
+router.get('/stats/:email', requireLogOwnerOrStaff, async (req, res) => {
   try {
     const { email } = req.params;
 

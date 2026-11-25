@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { authenticatedFetch } from "../utils/authHelper";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import "../styles/user-management.css";
@@ -31,7 +32,7 @@ const LibrarianUserManagement = () => {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("https://paranaque-web-system.onrender.com/api/logs");
+      const res = await authenticatedFetch("https://paranaque-web-system.onrender.com/api/logs");
       const data = await res.json();
       if (res.ok) {
         setLogs(data.logs || []);

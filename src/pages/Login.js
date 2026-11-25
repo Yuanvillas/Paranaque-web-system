@@ -21,6 +21,12 @@ function Login() {
   useEffect(() => {
     if (!hasAuthSession()) return;
 
+    // Older sessions predate the server-issued access token required by protected log APIs.
+    if (!localStorage.getItem("token")) {
+      clearAuthData();
+      return;
+    }
+
     const userEmail = localStorage.getItem("userEmail");
     const user = localStorage.getItem("user");
     
@@ -101,6 +107,7 @@ function Login() {
         });
         localStorage.setItem("userEmail", user.email);
         localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", res.data.accessToken);
         beginAuthSession(user.email);
         console.log("Admin or Librarian logged in:", user);
         navigate("/admin-dashboard");
@@ -108,6 +115,7 @@ function Login() {
         // For regular users, check for overdue books first
         localStorage.setItem("userEmail", user.email);
         localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", res.data.accessToken);
         beginAuthSession(user.email);
         setCurrentUser(user);
 

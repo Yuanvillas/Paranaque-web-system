@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { authenticatedFetch } from "../utils/authHelper";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -535,7 +536,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetch("https://paranaque-web-system.onrender.com/api/logs")
+    authenticatedFetch("https://paranaque-web-system.onrender.com/api/logs")
       .then((res) => res.json())
       .then((data) => {
         setLogs(data.logs);

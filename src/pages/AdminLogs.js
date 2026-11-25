@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faHistory, faCheckCircle, faTimesCircle, faShieldAlt } from "@fortawesome/free-solid-svg-icons";
 import "../components/App.css";
+import { authenticatedFetch } from "../utils/authHelper";
 
 const AdminLogs = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const AdminLogs = () => {
   const [pageSize] = useState(20);
 
   useEffect(() => {
-    fetch("https://paranaque-web-system.onrender.com/api/logs")
+    authenticatedFetch("https://paranaque-web-system.onrender.com/api/logs")
       .then((res) => res.json())
       .then((data) => {
         setLogs(data.logs);

@@ -18,7 +18,7 @@ const ProtectedRoute = ({ element, requiredRole = null }) => {
     }
   }
 
-  if (!isAuthenticated() || !userEmail || !userData || typeof userData !== "object" || Array.isArray(userData)) {
+  if (!isAuthenticated() || !localStorage.getItem("token") || !userEmail || !userData || typeof userData !== "object" || Array.isArray(userData)) {
     return <Navigate to="/" replace />;
   }
 

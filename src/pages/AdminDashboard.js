@@ -1,4 +1,5 @@
 // src/pages/AdminDashboard.js
+import { authenticatedFetch } from "../utils/authHelper";
 import React, { lazy, Suspense, useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -86,7 +87,7 @@ const AdminDashboard = () => {
       try {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `https://paranaque-web-system.onrender.com/api/logs/dashboard-stats?start=${encodeURIComponent(startOfDay.toISOString())}`
         );
         const data = await response.json();
@@ -105,7 +106,7 @@ const AdminDashboard = () => {
   const handleTodayEntriesClick = async () => {
     setLoadingModals(true);
     try {
-      const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
+      const response = await authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs');
       const data = await response.json();
       
       if (response.ok && data.logs) {
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
@@ -187,7 +188,7 @@ const AdminDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       
@@ -245,7 +246,7 @@ const AdminDashboard = () => {
     setLoadingModals(true);
     try {
       const [logsResponse, usersResponse] = await Promise.all([
-        fetch('https://paranaque-web-system.onrender.com/api/logs'),
+        authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs'),
         fetch('https://paranaque-web-system.onrender.com/api/auth/users')
       ]);
       

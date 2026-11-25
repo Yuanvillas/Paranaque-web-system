@@ -12,6 +12,7 @@ const { Resend } = require('resend');
 const { uploadBase64ToSupabase } = require('../utils/upload');
 const { sendEmail } = require('../utils/emailService');
 const { isValidEmail, normalizeEmail, emailLookupRegex } = require('../utils/emailValidation');
+const { createAccessToken } = require('../utils/logAuth');
 
 // Initialize Resend email service (kept for backwards compatibility if needed)
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -282,6 +283,7 @@ router.post('/login', async (req, res) => {
     console.log("User logged in:", user);
     return res.status(200).json({
       message: 'Login successful',
+      accessToken: createAccessToken(user),
       user: {
         firstName: user.firstName,
         lastName: user.lastName,

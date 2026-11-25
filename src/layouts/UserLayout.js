@@ -8,8 +8,7 @@ import {
   faBookOpen,
   faRightFromBracket,
   faUser,
-  faBook,
-  faHistory
+  faBook
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faBookmark,
@@ -88,9 +87,6 @@ const UserLayout = () => {
             </Link>
             <Link to="/user-home/shelf">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faBook} /> <span>My Shelf</span>
-            </Link>
-            <Link to="/user-home/activity-logs">
-              <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHistory} /> <span>Activity Logs</span>
             </Link>
             <Link to="/user-home/faq">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faQuestionCircle} /> <span>FAQ</span>

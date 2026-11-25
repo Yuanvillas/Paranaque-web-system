@@ -31,15 +31,6 @@ const MyShelf = () => {
 
   useEffect(() => {
     fetchTransactions();
-    fetch("https://paranaque-web-system.onrender.com/api/logs")
-      .then((res) => res.json())
-      .then(() => {
-        // Logs fetched but not used in this component
-      })
-      .catch((err) => {
-        console.error('Error fetching logs:', err); // Debug log
-      });
-
   }, [fetchTransactions]);
 
   const handleReturn = async (transactionId) => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { authenticatedFetch } from "../utils/authHelper";
 import './App.css';
 
 const UserEntryMonitor = () => {
@@ -17,7 +18,7 @@ const UserEntryMonitor = () => {
   const fetchUserEntries = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://paranaque-web-system.onrender.com/api/logs');
+      const response = await authenticatedFetch('https://paranaque-web-system.onrender.com/api/logs');
       const data = await response.json();
       
       if (response.ok) {

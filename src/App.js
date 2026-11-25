@@ -24,7 +24,6 @@ const UserHome = lazy(() => import("./pages/UserHome"));
 const MyShelf = lazy(() => import("./pages/MyShelf"));
 const Bookmarks = lazy(() => import("./pages/Bookmarks"));
 const UserLayout = lazy(() => import("./layouts/UserLayout"));
-const UserActivityLogs = lazy(() => import("./pages/UserActivityLogs"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Resources = lazy(() => import("./pages/Resources"));
 const VerifyNotice = lazy(() => import("./pages/VerifyNotice"));
@@ -102,7 +101,7 @@ function AppContent() {
           <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
           <Route path="/admin/resources" element={<ProtectedRoute element={<Resources dashboardPath="/admin-dashboard" analyticsPath="/admin/analytics" />} />} />
           <Route path="/verify-notice" element={<VerifyNotice />} />
-          <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
+          <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} requiredRole="admin" />} />
           <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
           <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
           <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
@@ -117,7 +116,7 @@ function AppContent() {
             <Route path="shelf" element={<MyShelf />} />
             <Route path="bookmarks" element={<Bookmarks />} />
             <Route path="holds" element={<Navigate to="/user-home" replace />} />
-            <Route path="activity-logs" element={<UserActivityLogs />} />
+            <Route path="activity-logs" element={<Navigate to="/user-home/shelf" replace />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
           </Route>
