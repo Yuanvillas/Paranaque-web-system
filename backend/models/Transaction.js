@@ -6,6 +6,15 @@ const transactionSchema = new mongoose.Schema({
     ref: 'Book',
     required: true
   },
+  copyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BookCopy',
+    default: null
+  },
+  copyNumber: {
+    type: String,
+    default: null
+  },
   userEmail: {
     type: String,
     required: true

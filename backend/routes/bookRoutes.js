@@ -5,9 +5,17 @@ const path = require('path');
 const Book = require('../models/Book');
 const ArchivedBook = require('../models/ArchivedBook');
 const Transaction = require('../models/Transaction');
+const BookCopy = require('../models/BookCopy');
 const Log = require('../models/Log');
 const ReservedBook = require('../models/ReservedBook');
 const Counter = require('../models/Counter');
+const {
+  assignCopyToTransaction,
+  createCopies,
+  ensureBookCopies,
+  releaseCopyForTransaction,
+  syncCopiesForStockChange
+} = require('../utils/bookCopyInventory');
 const { uploadBase64ToSupabase, getFullImageUrl } = require('../utils/upload');
 const { generateLibraryCallNumber } = require('../utils/ddc');
 const bookSubjects = require('../../src/data/bookSubjects.json');
@@ -315,6 +323,13 @@ router.post('/', async (req, res) => {
     
     console.log("💾 Saving book to database...");
     const savedBook = await newBook.save();
+    try {
+      await createCopies(savedBook, savedBook.stock);
+    } catch (copyErr) {
+      await BookCopy.deleteMany({ bookId: savedBook._id });
+      await Book.deleteOne({ _id: savedBook._id });
+      throw copyErr;
+    }
     
     console.log("✅ Book saved successfully!");
     console.log("✅ Saved book accession number:", savedBook.accessionNumber);
@@ -919,6 +934,7 @@ router.put('/return/:id', async (req, res) => {
     // Update only this transaction
     transaction.status = 'completed';
     transaction.returnDate = new Date();
+    await releaseCopyForTransaction(transaction);
     await transaction.save();
 
     // Log the action
@@ -1046,6 +1062,7 @@ router.put('/archived/return/:id', async (req, res) => {
       location: archivedBook.location,
       image: archivedBook.image,
       archived: false,
+      bookId: await getNextBookId(),
       borrowedAt: null,
       borrowedBy: null,
       dueDate: null,
@@ -1058,6 +1075,13 @@ router.put('/archived/return/:id', async (req, res) => {
     });
 
     await book.save();
+    try {
+      await createCopies(book, book.stock);
+    } catch (copyErr) {
+      await BookCopy.deleteMany({ bookId: book._id });
+      await Book.deleteOne({ _id: book._id });
+      throw copyErr;
+    }
     await ArchivedBook.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ message: 'Book returned to stocks!', book });
@@ -1078,7 +1102,9 @@ router.put('/borrow/:id', async (req, res) => {
     }
 
     // Check if there are available copies
-    const availableStock = book.availableStock || book.stock || 0;
+    const availableStock = book.availableStock !== undefined && book.availableStock !== null
+      ? book.availableStock
+      : book.stock || 0;
     if (availableStock <= 0) {
       return res.status(400).json({ message: 'Book is not available' });
     }
@@ -1094,10 +1120,15 @@ router.put('/borrow/:id', async (req, res) => {
       bookTitle: book.title
     });
 
+    const copy = await assignCopyToTransaction(book, transaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
     // Update book status - decrement available stock
     book.borrowedBy = userEmail;
     book.borrowedAt = new Date();
-    book.availableStock = (book.availableStock || book.stock || 0) - 1;
+    book.availableStock = availableStock - 1;
 
     await Promise.all([
       transaction.save(),
@@ -1531,6 +1562,22 @@ router.get('/reserved', async (req, res) => {
   }
 });
 
+router.get('/:id/copies', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id).select('_id bookId stock availableStock');
+    if (!book) return res.status(404).json({ error: 'Book not found' });
+
+    await ensureBookCopies(book);
+    const copies = await BookCopy.find({ bookId: book._id })
+      .sort({ sequence: 1 })
+      .select('copyNumber sequence status borrowedAt retiredAt')
+      .lean();
+    res.json({ copies });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Generic PUT endpoint for updating book fields (year, stock, etc)
 router.put('/:id', async (req, res) => {
   try {
@@ -1550,20 +1597,18 @@ router.put('/:id', async (req, res) => {
     
     // Handle stock update with recalculation of availableStock
     if (stock !== undefined) {
-      updateData.stock = stock;
-      
-      // Calculate how many books are currently borrowed
-      const oldStock = currentBook.stock || 1;
-      const oldAvailableStock = currentBook.availableStock !== undefined ? currentBook.availableStock : oldStock;
-      const borrowedCount = oldStock - oldAvailableStock;
-      
-      // New available stock = new stock - borrowed count
-      const newAvailableStock = Math.max(0, stock - borrowedCount);
-      updateData.availableStock = newAvailableStock;
-      
+      const newStock = Number(stock);
+      if (!Number.isInteger(newStock) || newStock < 0) {
+        return res.status(400).json({ error: 'Stock must be a non-negative whole number.' });
+      }
+
+      const copyStock = await syncCopiesForStockChange(currentBook, newStock);
+      updateData.stock = newStock;
+      updateData.availableStock = copyStock.availableStock;
+
       console.log(`📚 Stock update for book "${currentBook.title}":
-        Old: stock=${oldStock}, availableStock=${oldAvailableStock}, borrowed=${borrowedCount}
-        New: stock=${stock}, availableStock=${newAvailableStock}`);
+        Old: stock=${currentBook.stock}, availableStock=${currentBook.availableStock}
+        New: stock=${newStock}, availableStock=${copyStock.availableStock}`);
     }
     
     if (category !== undefined) updateData.category = category;
@@ -1667,7 +1712,7 @@ router.put('/:id', async (req, res) => {
     res.status(200).json({ message: 'Book updated successfully', book: updatedBook });
   } catch (err) {
     console.error("Error updating book:", err);
-    res.status(500).json({ error: 'Error updating book: ' + err.message });
+    res.status(err.status || 500).json({ error: 'Error updating book: ' + err.message });
   }
 });
 
@@ -1726,6 +1771,12 @@ router.put('/borrow-reserved/:id', async (req, res) => {
     if (!reservation) {
       return res.status(404).json({ message: 'Active reservation not found' });
     }
+    const availableStock = book.availableStock !== undefined && book.availableStock !== null
+      ? book.availableStock
+      : book.stock || 0;
+    if (availableStock <= 0) {
+      return res.status(400).json({ message: 'No copies are available to complete this reservation' });
+    }
 
     // Check if it's the reserved date
     const today = new Date();
@@ -1735,10 +1786,6 @@ router.put('/borrow-reserved/:id', async (req, res) => {
         message: 'This book can only be borrowed on the reserved date'
       });
     }
-
-    // Mark the reservation as completed
-    reservation.status = 'completed';
-    await reservation.save();
 
     // Create new borrow transaction
     const borrowTransaction = new Transaction({
@@ -1751,9 +1798,19 @@ router.put('/borrow-reserved/:id', async (req, res) => {
       bookTitle: book.title
     });
 
+    const copy = await assignCopyToTransaction(book, borrowTransaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
+    // Mark the reservation as completed after a physical copy is secured.
+    reservation.status = 'completed';
+    await reservation.save();
+
     // Update book status
     book.borrowedBy = userEmail;
     book.borrowedAt = new Date();
+    book.availableStock = availableStock - 1;
 
     await Promise.all([
       borrowTransaction.save(),
@@ -1806,6 +1863,7 @@ router.post('/cleanup/return-deleted-users', async (req, res) => {
         
         const book = await Book.findById(transaction.bookId);
         if (book) {
+          await releaseCopyForTransaction(transaction);
           // Increment availableStock since it was borrowed
           book.availableStock = (book.availableStock || 0) + 1;
           book.borrowedBy = null;

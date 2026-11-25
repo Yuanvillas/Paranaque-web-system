@@ -75,6 +75,7 @@ const TransactionsTable = () => {
     const search = searchTerm.trim().toLowerCase();
     const matchesSearch = !search || [
       transaction.bookTitle,
+      transaction.copyNumber,
       transaction.userEmail,
       transaction.type,
       transaction.status
@@ -107,6 +108,7 @@ const TransactionsTable = () => {
   const exportToExcel = () => {
     const data = filteredTransactions.map(transaction => ({
       'Book Title': transaction.bookTitle || '-',
+      'Copy Number': transaction.copyNumber || '-',
       'User': transaction.userEmail || '-',
       'Type': transaction.type || '-',
       'Status': transaction.status || '-',
@@ -345,7 +347,14 @@ const TransactionsTable = () => {
                 ) : (
                   paginatedTransactions.map((transaction) => (
                     <tr key={transaction._id} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '12px', fontWeight: '600' }}>{transaction.bookTitle || '-'}</td>
+                      <td style={{ padding: '12px', fontWeight: '600' }}>
+                        {transaction.bookTitle || '-'}
+                        {transaction.copyNumber && (
+                          <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#666' }}>
+                            Copy: {transaction.copyNumber}
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: '12px' }}>{transaction.userEmail || '-'}</td>
                       <td style={{ padding: '12px', textTransform: 'capitalize' }}>{transaction.type || '-'}</td>
                       <td style={{ padding: '12px' }}>

@@ -7,6 +7,10 @@ const ReservedBook = require('../models/ReservedBook');
 const PendingReservedBook = require('../models/PendingReservedBook');
 const ReturnRequest = require('../models/ReturnRequest');
 const {
+  assignCopyToTransaction,
+  releaseCopyForTransaction
+} = require('../utils/bookCopyInventory');
+const {
   sendReservationPendingEmail,
   sendReservationApprovedEmail,
   sendReservationRejectedEmail,
@@ -57,7 +61,9 @@ router.post('/borrow', async (req, res) => {
     }
 
     // Check if there are available copies
-    const availableStock = book.availableStock || book.stock || 0;
+    const availableStock = book.availableStock !== undefined && book.availableStock !== null
+      ? book.availableStock
+      : book.stock || 0;
     if (availableStock <= 0) {
       return res.status(400).json({ message: 'Book is not available' });
     }
@@ -73,10 +79,15 @@ router.post('/borrow', async (req, res) => {
       bookTitle: book.title
     });
 
+    const copy = await assignCopyToTransaction(book, transaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
     // Update book status - decrement available stock
     book.borrowedBy = userEmail;
     book.borrowedAt = new Date();
-    book.availableStock = (book.availableStock || book.stock || 0) - 1;
+    book.availableStock = availableStock - 1;
 
     await Promise.all([
       transaction.save(),
@@ -239,6 +250,9 @@ router.post('/return/:transactionId', async (req, res) => {
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });
     }
+    if (transaction.type !== 'borrow' || !['active', 'borrowed'].includes(transaction.status)) {
+      return res.status(400).json({ message: 'This transaction is not an active borrow' });
+    }
 
     const book = await Book.findById(transaction.bookId);
     if (!book) {
@@ -251,6 +265,7 @@ router.post('/return/:transactionId', async (req, res) => {
 
     // Update book - increment availableStock if it was borrowed
     if (transaction.type === 'borrow') {
+      await releaseCopyForTransaction(transaction);
       book.availableStock = (book.availableStock || 0) + 1;
     }
     book.borrowedBy = null;
@@ -625,24 +640,30 @@ router.post('/approve-borrow/:id', async (req, res) => {
     transaction.endDate = dueDate;
 
     const book = await Book.findById(transaction.bookId);
-    if (book) {
-      // Check if there are available copies
-      const currentStock = book.availableStock !== undefined && book.availableStock !== null ? book.availableStock : (book.stock || 0);
-      console.log(`Before approve: Book ${book.title} availableStock=${book.availableStock}, stock=${book.stock}, current=${currentStock}`);
-      
-      if (currentStock <= 0) {
-        return res.status(400).json({ message: 'No copies available' });
-      }
-      
-      book.borrowedBy = transaction.userEmail;
-      book.borrowedAt = new Date();
-      // Decrement available stock
-      book.availableStock = currentStock - 1;
-      console.log(`After decrement: availableStock=${book.availableStock}`);
-      
-      await book.save();
-      console.log(`Saved book: availableStock=${book.availableStock}`);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
     }
+    // Check if there are available copies
+    const currentStock = book.availableStock !== undefined && book.availableStock !== null ? book.availableStock : (book.stock || 0);
+    console.log(`Before approve: Book ${book.title} availableStock=${book.availableStock}, stock=${book.stock}, current=${currentStock}`);
+
+    if (currentStock <= 0) {
+      return res.status(400).json({ message: 'No copies available' });
+    }
+
+    const copy = await assignCopyToTransaction(book, transaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
+    book.borrowedBy = transaction.userEmail;
+    book.borrowedAt = new Date();
+    // Decrement available stock
+    book.availableStock = currentStock - 1;
+    console.log(`After decrement: availableStock=${book.availableStock}`);
+
+    await book.save();
+    console.log(`Saved book: availableStock=${book.availableStock}`);
 
     await transaction.save();
 
@@ -1054,10 +1075,16 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
     if (!returnRequest) {
       return res.status(404).json({ message: 'Return request not found' });
     }
+    if (returnRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'This return request has already been processed' });
+    }
 
     const transaction = await Transaction.findById(returnRequest.transactionId);
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });
+    }
+    if (transaction.type !== 'borrow' || !['active', 'borrowed'].includes(transaction.status)) {
+      return res.status(400).json({ message: 'This transaction is not an active borrow' });
     }
 
     const book = await Book.findById(returnRequest.bookId);
@@ -1075,9 +1102,8 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
     transaction.returnDate = new Date();
 
     // Update book - increment availableStock
-    if (transaction.type === 'borrow') {
-      book.availableStock = (book.availableStock || 0) + 1;
-    }
+    await releaseCopyForTransaction(transaction);
+    book.availableStock = (book.availableStock || 0) + 1;
     book.borrowedBy = null;
     book.borrowedAt = null;
 

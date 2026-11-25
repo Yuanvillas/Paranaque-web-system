@@ -14,6 +14,9 @@ const BooksTable = () => {
   const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [bookCopies, setBookCopies] = useState([]);
+  const [copiesLoading, setCopiesLoading] = useState(false);
+  const [copiesError, setCopiesError] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
@@ -246,8 +249,11 @@ const BooksTable = () => {
     }
   };
 
-  const startEdit = (book) => {
+  const startEdit = async (book) => {
     setEditingBook(book._id);
+    setBookCopies([]);
+    setCopiesError('');
+    setCopiesLoading(true);
     setEditForm({
       title: book.title,
       author: book.author || '',
@@ -262,6 +268,19 @@ const BooksTable = () => {
       callNumber: book.callNumber || '',
       status: book.status || 'Available'
     });
+
+    try {
+      const response = await fetch(`https://paranaque-web-system.onrender.com/api/books/${book._id}/copies`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to load copy records.');
+      }
+      setBookCopies(Array.isArray(data.copies) ? data.copies : []);
+    } catch (err) {
+      setCopiesError(err.message);
+    } finally {
+      setCopiesLoading(false);
+    }
   };
 
   const handleEditChange = (e) => {
@@ -298,15 +317,16 @@ const BooksTable = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm)
       });
+      const result = await res.json();
       if (res.ok) {
         const updatedBooks = books.map(book =>
-          book._id === editingBook ? { ...book, ...editForm } : book
+          book._id === editingBook ? { ...book, ...result.book } : book
         );
         setBooks(updatedBooks);
         setEditingBook(null);
         alert('Book updated successfully!');
       } else {
-        alert('Failed to update book');
+        alert(result.error || 'Failed to update book');
       }
     } catch (err) {
       alert('Error updating book: ' + err.message);
@@ -316,6 +336,8 @@ const BooksTable = () => {
   const cancelEdit = () => {
     setEditingBook(null);
     setEditForm({});
+    setBookCopies([]);
+    setCopiesError('');
   };
 
   const viewBookHistory = async (book) => {
@@ -1231,6 +1253,28 @@ const BooksTable = () => {
                       }}
                     />
                   </div>
+                </div>
+
+                <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid #ddd', borderRadius: '6px' }}>
+                  <strong>Physical copy numbers</strong>
+                  {copiesLoading ? (
+                    <p style={{ marginBottom: 0 }}>Loading copy records...</p>
+                  ) : copiesError ? (
+                    <p role="alert" style={{ color: '#b00020', marginBottom: 0 }}>{copiesError}</p>
+                  ) : bookCopies.length === 0 ? (
+                    <p style={{ marginBottom: 0 }}>No copy records are available for this book.</p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', marginTop: '10px' }}>
+                      {bookCopies.map(copy => (
+                        <div key={copy.copyNumber} style={{ padding: '8px', background: '#f7f7f7', borderRadius: '4px' }}>
+                          <strong>{copy.copyNumber}</strong>
+                          <div style={{ fontSize: '13px' }}>
+                            {copy.status.replace(/-/g, ' ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>

@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import "../components/App.css";
 import "../styles/user-management.css";
+import { isValidEmail } from "../utils/emailValidation";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -170,8 +171,7 @@ const UserManagement = () => {
         if (!value) {
           error = "Email is required.";
         } else {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value)) {
+          if (!isValidEmail(value)) {
             error = "Please enter a valid email address.";
           }
         }
@@ -727,7 +727,7 @@ const UserManagement = () => {
                   value={createForm.email}
                   onChange={handleCreateChange}
                   className="modal-input"
-                  placeholder="Email (Gmail only)"
+                  placeholder="Email"
                   autoComplete="off"
                 />
                 {createErrors.email && <p className="error-text">{createErrors.email}</p>}

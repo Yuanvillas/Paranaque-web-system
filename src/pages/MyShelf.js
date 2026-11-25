@@ -330,6 +330,7 @@ const MyShelf = () => {
             searchFilteredItems.map((item) => (
               <div key={item._id} className="shelf-card">
                 <h3>{item.bookTitle}</h3>
+                {item.copyNumber && <p className="info-label">COPY NUMBER: {item.copyNumber}</p>}
                 
                 <div className="shelf-card-badge">
                   {item.status === 'pending' ? (
@@ -425,7 +426,12 @@ const MyShelf = () => {
                     backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff',
                     borderBottom: '1px solid #e0e0e0'
                   }}>
-                    <td style={{ padding: '12px 15px' }}>{item.bookTitle}</td>
+                    <td style={{ padding: '12px 15px' }}>
+                      {item.bookTitle}
+                      {item.copyNumber && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>Copy: {item.copyNumber}</div>
+                      )}
+                    </td>
                     <td style={{ padding: '12px 15px', textTransform: 'capitalize' }}>
                       {item.type === 'borrow' ? '📖 Borrow' : '♦ Reserve'}
                     </td>

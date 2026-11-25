@@ -138,7 +138,7 @@ function Login() {
       if (message === "Please verify your email before logging in.") {
         await Swal.fire({
           title: "Parañaledge",
-          text: "Please check your Gmail and verify your account before logging in.",
+          text: "Please check your email inbox and verify your account before logging in.",
           icon: "warning",
           confirmButtonText: "OK"
         });

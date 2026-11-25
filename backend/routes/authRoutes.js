@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const { Resend } = require('resend');
 const { uploadBase64ToSupabase } = require('../utils/upload');
 const { sendEmail } = require('../utils/emailService');
+const { isValidEmail, normalizeEmail, emailLookupRegex } = require('../utils/emailValidation');
 
 // Initialize Resend email service (kept for backwards compatibility if needed)
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -51,10 +52,10 @@ router.post("/register", async (req, res) => {
     }
 
     // ✅ Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({ message: "Please enter a valid email address." });
     }
+    const normalizedEmail = normalizeEmail(email);
 
     // ✅ Password strength validation before hashing
     const passwordRegex =
@@ -67,7 +68,7 @@ router.post("/register", async (req, res) => {
     }
 
     // Check for existing user
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: emailLookupRegex(normalizedEmail) });
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists." });
     }
@@ -80,7 +81,7 @@ router.post("/register", async (req, res) => {
       lastName,
       suffix,
       contactNumber,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role,
       address,
@@ -91,7 +92,7 @@ router.post("/register", async (req, res) => {
     await newUser.save();
 
     await new Log({
-      userEmail: email,
+      userEmail: normalizedEmail,
       action: 'register',
       actionType: 'account',
       status: 'success',
@@ -107,7 +108,7 @@ router.post("/register", async (req, res) => {
 
     const mailOptions = {
       from: process.env.GMAIL_USER,
-      to: email,
+      to: normalizedEmail,
       subject: "Email Verification - Parañaledge",
       html: `
         <h2>Email Verification</h2>
@@ -135,16 +136,19 @@ router.post("/register", async (req, res) => {
           <p>If you did not register, please ignore this email.</p>
         `,
       });
-      console.log(`Verification email sent successfully to: ${email} - Message ID: ${emailResult.messageId}`);
+      console.log(`Verification email sent successfully to: ${normalizedEmail} - Message ID: ${emailResult.messageId}`);
     } catch (emailErr) {
       console.error("Error sending verification email:", emailErr.message);
       // Don't throw error - still allow user registration even if email fails
-      console.warn(`User registered but email failed for: ${email}`);
+      console.warn(`User registered but email failed for: ${normalizedEmail}`);
     }
     
     return res.status(200).json({ message: 'User registered successfully. Please check your email to verify your account.' });
   } catch (err) {
     console.error("Error in /register route:", err);
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Email already exists." });
+    }
     return res.status(500).json({ message: 'Server error. Please check the backend logs.' });
   }
 });
@@ -183,8 +187,11 @@ router.get('/is-verified', async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: 'Email is required', verified: false });
     }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.', verified: false });
+    }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: emailLookupRegex(email) });
     if (!user) {
       return res.status(404).json({ message: 'User not found', verified: false });
     }
@@ -203,7 +210,11 @@ router.post('/login', async (req, res) => {
     const ipAddress = req.ip || req.connection.remoteAddress;
     const userAgent = req.get('User-Agent');
 
-    const user = await User.findOne({ email });
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+
+    const user = await User.findOne({ email: emailLookupRegex(email) });
     console.log("/login/ - user:", user);
     if (!user) {
       // Log failed login attempt
@@ -422,6 +433,10 @@ router.put('/profile/upload-image/:email', async (req, res) => {
 router.put("/change-password", async (req, res) => {
   const { email, currentPassword, newPassword } = req.body;
 
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: "Please enter a valid email address." });
+  }
+
   // Password strength validation (same as register)
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/;
   if (!passwordRegex.test(newPassword)) {
@@ -432,7 +447,7 @@ router.put("/change-password", async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: emailLookupRegex(email) });
     if (!user) return res.status(404).json({ message: "User not found." });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -676,9 +691,12 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: 'Email is required.' });
     }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
 
     // Check if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: emailLookupRegex(email) });
     if (!user) {
       return res.status(404).json({ message: 'User with this email not found.' });
     }
@@ -974,10 +992,10 @@ router.post('/create-first-admin', async (req, res) => {
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
+    const normalizedEmail = normalizeEmail(email);
 
     // Password strength validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/;
@@ -988,7 +1006,7 @@ router.post('/create-first-admin', async (req, res) => {
     }
 
     // Check if user with this email already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: emailLookupRegex(normalizedEmail) });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists.' });
     }
@@ -1000,7 +1018,7 @@ router.post('/create-first-admin', async (req, res) => {
     const newAdmin = new User({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       contactNumber,
       address,

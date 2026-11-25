@@ -6,6 +6,7 @@ import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
+import { isValidEmail } from "../utils/emailValidation";
 
 const STREET_SUGGESTIONS_KEY = "registerStreetSuggestions";
 const MAX_STREET_SUGGESTIONS = 20;
@@ -61,8 +62,7 @@ function Register() {
       return "Email is required.";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       setEmailStatus("invalid");
       return "Please enter a valid email address.";
     }
@@ -134,7 +134,7 @@ function Register() {
     };
     if (emailStatus === "valid")
       return { ...base, borderColor: "#4caf50", backgroundColor: "#f8fff8" };
-    if (emailStatus === "invalid" || emailStatus === "not-gmail")
+    if (emailStatus === "invalid")
       return { ...base, borderColor: "#f44336", backgroundColor: "#fff8f8" };
     return base;
   };
@@ -385,7 +385,7 @@ function Register() {
             <input type="tel" name="contactNumber" placeholder="Contact Number" value={form.contactNumber} onChange={handleChange} />
             {errors.contactNumber && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.contactNumber}</p>}
 
-            <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} style={getEmailInputStyle()} />
+            <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} autoComplete="email" style={getEmailInputStyle()} />
             {getEmailFeedback()}
             {errors.email && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.email}</p>}
 

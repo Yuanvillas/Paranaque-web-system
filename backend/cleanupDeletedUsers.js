@@ -7,6 +7,7 @@ const Book = require('./models/Book');
 const Transaction = require('./models/Transaction');
 const User = require('./models/User');
 const Log = require('./models/Log');
+const { releaseCopyForTransaction } = require('./utils/bookCopyInventory');
 
 async function cleanupDeletedUsers() {
   try {
@@ -55,6 +56,7 @@ async function cleanupDeletedUsers() {
       if (!userExists) {
         // User has been deleted, return the book
         console.log(`\n⚠️  User ${transaction.userEmail} not found, returning book: ${transaction.bookTitle}`);
+        await releaseCopyForTransaction(transaction);
         
         const book = await Book.findById(transaction.bookId);
         if (book) {
