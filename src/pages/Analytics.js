@@ -17,6 +17,7 @@ const Analytics = ({ onClose }) => {
   const reportRef = useRef();
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
+  const [booksListedFilter, setBooksListedFilter] = useState("all");
   const [todayCount, setTodayCount] = useState(0);
   const [borrowedWeekCount, setBorrowedWeekCount] = useState(0);
   const [error, setError] = useState(null);
@@ -42,6 +43,15 @@ const Analytics = ({ onClose }) => {
     (book.title?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false) ||
     (book.author?.toLowerCase().includes(searchMostBorrowed.toLowerCase()) || false)
   );
+  const filteredListedBooks = books.filter((book) => {
+    const stock = Math.max(0, Number(book.stock) || 0);
+    const availableStock = Math.max(0, Number(book.availableStock) || 0);
+    const borrowedStock = Math.max(0, stock - availableStock);
+
+    if (booksListedFilter === "borrowed") return borrowedStock > 0;
+    if (booksListedFilter === "available") return availableStock > 0;
+    return true;
+  });
   const borrowReturnExportData = borrowedBooks.map(book => ({
     "Book Title": book.title || "-",
     Borrower: book.borrowedBy || "N/A",
@@ -69,6 +79,11 @@ const Analytics = ({ onClose }) => {
     cursor: "pointer",
     fontSize: "14px",
     fontWeight: "bold"
+  };
+
+  const openBooksListedModal = (filter) => {
+    setBooksListedFilter(filter);
+    setSelectedModal("booksListed");
   };
 
   const exportWorkbook = (sheets, filename) => {
@@ -386,8 +401,32 @@ const Analytics = ({ onClose }) => {
           {error && <div className="error-message">{error}</div>}
 
           <div style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "15px", marginBottom: "30px", padding: "15px", width: "100%"}}>
-            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('booksListed')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
-              <BooksListedChart books={books} />
+            <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "320px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => openBooksListedModal("all")} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
+              <div style={{ height: "270px" }}>
+                <BooksListedChart books={books} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openBooksListedModal("available");
+                  }}
+                  style={{ padding: "7px 12px", border: "none", borderRadius: "5px", backgroundColor: "#4caf50", color: "white", cursor: "pointer" }}
+                >
+                  View Available
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openBooksListedModal("borrowed");
+                  }}
+                  style={{ padding: "7px 12px", border: "none", borderRadius: "5px", backgroundColor: "#ffb300", color: "#333", cursor: "pointer" }}
+                >
+                  View Borrowed
+                </button>
+              </div>
             </div>
             <div style={{backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", height: "280px", overflow: "hidden", cursor: "pointer", transition: "all 0.3s ease"}} onClick={() => setSelectedModal('monthlyUsers')} onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"} onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}>
               <BooksAddedTodayChart monthlyUsers={monthlyUsers} />
@@ -509,10 +548,10 @@ const Analytics = ({ onClose }) => {
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2>Books Listed Status ({books.length})</h2>
+                  <h2>Books Listed Status ({filteredListedBooks.length})</h2>
                   <button 
                     onClick={() => {
-                      const data = books.map(book => ({
+                      const data = filteredListedBooks.map(book => ({
                         Title: book.title,
                         Author: book.author,
                         Year: book.year,
@@ -525,11 +564,25 @@ const Analytics = ({ onClose }) => {
                       }));
                       exportToExcel(data, "Books_Listed_Status");
                     }}
-                    style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                    disabled={filteredListedBooks.length === 0}
+                    style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: filteredListedBooks.length === 0 ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', opacity: filteredListedBooks.length === 0 ? 0.6 : 1 }}
                   >
                     📥 Export to Excel
                   </button>
                 </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px' }}>
+                  <span>Filter by availability:</span>
+                  <select
+                    value={booksListedFilter}
+                    onChange={(e) => setBooksListedFilter(e.target.value)}
+                    aria-label="Filter books by borrowed or available copies"
+                    style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                  >
+                    <option value="all">All Books</option>
+                    <option value="borrowed">Borrowed (has copies out)</option>
+                    <option value="available">Available (has copies in stock)</option>
+                  </select>
+                </label>
                 <table className="styled-table" style={{ marginTop: '20px' }}>
                   <thead>
                     <tr>
@@ -545,7 +598,13 @@ const Analytics = ({ onClose }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {books.map((book) => (
+                    {filteredListedBooks.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                          No books match this filter.
+                        </td>
+                      </tr>
+                    ) : filteredListedBooks.map((book) => (
                       <tr key={book._id}>
                         <td>{book.image ? <img src={book.image} alt={book.title} style={{ width: '50px', height: 'auto' }} /> : 'No Image'}</td>
                         <td>{book.title}</td>
