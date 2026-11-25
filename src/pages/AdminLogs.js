@@ -203,7 +203,7 @@ const AdminLogs = () => {
                               }}>
                                 <FontAwesomeIcon icon={actionInfo.icon} />
                               </div>
-                              <span style={styles.actionText}>{log.action}</span>
+                              <span style={styles.actionText}>{log.description || log.action}</span>
                             </div>
                           </td>
                           <td style={styles.td}>

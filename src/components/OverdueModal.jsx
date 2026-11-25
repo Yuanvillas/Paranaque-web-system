@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { clearAuthData } from '../utils/authHelper';
 import './OverdueModal.css';
 
 /**
@@ -47,8 +48,7 @@ const OverdueModal = ({ overdueBooks, userEmail, onClose }) => {
       Swal.close();
       
       // Clear all session data
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('user');
+      clearAuthData();
       sessionStorage.clear();
       
       // Close the overdue modal

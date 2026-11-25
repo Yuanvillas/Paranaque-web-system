@@ -107,9 +107,20 @@ const GenreBooks = () => {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/reserve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: selectedBook._id, userEmail }),
+        body: JSON.stringify({ bookId: selectedBook._id, userEmail, reserveDate }),
       });
       const data = await res.json();
+      if (res.ok && data.alreadyReserved) {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: data.message,
+          icon: "info",
+          confirmButtonText: "OK"
+        });
+        closeModal();
+        return;
+      }
+
       if (res.ok) {
         await Swal.fire({ title: "Parañaledge", text: "Book reserved successfully! Pending admin approval.", icon: "success", confirmButtonText: "OK" });
         closeModal();
@@ -142,8 +153,8 @@ const GenreBooks = () => {
   if (!genre || typeof genre !== "string" || genre.length === 0) {
     return (
       <div style={{ padding: "20px" }}>
-        <h2>Invalid genre or loading...</h2>
-        <Link to="/user-home/genres" style={{ color: "#007bff" }}>← Back to Genres</Link>
+        <h2>Invalid catalog or loading...</h2>
+        <Link to="/user-home/genres" style={{ color: "#007bff" }}>← Back to Catalogs</Link>
       </div>
     );
   }
@@ -191,7 +202,7 @@ const GenreBooks = () => {
             </div>
           ))
         ) : (
-          <p style={{ fontSize: "16px", marginTop: "20px" }}>No books found in this genre.</p>
+          <p style={{ fontSize: "16px", marginTop: "20px" }}>No books found in this catalog.</p>
         )}
       </div>
 

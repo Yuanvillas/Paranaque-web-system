@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Log = require('../models/Log');
+const User = require('../models/User');
 
 // Add a log entry
 router.post('/add', async (req, res) => {
@@ -18,6 +19,60 @@ router.get('/', async (req, res) => {
   try {
     const logs = await Log.find().sort({ timestamp: -1 });
     return res.json({ logs });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.get('/dashboard-stats', async (req, res) => {
+  if (req.query.start && typeof req.query.start !== 'string') {
+    return res.status(400).json({ message: 'Invalid start date' });
+  }
+
+  const startOfDay = req.query.start ? new Date(req.query.start) : new Date();
+  if (!req.query.start) startOfDay.setHours(0, 0, 0, 0);
+  if (Number.isNaN(startOfDay.getTime())) {
+    return res.status(400).json({ message: 'Invalid start date' });
+  }
+
+  try {
+    const [totalEntries, todayEntries, authLogs, users] = await Promise.all([
+      Log.countDocuments(),
+      Log.countDocuments({ timestamp: { $gte: startOfDay } }),
+      Log.aggregate([
+        {
+          $match: {
+            timestamp: { $gte: startOfDay },
+            action: { $in: ['login', 'logout'] }
+          }
+        },
+        { $sort: { timestamp: -1 } },
+        {
+          $group: {
+            _id: '$userEmail',
+            action: { $first: '$action' }
+          }
+        }
+      ]),
+      User.find().select('email role').lean()
+    ]);
+
+    const userRoles = new Map(users.map(user => [user.email, user.role]));
+    const activeCounts = { user: 0, admin: 0, librarian: 0 };
+    authLogs.forEach(({ _id: email, action }) => {
+      const role = userRoles.get(email);
+      if (action === 'login' && Object.prototype.hasOwnProperty.call(activeCounts, role)) {
+        activeCounts[role] += 1;
+      }
+    });
+
+    return res.json({
+      totalEntries,
+      todayEntries,
+      activeUsers: activeCounts.user,
+      activeAdmins: activeCounts.admin,
+      activeLibrarians: activeCounts.librarian
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

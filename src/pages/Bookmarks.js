@@ -1,115 +1,114 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark, faTrash, faBook } from "@fortawesome/free-solid-svg-icons";
 import "../styles/bookmarks.css";
 import Swal from "sweetalert2";
+import API_BASE_URL from "../config/api";
 
 const Bookmarks = () => {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const userEmail = localStorage.getItem("userEmail");
+
+  const loadBookmarks = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+
+    if (!userEmail) {
+      setBookmarks([]);
+      setLoadError("Please log in to view your bookmarks.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookmarks/get?email=${encodeURIComponent(userEmail)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load bookmarks.");
+      }
+      if (!Array.isArray(data.bookmarks)) {
+        throw new Error("The bookmarks response was invalid.");
+      }
+
+      setBookmarks(data.bookmarks.filter(
+        (bookmark) => bookmark?.book_id && typeof bookmark.book_id === "object" && bookmark.book_id._id
+      ));
+    } catch (error) {
+      console.error("Error loading bookmarks:", error);
+      setBookmarks([]);
+      setLoadError("Unable to load your bookmarks. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail]);
 
   useEffect(() => {
     loadBookmarks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadBookmarks = async () => {
-    try {
-      if (!userEmail) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`https://paranaque-web-system.onrender.com/api/bookmarks/get?email=${userEmail}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" }
-        });
-        const data = await res.json();
-        setBookmarks(data.bookmarks);
-
-        console.log("bookmarks: ", data.bookmarks)
-      } catch (error) {
-        await Swal.fire({
-          title: "Parañaledge",
-          text: "Error listing in booksmarks",
-          icon: "error",
-          confirmButtonText: "OK"
-        });
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading bookmarks:", error);
-      setLoading(false);
-    }
-  };
+  }, [loadBookmarks]);
 
   const removeBookmark = async (bookId) => {
     try {
-      try {
-        const res = await fetch("https://paranaque-web-system.onrender.com/api/bookmarks/delete", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ book_id: bookId, email: userEmail }),
-        });
-
-        const data = await res.json();
-
-        await Swal.fire({
-          title: "Parañaledge",
-          text: data.message,
-          icon: res.ok ? "success" : "error",
-          confirmButtonText: "OK"
-        });
-
-      } catch (error) {
-        await Swal.fire({
-          title: "Parañaledge",
-          text: "Something went wrong.",
-          icon: "error",
-          confirmButtonText: "OK"
-        });
+      const res = await fetch(`${API_BASE_URL}/api/bookmarks/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ book_id: bookId, email: userEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Unable to remove this bookmark.");
       }
 
-      const updatedBookmarks = bookmarks.filter(bookmark => bookmark.book_id._id !== bookId);
-      setBookmarks(updatedBookmarks);
-
+      setBookmarks((currentBookmarks) => currentBookmarks.filter(
+        (bookmark) => bookmark.book_id._id !== bookId
+      ));
+      await Swal.fire({
+        title: "Parañaledge",
+        text: data.message || "Bookmark removed successfully.",
+        icon: "success",
+        confirmButtonText: "OK"
+      });
     } catch (error) {
       console.error("Error removing bookmark:", error);
+      await Swal.fire({
+        title: "Parañaledge",
+        text: error.message || "Unable to remove this bookmark.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
     }
   };
 
-  const clearAllBookmarks = async() => {
+  const clearAllBookmarks = async () => {
     if (window.confirm("Are you sure you want to clear all bookmarks?")) {
       try {
-        const res = await fetch("https://paranaque-web-system.onrender.com/api/bookmarks/delete/all", {
+        const res = await fetch(`${API_BASE_URL}/api/bookmarks/delete/all`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail }),
         });
-
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Unable to clear bookmarks.");
+        }
 
+        setBookmarks([]);
         await Swal.fire({
           title: "Parañaledge",
-          text: data.message,
-          icon: res.ok ? "success" : "error",
+          text: data.message || "All bookmarks removed successfully.",
+          icon: "success",
           confirmButtonText: "OK"
         });
-
       } catch (error) {
+        console.error("Error clearing bookmarks:", error);
         await Swal.fire({
           title: "Parañaledge",
-          text: "Something went wrong.",
+          text: error.message || "Unable to clear bookmarks.",
           icon: "error",
           confirmButtonText: "OK"
         });
       }
-
-      setBookmarks([]);
-
     }
   };
 
@@ -133,7 +132,18 @@ const Bookmarks = () => {
 
       {/* Main Content */}
       <div className="bookmarks-content">
-        {bookmarks.length === 0 ? (
+        {loadError ? (
+          <div className="empty-state" role="alert">
+            <FontAwesomeIcon icon={faBook} className="empty-icon" />
+            <h2>Unable to load bookmarks</h2>
+            <p>{loadError}</p>
+            {userEmail && (
+              <button className="retry-btn" onClick={loadBookmarks}>
+                Try Again
+              </button>
+            )}
+          </div>
+        ) : bookmarks.length === 0 ? (
           <div className="empty-state">
             <FontAwesomeIcon icon={faBook} className="empty-icon" />
             <h2>No Bookmarks Yet</h2>
@@ -180,7 +190,9 @@ const Bookmarks = () => {
                     </div>
 
                     <p className="description">
-                      {bookmark.book_id.description ? bookmark.book_id.description.substring(0, 100) + "..." : "No description available"}
+                      {typeof bookmark.book_id.description === "string" && bookmark.book_id.description
+                        ? `${bookmark.book_id.description.substring(0, 100)}...`
+                        : "No description available"}
                     </p>
                   </div>
 

@@ -7,7 +7,7 @@ import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
 import OverdueModal from "../components/OverdueModal";
-import { clearAuthData } from "../utils/authHelper";
+import { beginAuthSession, clearAuthData, hasAuthSession } from "../utils/authHelper";
 
 function Login() {
   const navigate = useNavigate();
@@ -19,6 +19,8 @@ function Login() {
 
   // Check if user is already logged in and redirect
   useEffect(() => {
+    if (!hasAuthSession()) return;
+
     const userEmail = localStorage.getItem("userEmail");
     const user = localStorage.getItem("user");
     
@@ -39,6 +41,8 @@ function Login() {
       } catch (e) {
         console.error("Error parsing user data:", e);
       }
+    } else {
+      clearAuthData();
     }
   }, [navigate]);
 
@@ -97,12 +101,14 @@ function Login() {
         });
         localStorage.setItem("userEmail", user.email);
         localStorage.setItem("user", JSON.stringify(user));
+        beginAuthSession(user.email);
         console.log("Admin or Librarian logged in:", user);
         navigate("/admin-dashboard");
       } else {
         // For regular users, check for overdue books first
         localStorage.setItem("userEmail", user.email);
         localStorage.setItem("user", JSON.stringify(user));
+        beginAuthSession(user.email);
         setCurrentUser(user);
 
         // Check for overdues
@@ -132,7 +138,7 @@ function Login() {
       if (message === "Please verify your email before logging in.") {
         await Swal.fire({
           title: "Parañaledge",
-          text: "Please check your Gmail and verify your account before logging in.",
+          text: "Please check your email inbox and verify your account before logging in.",
           icon: "warning",
           confirmButtonText: "OK"
         });

@@ -25,26 +25,24 @@ const AdminDashboardTable = ({ onViewResources }) => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      
-      // Fetch all books
-      const booksRes = await fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000');
-      const booksData = await booksRes.json();
+      const responses = await Promise.all([
+        fetch('https://paranaque-web-system.onrender.com/api/books?limit=10000'),
+        fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000'),
+        fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
+        fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests'),
+        fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000')
+      ]);
+      if (responses.some(response => !response.ok)) {
+        throw new Error('Failed to fetch dashboard statistics');
+      }
+
+      const [booksData, borrowedData, requestsData, returnData, transData] = await Promise.all(
+        responses.map(response => response.json())
+      );
       const books = booksData.books || [];
-      
-      // Fetch borrowed books
-      const borrowedRes = await fetch('https://paranaque-web-system.onrender.com/api/books/borrowed?limit=10000');
-      const borrowedData = await borrowedRes.json();
       const borrowedBooks = borrowedData.books || [];
-      
-      // Fetch pending requests
-      const requestsRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
-      const requestsData = await requestsRes.json();
       const allRequests = requestsData.transactions || [];
       const pendingBorrowReserveRequests = allRequests.filter(req => req.status === 'pending').length;
-      
-      // Fetch return requests
-      const returnRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
-      const returnData = await returnRes.json();
       const allReturnRequests = returnData.requests || [];
       const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending').length;
       
@@ -52,8 +50,6 @@ const AdminDashboardTable = ({ onViewResources }) => {
       const pendingRequests = pendingBorrowReserveRequests + pendingReturnRequests;
       
       // Calculate returned books (completed transactions)
-      const transRes = await fetch('https://paranaque-web-system.onrender.com/api/transactions?limit=10000');
-      const transData = await transRes.json();
       const completedTransactions = transData.transactions ? transData.transactions.filter(t => t.status === 'completed').length : 0;
       
       // Get unique authors and categories

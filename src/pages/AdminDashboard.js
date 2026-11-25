@@ -16,6 +16,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import AdminDashboardTable from "../components/AdminDashboardTable";
 import OverdueNotificationPanel from "../components/OverdueNotificationPanel";
+import { clearAuthData } from "../utils/authHelper";
+import ChangePasswordButton from "../components/ChangePasswordButton";
 
 const BorrowedBooksTable = lazy(() => import("../components/BorrowedBooksTable"));
 const TransactionsTable = lazy(() => import("../components/TransactionsTable"));
@@ -25,7 +27,6 @@ const BooksTable = lazy(() => import("../components/BooksTable"));
 const PendingRequestTable = lazy(() => import("../components/PendingRequestTable"));
 const UploadAvatar = lazy(() => import("../components/UploadAvatar"));
 const UserEntryMonitor = lazy(() => import("../components/UserEntryMonitor"));
-const Analytics = lazy(() => import("./Analytics"));
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -65,22 +66,11 @@ const AdminDashboard = () => {
         navigate("/admin/user-management");
       }
     } else if (name === "Analytics") {
-      if (selectedResource === "Analytics") {
-        setSelectedResource(null);
-        setSelectedSubResource(null);
-      } else {
-        setSelectedResource("Analytics");
-      }
+      navigate("/admin/analytics");
     } else if (name === "Log Activities") {
       navigate("/admin/logs");
     } else if (name === "Resource Management") {
-      if (selectedResource === "Resource Management") {
-        setSelectedResource(null);
-        setSelectedSubResource(null);
-      } else {
-        setSelectedResource("Resource Management");
-        setSelectedSubResource("All Books"); // Show All Books by default
-      }
+      navigate("/admin/resources");
     } else {
       Swal.fire({
         title: "Parañaledge",
@@ -94,88 +84,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchEntryStats = async () => {
       try {
-        const [logsResponse, usersResponse] = await Promise.all([
-          fetch('https://paranaque-web-system.onrender.com/api/logs'),
-          fetch('https://paranaque-web-system.onrender.com/api/auth/users')
-        ]);
-        
-        const logsData = await logsResponse.json();
-        const usersData = await usersResponse.json();
-        
-        if (logsResponse.ok && logsData.logs && usersResponse.ok && usersData.users) {
-          const logs = logsData.logs;
-          const today = new Date().toDateString();
-          
-          const todayLogs = logs.filter(log => 
-            new Date(log.timestamp).toDateString() === today
-          );
-          
-          // Create a map of user roles
-          const userRoles = {};
-          usersData.users.forEach(user => {
-            userRoles[user.email] = user.role;
-          });
-          
-          // Count unique regular users who are STILL logged in
-          // by finding their LAST action - only count if it's login (not logout)
-          const userLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'user' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!userLastActions[log.userEmail] || new Date(log.timestamp) > new Date(userLastActions[log.userEmail].timestamp)) {
-                userLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueUsersToday = new Set(
-            Object.values(userLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          // Count unique admins who are STILL logged in
-          const adminLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'admin' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!adminLastActions[log.userEmail] || new Date(log.timestamp) > new Date(adminLastActions[log.userEmail].timestamp)) {
-                adminLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueAdminsToday = new Set(
-            Object.values(adminLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          // Count unique librarians who are STILL logged in
-          const librarianLastActions = {};
-          todayLogs.forEach(log => {
-            if (log.action && userRoles[log.userEmail] === 'librarian' &&
-                (log.action.toLowerCase().includes('login') || log.action.toLowerCase().includes('logout'))) {
-              if (!librarianLastActions[log.userEmail] || new Date(log.timestamp) > new Date(librarianLastActions[log.userEmail].timestamp)) {
-                librarianLastActions[log.userEmail] = log;
-              }
-            }
-          });
-          
-          const uniqueLibrariansToday = new Set(
-            Object.values(librarianLastActions)
-              .filter(log => log.action && log.action.toLowerCase().includes('login'))
-              .map(log => log.userEmail)
-          );
-          
-          setEntryStats({
-            totalEntries: logs.length,
-            todayEntries: todayLogs.length,
-            activeUsers: uniqueUsersToday.size,
-            activeAdmins: uniqueAdminsToday.size,
-            activeLibrarians: uniqueLibrariansToday.size
-          });
-        }
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const response = await fetch(
+          `https://paranaque-web-system.onrender.com/api/logs/dashboard-stats?start=${encodeURIComponent(startOfDay.toISOString())}`
+        );
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch entry statistics');
+        setEntryStats(data);
       } catch (err) {
         console.error('Error fetching entry stats:', err);
       }
@@ -386,24 +302,27 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchPendingRequestsCount = async () => {
       try {
-        const response = await fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000');
-        const returnResponse = await fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests');
-        const data = await response.json();
-        const returnData = await returnResponse.json();
-        if (response.ok && returnResponse.ok) {
-          const allRequests = data.transactions || [];
-          const allReturnRequests = returnData.requests || [];
-          const borrowRequests = allRequests.filter(req => req.type === 'borrow');
-          const reserveRequests = allRequests.filter(req => req.type === 'reserve');
-          const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
-          setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
+        const [response, returnResponse] = await Promise.all([
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/pending-requests?limit=10000'),
+          fetch('https://paranaque-web-system.onrender.com/api/transactions/return-requests')
+        ]);
+        const [data, returnData] = await Promise.all([response.json(), returnResponse.json()]);
+        if (!response.ok || !returnResponse.ok) {
+          throw new Error('Failed to fetch pending request counts');
         }
+
+        const allRequests = data.transactions || [];
+        const allReturnRequests = returnData.requests || [];
+        const borrowRequests = allRequests.filter(req => req.type === 'borrow');
+        const reserveRequests = allRequests.filter(req => req.type === 'reserve');
+        const pendingReturnRequests = allReturnRequests.filter(req => req.status === 'pending');
+        setPendingRequestsCount(borrowRequests.length + reserveRequests.length + pendingReturnRequests.length);
       } catch (err) {
         console.error('Error fetching pending requests count:', err);
       }
     };
 
-    const interval = setInterval(fetchPendingRequestsCount, 5000);
+    const interval = setInterval(fetchPendingRequestsCount, 30000);
     fetchPendingRequestsCount();
 
     return () => clearInterval(interval);
@@ -434,18 +353,6 @@ const AdminDashboard = () => {
       setSelectedSubResource("Transactions");
     }
   };
-
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        fetch("https://paranaque-web-system.onrender.com/api/books");
-      } catch (error) {
-        console.error("Error fetching books:", error);
-      }
-    };
-
-    fetchBooks();
-  }, [selectedResource]);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -503,43 +410,11 @@ const AdminDashboard = () => {
       }
     }
     
-    // Clear ALL authentication data from local storage
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    clearAuthData();
     
     // Navigate to login page with replace to prevent back button access
     navigate('/', { replace: true });
   };
-
-  // Track logout when admin closes browser/tab
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail) {
-        // Clear all auth data before closing
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        
-        // Use sendBeacon with FormData for reliable delivery even if page is closing
-        const formData = new FormData();
-        formData.append('email', userEmail);
-        navigator.sendBeacon(
-          'https://paranaque-web-system.onrender.com/api/auth/logout',
-          formData
-        );
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
 
   const [selectedSubResource, setSelectedSubResource] = useState("");
 
@@ -698,6 +573,7 @@ const AdminDashboard = () => {
                     <div style={{ fontSize: "0.95rem", color: "#444" }}>
                       <strong>Role:</strong> {user.role}
                     </div>
+                    <ChangePasswordButton email={user.email} />
                   </div>
                 </div>
               </div>
@@ -998,15 +874,6 @@ const AdminDashboard = () => {
           {selectedSubResource === "All Books" && (
             <Suspense fallback={<div role="status">Loading books...</div>}>
               <BooksTable />
-            </Suspense>
-          )}
-
-          {selectedResource === "Analytics" && (
-            <Suspense fallback={<div role="status">Loading analytics...</div>}>
-              <Analytics onClose={() => {
-                setSelectedResource(null);
-                setSelectedSubResource(null);
-              }} />
             </Suspense>
           )}
 

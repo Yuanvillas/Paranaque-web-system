@@ -1,0 +1,90 @@
+.transaction-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.transaction-filter-control {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #333;
+  accent-color: #2e7d32;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-filter-control:hover {
+  border-color: #9ca3af;
+}
+
+.transaction-filter-control:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.12);
+}
+
+.transaction-filter-control option {
+  background-color: #fff;
+  color: #333;
+}
+
+.transaction-filter-control option:checked {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.transaction-filter-search {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.transaction-filter-label {
+  display: grid;
+  gap: 4px;
+  color: #555;
+  font-size: 12px;
+}
+
+.transaction-clear-filters {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #2e7d32;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.transaction-clear-filters:hover:not(:disabled) {
+  background-color: #e8f5e9;
+}
+
+.transaction-clear-filters:disabled {
+  border-color: #cbd5e1;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.transaction-filter-count {
+  margin-left: auto;
+  color: #555;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .transaction-filter-count {
+    width: 100%;
+    margin-left: 0;
+  }
+}

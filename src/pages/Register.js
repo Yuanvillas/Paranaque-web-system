@@ -6,6 +6,10 @@ import "../styles/loginregister.css";
 import schoolImage from "../imgs/schoolpic.png";
 import logo from "../imgs/liblogo.png";
 import PasswordInput from "../ui/PasswordInput";
+import { isValidEmail } from "../utils/emailValidation";
+
+const STREET_SUGGESTIONS_KEY = "registerStreetSuggestions";
+const MAX_STREET_SUGGESTIONS = 20;
 
 function Register() {
   const navigate = useNavigate();
@@ -13,6 +17,8 @@ function Register() {
     firstName: "",
     lastName: "",
     suffix: "", 
+    street: "",
+    barangay: "",
     contactNumber: "",
     address: "",
     email: "",
@@ -22,6 +28,8 @@ function Register() {
   });
   const [errors, setErrors] = useState({});
   const [emailStatus, setEmailStatus] = useState("");
+  const [streetSuggestions, setStreetSuggestions] = useState([]);
+  const [streetSuggestionError, setStreetSuggestionError] = useState("");
 
   const [regions, setRegions] = useState([]);
   const [cities, setCities] = useState([]);
@@ -31,14 +39,30 @@ function Register() {
   const [selectedCity, setSelectedCity] = useState("");
   const [showTermsModal, setShowTermsModal] = useState(false);
 
+  useEffect(() => {
+    try {
+      const savedSuggestions = localStorage.getItem(STREET_SUGGESTIONS_KEY);
+      if (!savedSuggestions) return;
+
+      const parsedSuggestions = JSON.parse(savedSuggestions);
+      if (!Array.isArray(parsedSuggestions) || !parsedSuggestions.every((value) => typeof value === "string")) {
+        throw new Error("Saved street suggestions have an invalid format.");
+      }
+
+      setStreetSuggestions(parsedSuggestions.filter((value) => value.trim().length >= 2).slice(0, MAX_STREET_SUGGESTIONS));
+    } catch (error) {
+      console.error("Failed to load saved street suggestions:", error);
+      setStreetSuggestionError("Saved street suggestions could not be loaded from this device.");
+    }
+  }, []);
+
   const validateEmail = (email) => {
     if (!email) {
       setEmailStatus("");
       return "Email is required.";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       setEmailStatus("invalid");
       return "Please enter a valid email address.";
     }
@@ -53,7 +77,12 @@ function Register() {
       case "firstName":
       case "lastName":
         if (!value.trim()) error = "This field is required.";
+        else if (value.trim().length < 2) error = "Must be at least 2 characters.";
         else if (!/^[a-zA-Z\s]+$/.test(value)) error = "Only letters and spaces are allowed.";
+        break;
+      case "street":
+        if (!value.trim()) error = "Street is required.";
+        else if (value.trim().length < 2) error = "Must be at least 2 characters.";
         break;
       case "contactNumber":
         if (!/^09\d{9}$/.test(value)) error = "Must be 11 digits and start with '09'.";
@@ -73,6 +102,7 @@ function Register() {
         break;
       case "address":
         if (!value.trim()) error = "Address is required.";
+        else if (value.trim().length < 2) error = "Address must be at least 2 characters.";
         break;
       case "termsAccepted":
         if (!value) error = "You must accept the terms.";
@@ -104,7 +134,7 @@ function Register() {
     };
     if (emailStatus === "valid")
       return { ...base, borderColor: "#4caf50", backgroundColor: "#f8fff8" };
-    if (emailStatus === "invalid" || emailStatus === "not-gmail")
+    if (emailStatus === "invalid")
       return { ...base, borderColor: "#f44336", backgroundColor: "#fff8f8" };
     return base;
   };
@@ -132,6 +162,7 @@ function Register() {
         case "firstName":
         case "lastName":
           if (!form[field].trim()) error = "This field is required.";
+          else if (form[field].trim().length < 2) error = "Must be at least 2 characters.";
           else if (!/^[a-zA-Z\s]+$/.test(form[field])) error = "Only letters and spaces are allowed.";
           break;
         case "contactNumber":
@@ -150,6 +181,7 @@ function Register() {
           break;
         case "street":
           if (!form[field].trim()) error = "Street is required.";
+          else if (form[field].trim().length < 2) error = "Must be at least 2 characters.";
           break;
         case "barangay":
           if (!form[field]) error = "Please select a barangay.";
@@ -187,9 +219,24 @@ function Register() {
   try {
     const { confirmPassword, termsAccepted, ...finalData } = dataToSend;
     const res = await axios.post("https://paranaque-web-system.onrender.com/api/auth/register", finalData);
+    let registrationMessage = res.data.message;
+    const street = form.street.trim();
+    const updatedSuggestions = [
+      street,
+      ...streetSuggestions.filter((suggestion) => suggestion.toLowerCase() !== street.toLowerCase()),
+    ].slice(0, MAX_STREET_SUGGESTIONS);
+    try {
+      localStorage.setItem(STREET_SUGGESTIONS_KEY, JSON.stringify(updatedSuggestions));
+      setStreetSuggestions(updatedSuggestions);
+      setStreetSuggestionError("");
+    } catch (storageError) {
+      console.error("Failed to save street suggestion on this device:", storageError);
+      registrationMessage += " Your street entry could not be saved for future suggestions on this device.";
+      setStreetSuggestionError("Your street entry could not be saved for future suggestions on this device.");
+    }
     await Swal.fire({
       title: "Parañaledge",
-      text: res.data.message,
+      text: registrationMessage,
       icon: "success",
       confirmButtonText: "OK"
     });
@@ -234,7 +281,7 @@ function Register() {
   }, [selectedCity]);
 
   return (
-    <div className="auth-container">
+    <div className="auth-container register-page">
       <div className="auth-wrapper">
         <div className="auth-image">
           <img src={schoolImage} alt="School" />
@@ -246,14 +293,13 @@ function Register() {
             <input type="text" name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} />
             {errors.firstName && <p style={{ color: "red", fontSize: "0.8rem"}}>{errors.firstName}</p>}
             
-            <div className="d-flex gap-3">
+            <div className="register-form-row register-name-row">
               <input type="text" name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} />
               <select
                 name="suffix"
                 value={form.suffix}
                 onChange={handleChange}
                 className="form-control input-field"
-                style={{ width: "50%"}}
               >
                 <option value="">Suffix</option>
                 <option value="Sr.">Sr.</option>
@@ -273,10 +319,20 @@ function Register() {
               placeholder="House No., Street, Subdivision"
               value={form.street}
               onChange={handleChange}
+              list="street-suggestions"
             />
+            <datalist id="street-suggestions">
+              {streetSuggestions.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+            <p style={{ fontSize: "0.75rem", color: "#666" }}>
+              Previous street entries are saved in this browser for suggestions. Avoid using this on a shared device.
+            </p>
             {errors.street && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.street}</p>}
+            {streetSuggestionError && <p style={{ color: "red", fontSize: "0.8rem" }}>{streetSuggestionError}</p>}
             
-            <div className="d-flex gap-3">
+            <div className="register-form-row">
               <select
                 name="region"
                 value={selectedRegion}
@@ -312,34 +368,31 @@ function Register() {
               </select>
             </div>
 
-            <div className="d-flex gap-3">
-              <select
-                name="barangay"
-                value={form.barangay}
-                onChange={handleChange}
-                className="form-control"
-              >
-                <option value="">Select Barangay</option>
-                {barangays.map(brgy => (
-                  <option key={brgy.code} value={brgy.name}>
-                    {brgy.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            <select
+              name="barangay"
+              value={form.barangay}
+              onChange={handleChange}
+              className="form-control"
+            >
+              <option value="">Select Barangay</option>
+              {barangays.map(brgy => (
+                <option key={brgy.code} value={brgy.name}>
+                  {brgy.name}
+                </option>
+              ))}
+            </select>
 
             <input type="tel" name="contactNumber" placeholder="Contact Number" value={form.contactNumber} onChange={handleChange} />
             {errors.contactNumber && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.contactNumber}</p>}
 
-            <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} style={getEmailInputStyle()} />
+            <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} autoComplete="email" style={getEmailInputStyle()} />
             {getEmailFeedback()}
             {errors.email && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.email}</p>}
 
             <PasswordInput type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} />
             {errors.password && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.password}</p>}
 
-            <PasswordInput type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} />
+            <PasswordInput type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} preventClipboard />
             {errors.confirmPassword && <p style={{ color: "red", fontSize: "0.8rem" }}>{errors.confirmPassword}</p>}
 
             <label className="terms-text d-flex justify-content-center align-items-center">

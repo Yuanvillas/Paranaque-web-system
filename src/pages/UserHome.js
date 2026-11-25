@@ -59,8 +59,8 @@ const UserHome = () => {
   const [bookmarks, setBookmarks] = useState([]);
   const [userHolds, setUserHolds] = useState([]);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
-  const [allBooks, setAllBooks] = useState([]);
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [categories, setCategories] = useState([]);
@@ -106,15 +106,12 @@ const UserHome = () => {
   const fetchBooks = useCallback(() => {
     // Use pagination: 4 rows x 6 columns = 24 items per page
     const limit = 24;
-    // Add cache busting with timestamp
-    const timestamp = new Date().getTime();
     const categoryQuery = categoryFilter !== "all"
       ? `&category=${encodeURIComponent(categoryFilter)}`
       : "";
-    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}&_t=${timestamp}`)
+    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("📚 Fetched books with images:", data.books?.map(b => ({ title: b.title, hasImage: !!b.image })));
         setBooks(data.books || []);
         setTotalPages(data.totalPages || 1);
       })
@@ -146,17 +143,6 @@ const UserHome = () => {
     }
   }, [userEmail]);
 
-  const fetchAllBooksForRecommendations = useCallback(async () => {
-    try {
-      const timestamp = new Date().getTime();
-      const res = await fetch(`https://paranaque-web-system.onrender.com/api/books?limit=10000&_t=${timestamp}`);
-      const data = await res.json();
-      setAllBooks(data.books || []);
-    } catch (error) {
-      console.error("Error fetching all books:", error);
-    }
-  }, []);
-
   const fetchPendingReservations = useCallback(async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) return;
@@ -179,26 +165,36 @@ const UserHome = () => {
     }
   }, []);
 
-  const fetchBorrowedBooks = useCallback(async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) return;
+  const fetchUserTransactions = useCallback(async () => {
+    if (!userEmail) {
+      setTransactionsLoaded(true);
+      return;
+    }
 
     try {
       const response = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/user/${userEmail}`);
       const data = await response.json();
-      
-      if (response.ok && data.transactions && Array.isArray(data.transactions)) {
-        let borrowed = data.transactions.filter(t => 
-          (t.type === 'borrow' || t.transactionType === 'borrow')
-        );
-        
-        console.log("All borrow transactions found:", borrowed.length, borrowed);
-        setBorrowedBooks(borrowed);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch user transactions");
       }
+
+      const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+      setPendingReservations(transactions.filter(transaction =>
+        transaction.type === "reserve" &&
+        ["pending", "approved"].includes(transaction.status)
+      ));
+      setBorrowedBooks(transactions.filter(transaction =>
+        (
+          transaction.type === "borrow" ||
+          transaction.transactionType === "borrow"
+        )
+      ));
     } catch (error) {
-      console.error("Error fetching borrowed books:", error);
+      console.error("Error fetching user transactions:", error);
+    } finally {
+      setTransactionsLoaded(true);
     }
-  }, []);
+  }, [userEmail]);
 
   // Fetch user's holds
   const fetchUserHolds = useCallback(async () => {
@@ -214,12 +210,10 @@ const UserHome = () => {
 
   // useEffect hooks
   useEffect(() => {
-    fetchPendingReservations();
+    fetchUserTransactions();
     fetchBookmarks();
-    fetchBorrowedBooks();
-    fetchAllBooksForRecommendations();
     fetchUserHolds();
-  }, [fetchBookmarks, fetchPendingReservations, fetchBorrowedBooks, fetchAllBooksForRecommendations, fetchUserHolds]);
+  }, [fetchBookmarks, fetchUserTransactions, fetchUserHolds]);
 
   useEffect(() => {
     fetchBooks();
@@ -246,12 +240,10 @@ const UserHome = () => {
   }, []);
 
   useEffect(() => {
-    if (allBooks.length > 0 && borrowedBooks.length > 0) {
+    if (transactionsLoaded) {
       generateRecommendations(borrowedBooks, bookmarks, pendingReservations);
-    } else if (allBooks.length > 0) {
-      setRecommendedBooks([]);
     }
-  }, [borrowedBooks, bookmarks, pendingReservations, allBooks]);
+  }, [transactionsLoaded, borrowedBooks, bookmarks, pendingReservations]);
 
   const handleBorrow = async () => {
     const avail = selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0;
@@ -352,13 +344,26 @@ const UserHome = () => {
       const res = await fetch(`https://paranaque-web-system.onrender.com/api/transactions/reserve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: selectedBook._id, userEmail }),
+        body: JSON.stringify({ bookId: selectedBook._id, userEmail, reserveDate }),
         signal: controller.signal
       });
       
       clearTimeout(timeoutId);
       
       const data = await res.json();
+      if (res.ok && data.alreadyReserved) {
+        await Swal.fire({
+          title: "Parañaledge",
+          text: data.message,
+          icon: "info",
+          confirmButtonText: "OK"
+        });
+        fetchBooks();
+        fetchPendingReservations();
+        closeModal();
+        return;
+      }
+
       if (res.ok) {
         await Swal.fire({
           title: "Parañaledge",
@@ -896,9 +901,17 @@ const UserHome = () => {
       </div>
 
       {showModal && selectedBook && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">{selectedBook.title}</h2>
+        <div className="modal-overlay user-home-book-modal-overlay" onClick={closeModal}>
+          <div className="modal-content user-home-book-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="user-home-book-modal-close"
+              onClick={closeModal}
+              aria-label="Close book details"
+            >
+              ×
+            </button>
+            <h2 className="modal-title user-home-book-modal-title">{selectedBook.title}</h2>
 
             <div className="modal-details">
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
@@ -911,28 +924,13 @@ const UserHome = () => {
               {selectedBook.reserveUntil && <p><strong>Reserve Until:</strong> {new Date(selectedBook.reserveUntil).toLocaleString()}</p>}
             </div>
 
-            <div className="modal-body-flex">
-              <div className="image-info-container">
-                {selectedBook.image ? (
-                  <div className="modal-image-wrapper" style={{ minWidth: '300px', minHeight: '400px' }}>
-                    <img
-                      src={selectedBook.image}
-                      alt={selectedBook.title}
-                      className="modal-image"
-                      style={{ minWidth: '300px', minHeight: '400px', objectFit: 'cover', borderRadius: '8px' }}
-                      onError={(e) => {
-                        console.log("Image failed to load:", selectedBook.image);
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{ minWidth: '300px', minHeight: '400px', backgroundColor: '#f0f0f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ color: '#999' }}>No image available</p>
-                  </div>
-                )}
+            <div className="modal-body-flex user-home-book-modal-body">
+              <div className="image-info-container user-home-book-image-info">
+                <div className="modal-image-wrapper user-home-book-image-wrapper">
+                  <BookCover key={selectedBook._id} src={selectedBook.image} alt={selectedBook.title} />
+                </div>
 
-                <div className="modal-right">
+                <div className="modal-right user-home-book-details">
                   <div className="book-details-grid">
                     <p className="book-info"><strong>Author:</strong> {selectedBook.author || "-"}</p>
                     <p className="book-info"><strong>Publisher:</strong> {selectedBook.publisher || "-"}</p>
@@ -952,7 +950,7 @@ const UserHome = () => {
                 </div>
               </div>
 
-              <div className="modal-inputs">
+              <div className="modal-inputs user-home-book-actions">
                 <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
                   <p style={{ margin: '0', fontSize: '13px', color: '#e65100', fontWeight: '500' }}>
                     📌 <strong>Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.

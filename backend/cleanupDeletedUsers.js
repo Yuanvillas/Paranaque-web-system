@@ -7,6 +7,7 @@ const Book = require('./models/Book');
 const Transaction = require('./models/Transaction');
 const User = require('./models/User');
 const Log = require('./models/Log');
+const { releaseCopyForTransaction } = require('./utils/bookCopyInventory');
 
 async function cleanupDeletedUsers() {
   try {
@@ -55,6 +56,7 @@ async function cleanupDeletedUsers() {
       if (!userExists) {
         // User has been deleted, return the book
         console.log(`\n⚠️  User ${transaction.userEmail} not found, returning book: ${transaction.bookTitle}`);
+        await releaseCopyForTransaction(transaction);
         
         const book = await Book.findById(transaction.bookId);
         if (book) {
@@ -75,7 +77,12 @@ async function cleanupDeletedUsers() {
         // Log the action
         await new Log({
           userEmail: 'system',
-          action: `Auto-returned book from deleted user: ${transaction.bookTitle} (was borrowed by ${transaction.userEmail})`
+          action: 'return',
+          actionType: 'transaction',
+          transactionId: transaction._id,
+          bookId: transaction.bookId,
+          bookTitle: transaction.bookTitle,
+          description: `Auto-returned book from deleted user (was borrowed by ${transaction.userEmail})`
         }).save();
 
         returnedCount++;

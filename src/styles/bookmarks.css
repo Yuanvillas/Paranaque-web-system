@@ -79,6 +79,22 @@
   margin: 0;
 }
 
+.retry-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  background: #256628;
+}
+
 /* Bookmarks Info */
 .bookmarks-info {
   display: flex;

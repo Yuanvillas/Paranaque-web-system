@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import logo from "../imgs/liblogo.png";
+import bookSubjects from "../data/bookSubjects.json";
 
 // Library Call Number Utility (mirrored from backend)
 // Format: PREFIX.DDC-CUTTER-YEAR
@@ -2703,112 +2704,10 @@ const generateLibraryCallNumber = (collectionType, subject, author, year) => {
 const AddBook = ({ onBookAdded }) => {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Book Added Successfully!");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
-  const [categories, setCategories] = useState([
-    // DDC Classification System
-    '000 Computer science, knowledge & systems',
-    '010 Bibliographies',
-    '020 Library & information sciences',
-    '030 Encyclopedias & books of facts',
-    '050 Magazines, journals & serials',
-    '060 Associations, organizations & museums',
-    '070 News media, journalism & publishing',
-    '080 Quotations',
-    '090 Manuscripts & rare books',
-    '100 Philosophy',
-    '110 Metaphysics',
-    '120 Epistemology',
-    '130 Parapsychology & occultism',
-    '140 Philosophical schools of thought',
-    '150 Psychology',
-    '160 Logic',
-    '170 Ethics',
-    '180 Ancient, medieval & eastern philosophy',
-    '190 Modern western philosophy',
-    '200 Religion',
-    '210 Philosophy & theory of religion',
-    '220 The Bible',
-    '230 Christianity & Christian theology',
-    '240 Christian practice & observance',
-    '250 Christian pastoral practice & religious orders',
-    '260 Christian organization, social work & worship',
-    '270 History of Christianity',
-    '280 Christian denominations',
-    '290 Other religions',
-    '300 Social sciences, sociology & anthropology',
-    '310 Statistics',
-    '320 Political science',
-    '330 Economics',
-    '340 Law',
-    '350 Public administration & military science',
-    '360 Social problems & social services',
-    '370 Education',
-    '380 Commerce, communications & transportation',
-    '390 Customs, etiquette & folklore',
-    '400 Language',
-    '410 Linguistics',
-    '420 English & Old English languages',
-    '430 German & related languages',
-    '440 French & related languages',
-    '450 Italian, Romanian & related languages',
-    '460 Spanish & Portuguese languages',
-    '470 Latin & Italic languages',
-    '480 Classical & modern Greek languages',
-    '490 Other languages',
-    '500 Science',
-    '510 Mathematics',
-    '520 Astronomy',
-    '530 Physics',
-    '540 Chemistry',
-    '550 Earth sciences & geology',
-    '560 Fossils & prehistoric life',
-    '570 Life sciences; biology',
-    '580 Plants (Botany)',
-    '590 Animals (Zoology)',
-    '600 Technology',
-    '610 Medicine & health',
-    '620 Engineering',
-    '630 Agriculture',
-    '640 Home & family management',
-    '650 Management & public relations',
-    '660 Chemical engineering',
-    '670 Manufacturing',
-    '680 Manufacture for specific uses',
-    '690 Building & construction',
-    '700 Arts',
-    '710 Landscaping & area planning',
-    '720 Architecture',
-    '730 Sculpture, ceramics & metalwork',
-    '740 Drawing & decorative arts',
-    '750 Painting',
-    '760 Graphic arts',
-    '770 Photography & computer art',
-    '780 Music',
-    '790 Sports, games & entertainment',
-    '800 Literature, rhetoric & criticism',
-    '810 American literature in English',
-    '820 English & Old English literatures',
-    '830 German & related literatures',
-    '840 French & related literatures',
-    '850 Italian, Romanian & related literatures',
-    '860 Spanish & Portuguese literatures',
-    '870 Latin & Italic literatures',
-    '880 Classical & modern Greek literatures',
-    '890 Other literatures',
-    '900 History',
-    '910 Geography & travel',
-    '920 Biography & genealogy',
-    '930 History of ancient world (to ca. 499)',
-    '940 History of Europe',
-    '950 History of Asia',
-    '960 History of Africa',
-    '970 History of North America',
-    '980 History of South America',
-    '990 History of other areas',
-    // Legacy support
-    'Science', 'Math', 'Filipino', 'English', 'Fiction'
-  ]);
+  const [categories, setCategories] = useState(bookSubjects);
   const [nextAccessionNumber, setNextAccessionNumber] = useState("Calculating...");
   const [nextCallNumber, setNextCallNumber] = useState("PREFIX.DDD-CCC-YYYY");
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -2889,6 +2788,10 @@ const AddBook = ({ onBookAdded }) => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
+    if (name === "year" && value !== "" && !/^\d+$/.test(value)) {
+      return;
+    }
+
     if (name === "image") {
       const file = files[0];
       
@@ -2941,12 +2844,13 @@ const AddBook = ({ onBookAdded }) => {
   const handleAddCategory = () => {
     if (newCategory.trim()) {
       if (!categories.includes(newCategory.trim())) {
-        setCategories([...categories, newCategory.trim()]);
-        setBook({ ...book, category: newCategory.trim() });
+        const subject = newCategory.trim();
+        setCategories([...categories, subject]);
+        setBook({ ...book, category: subject, subject });
         setNewCategory("");
         setShowCategoryModal(false);
       } else {
-        alert("Category already exists!");
+        alert("Subject already exists!");
       }
     }
   };
@@ -2975,7 +2879,7 @@ const AddBook = ({ onBookAdded }) => {
       return;
     }
     
-    if (!book.year || isNaN(book.year) || book.year < 1000 || book.year > new Date().getFullYear() + 10) {
+    if (!book.year || !Number.isInteger(Number(book.year)) || book.year < 1000 || book.year > new Date().getFullYear() + 10) {
       alert("Please enter a valid year (between 1000 and " + (new Date().getFullYear() + 10) + ")");
       return;
     }
@@ -3037,6 +2941,62 @@ const AddBook = ({ onBookAdded }) => {
     }
   };
 
+  const addCopiesToExistingBook = async () => {
+    const copiesToAdd = Number(book.stock);
+    const currentStock = Number(duplicateBook?.stock);
+
+    if (!duplicateBook?.id) {
+      alert("The existing book could not be identified. Please cancel and try again.");
+      return;
+    }
+
+    if (!Number.isInteger(copiesToAdd) || copiesToAdd < 1 || !Number.isInteger(currentStock) || currentStock < 0) {
+      alert("Could not determine the current stock or number of copies to add. Please cancel and try again.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`https://paranaque-web-system.onrender.com/api/books/${duplicateBook.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: currentStock + copiesToAdd })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to update the existing book's stock");
+      }
+
+      setShowDuplicateModal(false);
+      setDuplicateBook(null);
+      setSuccessMessage(`${copiesToAdd} ${copiesToAdd === 1 ? "copy" : "copies"} added to the existing book.`);
+      setShowSuccessModal(true);
+      setBook({
+        title: "",
+        year: "",
+        genre: "",
+        category: book.category,
+        stock: "1",
+        location: { shelf: "", level: "" },
+        author: "",
+        publisher: "",
+        accessionNumber: "",
+        callNumber: "",
+        image: null
+      });
+      setPreview(null);
+      setBase64Image("");
+
+      if (onBookAdded) onBookAdded();
+    } catch (err) {
+      console.error("❌ Error adding copies to existing book:", err);
+      alert("Failed to add copies: " + (err.message || "Network error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submitBook = async () => {
     setLoading(true);
     console.log("🔄 Starting book submission...");
@@ -3079,6 +3039,7 @@ const AddBook = ({ onBookAdded }) => {
 
       if (res.ok) {
         console.log("✅ Book added successfully! Image URL:", data.book?.image);
+        setSuccessMessage("Book Added Successfully!");
         setShowSuccessModal(true);
         setShowDuplicateModal(false);
         setBook({
@@ -3153,7 +3114,17 @@ const AddBook = ({ onBookAdded }) => {
 
         <Input label="Publisher (Optional)" name="publisher" value={book.publisher} onChange={handleChange} />
 
-        <Input label="Year Published" type="number" name="year" value={book.year} onChange={handleChange} required />
+        <Input
+          label="Year Published"
+          type="number"
+          name="year"
+          min="1000"
+          max={new Date().getFullYear() + 10}
+          step="1"
+          value={book.year}
+          onChange={handleChange}
+          required
+        />
 
         <Input label="Number of Copies" type="number" name="stock" min="1" value={book.stock} onChange={(e) => {
           const value = e.target.value;
@@ -3217,14 +3188,14 @@ const AddBook = ({ onBookAdded }) => {
             <h3>Add New Subject</h3>
             <input
               type="text"
-              placeholder="Enter category name"
+              placeholder="Enter subject name"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               style={styles.input}
             />
             <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
               <button onClick={handleAddCategory} style={styles.submitBtn}>
-                Add Category
+                Add Subject
               </button>
               <button onClick={() => { setShowCategoryModal(false); setNewCategory(""); }} style={styles.cancelBtn}>
                 Cancel
@@ -3237,7 +3208,7 @@ const AddBook = ({ onBookAdded }) => {
       {showSuccessModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
-            <h3>Book Added Successfully!</h3>
+            <h3>{successMessage}</h3>
             <button onClick={() => setShowSuccessModal(false)} style={styles.closeModalBtn}>
               Close
             </button>
@@ -3276,18 +3247,15 @@ const AddBook = ({ onBookAdded }) => {
               </p>
             </div>
             <p style={{color: '#856404', fontSize: '13px', fontStyle: 'italic'}}>
-              Do you want to proceed with adding another copy, or cancel?
+              Add {book.stock} {Number(book.stock) === 1 ? "copy" : "copies"} to this book's stock, or cancel?
             </p>
             <div style={{ display: "flex", gap: "10px", marginTop: "15px", justifyContent: 'center' }}>
               <button 
-                onClick={() => {
-                  setShowDuplicateModal(false);
-                  submitBook();
-                }} 
+                onClick={addCopiesToExistingBook}
                 style={{...styles.submitBtn, background: '#ff9800'}}
                 disabled={loading}
               >
-                {loading ? "Adding..." : "Proceed Anyway"}
+                {loading ? "Adding..." : "Add Copies"}
               </button>
               <button 
                 onClick={() => { 
@@ -3307,7 +3275,7 @@ const AddBook = ({ onBookAdded }) => {
   );
 };
 
-const Input = ({ label, name, value, onChange, type = "text", required = false, disabled = false, small = false, min = undefined }) => (
+const Input = ({ label, name, value, onChange, type = "text", required = false, disabled = false, small = false, min = undefined, max = undefined, step = undefined }) => (
   <div style={{ marginBottom: "15px", width: small ? "48%" : "100%" }}>
     <label style={styles.label}>{label}</label>
     <input
@@ -3320,6 +3288,8 @@ const Input = ({ label, name, value, onChange, type = "text", required = false, 
       aria-label={label}
       style={styles.input}
       min={min}
+      max={max}
+      step={step}
     />
   </div>
 );

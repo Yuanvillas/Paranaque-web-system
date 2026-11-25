@@ -8,7 +8,6 @@ import {
   faBookOpen,
   faRightFromBracket,
   faUser,
-  faListCheck,
   faBook,
   faHistory
 } from "@fortawesome/free-solid-svg-icons";
@@ -21,6 +20,7 @@ import ChatPopup from "../pages/ChatPopup";
 import NotificationBell from "../components/NotificationBell";
 import "../components/App.css";
 import logo from "../imgs/liblogo.png";
+import { clearAuthData } from "../utils/authHelper";
 
 // Create context
 export const SearchContext = createContext();
@@ -63,43 +63,11 @@ const UserLayout = () => {
       }
     }
 
-    // Clear ALL authentication data from local storage
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    clearAuthData();
     
     // Navigate to login page with replace to prevent back button access
     navigate("/", { replace: true });
   };
-
-  // Track logout when user closes browser/tab
-  React.useEffect(() => {
-    const handleBeforeUnload = () => {
-      const userEmail = localStorage.getItem("userEmail");
-      if (userEmail) {
-        // Clear all auth data before closing
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        
-        // Use sendBeacon with FormData for reliable delivery even if page is closing
-        const formData = new FormData();
-        formData.append('email', userEmail);
-        navigator.sendBeacon(
-          'https://paranaque-web-system.onrender.com/api/auth/logout',
-          formData
-        );
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
 
   return (
     <SearchContext.Provider value={searchTerm}>
@@ -120,9 +88,6 @@ const UserLayout = () => {
             </Link>
             <Link to="/user-home/shelf">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faBook} /> <span>My Shelf</span>
-            </Link>
-            <Link to="/user-home/holds">
-              <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faListCheck} /> <span>My Holds</span>
             </Link>
             <Link to="/user-home/activity-logs">
               <FontAwesomeIcon style={{ fontSize: '20px' }} icon={faHistory} /> <span>Activity Logs</span>

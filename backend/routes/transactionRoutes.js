@@ -7,6 +7,10 @@ const ReservedBook = require('../models/ReservedBook');
 const PendingReservedBook = require('../models/PendingReservedBook');
 const ReturnRequest = require('../models/ReturnRequest');
 const {
+  assignCopyToTransaction,
+  releaseCopyForTransaction
+} = require('../utils/bookCopyInventory');
+const {
   sendReservationPendingEmail,
   sendReservationApprovedEmail,
   sendReservationRejectedEmail,
@@ -57,7 +61,9 @@ router.post('/borrow', async (req, res) => {
     }
 
     // Check if there are available copies
-    const availableStock = book.availableStock || book.stock || 0;
+    const availableStock = book.availableStock !== undefined && book.availableStock !== null
+      ? book.availableStock
+      : book.stock || 0;
     if (availableStock <= 0) {
       return res.status(400).json({ message: 'Book is not available' });
     }
@@ -73,17 +79,27 @@ router.post('/borrow', async (req, res) => {
       bookTitle: book.title
     });
 
+    const copy = await assignCopyToTransaction(book, transaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
     // Update book status - decrement available stock
     book.borrowedBy = userEmail;
     book.borrowedAt = new Date();
-    book.availableStock = (book.availableStock || book.stock || 0) - 1;
+    book.availableStock = availableStock - 1;
 
     await Promise.all([
       transaction.save(),
       book.save(),
       new Log({
         userEmail,
-        action: `Borrowed book: ${book.title}`
+        action: 'borrow',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Borrowed book: ${book.title}`
       }).save()
     ]);
 
@@ -134,11 +150,31 @@ router.post('/borrow', async (req, res) => {
 // Reserve a book
 router.post('/reserve', async (req, res) => {
   try {
-    const { bookId, userEmail } = req.body;
+    const { bookId, userEmail, reserveDate } = req.body;
     console.log("/reserve", bookId, userEmail);
     const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Book not found' });
+    }
+
+    let reservationStartDate = new Date();
+    if (reserveDate !== undefined) {
+      if (typeof reserveDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(reserveDate)) {
+        return res.status(400).json({ message: 'Invalid reservation date' });
+      }
+
+      const selectedDate = new Date(`${reserveDate}T00:00:00.000Z`);
+      if (Number.isNaN(selectedDate.getTime()) || selectedDate.toISOString().slice(0, 10) !== reserveDate) {
+        return res.status(400).json({ message: 'Invalid reservation date' });
+      }
+
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        return res.status(400).json({ message: 'Reservation date cannot be in the past' });
+      }
+
+      reservationStartDate = selectedDate;
     }
 
     // Check if book is already reserved by this user
@@ -149,26 +185,39 @@ router.post('/reserve', async (req, res) => {
     });
 
     if (existingReservation) {
-      return res.status(400).json({ message: 'You have already reserved this book' });
+      return res.status(200).json({
+        message: existingReservation.status === 'pending'
+          ? 'Your reservation request is already pending admin approval.'
+          : 'You already have an active reservation for this book.',
+        alreadyReserved: true,
+        transaction: existingReservation
+      });
     }
     const transaction = new Transaction({
       bookId,
       userEmail,
       type: 'reserve',
       status: 'pending', // Start as pending, waiting for admin approval
-      startDate: new Date(),
+      startDate: reservationStartDate,
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days for admin to approve
       bookTitle: book.title
     });
     
-    // Save transaction and log immediately
-    await Promise.all([
-      transaction.save(),
-      new Log({
+    await transaction.save();
+    try {
+      await new Log({
         userEmail,
-        action: `Reservation requested for book: ${book.title}`
-      }).save()
-    ]);
+        action: 'reserve',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Reservation requested for book: ${book.title}`,
+        status: 'pending'
+      }).save();
+    } catch (logError) {
+      console.error('Error logging reservation request:', logError);
+    }
 
     // Send email and create pending reserved book in the background (non-blocking)
     try {
@@ -201,6 +250,9 @@ router.post('/return/:transactionId', async (req, res) => {
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });
     }
+    if (transaction.type !== 'borrow' || !['active', 'borrowed'].includes(transaction.status)) {
+      return res.status(400).json({ message: 'This transaction is not an active borrow' });
+    }
 
     const book = await Book.findById(transaction.bookId);
     if (!book) {
@@ -213,6 +265,7 @@ router.post('/return/:transactionId', async (req, res) => {
 
     // Update book - increment availableStock if it was borrowed
     if (transaction.type === 'borrow') {
+      await releaseCopyForTransaction(transaction);
       book.availableStock = (book.availableStock || 0) + 1;
     }
     book.borrowedBy = null;
@@ -223,7 +276,12 @@ router.post('/return/:transactionId', async (req, res) => {
       book.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Returned book: ${book.title}`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Returned book: ${book.title}`
       }).save()
     ]);
 
@@ -323,7 +381,12 @@ router.post('/cancel-reservation/:transactionId', async (req, res) => {
       transaction.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Cancelled reservation for: ${transaction.bookTitle}`
+        action: 'cancel_reservation',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: transaction.bookId,
+        bookTitle: transaction.bookTitle,
+        description: `Cancelled reservation for: ${transaction.bookTitle}`
       }).save()
     ]);
 
@@ -350,7 +413,12 @@ router.post('/cancel-pending/:transactionId', async (req, res) => {
       transaction.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Cancelled pending ${transaction.type} request for: ${transaction.bookTitle}`
+        action: 'cancel_transaction',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: transaction.bookId,
+        bookTitle: transaction.bookTitle,
+        description: `Cancelled pending ${transaction.type} request for: ${transaction.bookTitle}`
       }).save()
     ]);
 
@@ -460,12 +528,15 @@ router.post('/approve-reservation/:id', async (req, res) => {
     // Create log entry and send notification
     await Promise.all([
       new Log({
-        action: 'RESERVATION_APPROVED',
+        action: 'approve_transaction',
+        actionType: 'transaction',
         userEmail: transaction.userEmail,
-        adminEmail,
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
-        details: `Reservation approved by ${adminEmail}`
+        transactionId: transaction._id,
+        description: `Reservation approved by ${adminEmail}`,
+        details: { adminEmail },
+        status: 'success'
       }).save()
     ]);
 
@@ -515,12 +586,15 @@ router.post('/reject-reservation/:id', async (req, res) => {
 
     await Promise.all([
       new Log({
-        action: 'RESERVATION_REJECTED',
+        action: 'reject_transaction',
+        actionType: 'transaction',
         userEmail: transaction.userEmail,
-        adminEmail,
         bookId: transaction.bookId,
         bookTitle: transaction.bookTitle,
-        details: `Reservation rejected by ${adminEmail}. Reason: ${rejectionReason}`
+        transactionId: transaction._id,
+        description: `Reservation rejected by ${adminEmail}. Reason: ${rejectionReason}`,
+        details: { adminEmail, rejectionReason },
+        status: 'success'
       }).save()
     ]);
 
@@ -566,24 +640,30 @@ router.post('/approve-borrow/:id', async (req, res) => {
     transaction.endDate = dueDate;
 
     const book = await Book.findById(transaction.bookId);
-    if (book) {
-      // Check if there are available copies
-      const currentStock = book.availableStock !== undefined && book.availableStock !== null ? book.availableStock : (book.stock || 0);
-      console.log(`Before approve: Book ${book.title} availableStock=${book.availableStock}, stock=${book.stock}, current=${currentStock}`);
-      
-      if (currentStock <= 0) {
-        return res.status(400).json({ message: 'No copies available' });
-      }
-      
-      book.borrowedBy = transaction.userEmail;
-      book.borrowedAt = new Date();
-      // Decrement available stock
-      book.availableStock = currentStock - 1;
-      console.log(`After decrement: availableStock=${book.availableStock}`);
-      
-      await book.save();
-      console.log(`Saved book: availableStock=${book.availableStock}`);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
     }
+    // Check if there are available copies
+    const currentStock = book.availableStock !== undefined && book.availableStock !== null ? book.availableStock : (book.stock || 0);
+    console.log(`Before approve: Book ${book.title} availableStock=${book.availableStock}, stock=${book.stock}, current=${currentStock}`);
+
+    if (currentStock <= 0) {
+      return res.status(400).json({ message: 'No copies available' });
+    }
+
+    const copy = await assignCopyToTransaction(book, transaction);
+    if (!copy) {
+      return res.status(400).json({ message: 'No unassigned physical copies are available' });
+    }
+
+    book.borrowedBy = transaction.userEmail;
+    book.borrowedAt = new Date();
+    // Decrement available stock
+    book.availableStock = currentStock - 1;
+    console.log(`After decrement: availableStock=${book.availableStock}`);
+
+    await book.save();
+    console.log(`Saved book: availableStock=${book.availableStock}`);
 
     await transaction.save();
 
@@ -830,7 +910,13 @@ router.post('/borrow-request', async (req, res) => {
     await transaction.save();
     await new Log({
       userEmail,
-      action: `Requested to borrow book: ${book.title}`
+      action: 'borrow',
+      actionType: 'transaction',
+      transactionId: transaction._id,
+      bookId: book._id,
+      bookTitle: book.title,
+      description: `Requested to borrow book: ${book.title}`,
+      status: 'pending'
     }).save();
 
     // Send email notification to user about their borrow request (async, don't wait)
@@ -916,7 +1002,13 @@ router.post('/request-return/:transactionId', async (req, res) => {
       returnRequest.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Submitted return request for book: ${book.title}`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Submitted return request for book: ${book.title}`,
+        status: 'pending'
       }).save()
     ]);
 
@@ -983,10 +1075,16 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
     if (!returnRequest) {
       return res.status(404).json({ message: 'Return request not found' });
     }
+    if (returnRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'This return request has already been processed' });
+    }
 
     const transaction = await Transaction.findById(returnRequest.transactionId);
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });
+    }
+    if (transaction.type !== 'borrow' || !['active', 'borrowed'].includes(transaction.status)) {
+      return res.status(400).json({ message: 'This transaction is not an active borrow' });
     }
 
     const book = await Book.findById(returnRequest.bookId);
@@ -1004,9 +1102,8 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
     transaction.returnDate = new Date();
 
     // Update book - increment availableStock
-    if (transaction.type === 'borrow') {
-      book.availableStock = (book.availableStock || 0) + 1;
-    }
+    await releaseCopyForTransaction(transaction);
+    book.availableStock = (book.availableStock || 0) + 1;
     book.borrowedBy = null;
     book.borrowedAt = null;
 
@@ -1016,7 +1113,12 @@ router.put('/return-requests/:requestId/approve', async (req, res) => {
       book.save(),
       new Log({
         userEmail: transaction.userEmail,
-        action: `Returned book: ${book.title} (Approved by ${approvedBy || 'Librarian'})`
+        action: 'return',
+        actionType: 'transaction',
+        transactionId: transaction._id,
+        bookId: book._id,
+        bookTitle: book.title,
+        description: `Returned book: ${book.title} (Approved by ${approvedBy || 'Librarian'})`
       }).save()
     ]);
 
@@ -1131,7 +1233,14 @@ router.put('/return-requests/:requestId/reject', async (req, res) => {
       returnRequest.save(),
       new Log({
         userEmail: returnRequest.userEmail,
-        action: `Return request rejected for book: ${returnRequest.bookTitle}. Reason: ${rejectionReason || 'No reason provided'}`
+        action: 'reject_transaction',
+        actionType: 'transaction',
+        transactionId: returnRequest.transactionId,
+        bookId: returnRequest.bookId,
+        bookTitle: returnRequest.bookTitle,
+        description: `Return request rejected for book: ${returnRequest.bookTitle}. Reason: ${rejectionReason || 'No reason provided'}`,
+        details: { approvedBy, rejectionReason: rejectionReason || 'No reason provided' },
+        status: 'success'
       }).save()
     ]);
 

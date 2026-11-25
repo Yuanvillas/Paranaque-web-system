@@ -90,10 +90,10 @@ const About = () => {
           <h2>Find Us On The Map</h2>
           <div className="map-container">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.502662066156!2d121.00312!3d14.364722!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397ca8d5c5c5c5d%3A0x5c5c5c5d5c5c5c5d!2sParañaque%20City%20Public%20Library%2C%20Ground%20Floor%20Barangay%20Daniel%20Fajardo%20Hall%2C%20Padule%20Open%20Circle%2C%20Polytechnic%20University%20of%20the%20Philippines%20-%20Paran%CC%83aque%2C%201740!5e0!3m2!1sen!2sph!4v1701781200000"
+              src="https://www.google.com/maps?q=Par%C3%B1aque%20City%20Public%20Library%2C%20Ground%20Floor%20Barangay%20Daniel%20Fajardo%20Hall%2C%20Padule%20Open%20Circle%2C%20Polytechnic%20University%20of%20the%20Philippines%20-%20Par%C3%B1aque%2C%201740&z=16&output=embed"
               width="100%"
               height="500"
-              style={{ border: 0, borderRadius: "12px" }}
+              style={{ border: 0, borderRadius: "12px", display: "block" }}
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"

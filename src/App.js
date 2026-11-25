@@ -1,7 +1,13 @@
-import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import "./components/App.css";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import {
+  clearAuthData,
+  expireSessionOnBrowserHistoryNavigation,
+  hasAuthSession,
+  shouldExpireSessionOnRouterHistoryNavigation
+} from "./utils/authHelper";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -17,10 +23,10 @@ const Profile = lazy(() => import("./pages/Profile"));
 const UserHome = lazy(() => import("./pages/UserHome"));
 const MyShelf = lazy(() => import("./pages/MyShelf"));
 const Bookmarks = lazy(() => import("./pages/Bookmarks"));
-const MyHolds = lazy(() => import("./pages/MyHolds"));
 const UserLayout = lazy(() => import("./layouts/UserLayout"));
 const UserActivityLogs = lazy(() => import("./pages/UserActivityLogs"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const Resources = lazy(() => import("./pages/Resources"));
 const VerifyNotice = lazy(() => import("./pages/VerifyNotice"));
 const VerificationSuccess = lazy(() => import("./pages/VerificationSuccess"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -34,6 +40,46 @@ const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const previousLocationKey = useRef(location.key);
+
+  useLayoutEffect(() => {
+    const locationChanged = previousLocationKey.current !== location.key;
+    previousLocationKey.current = location.key;
+
+    const expiredFromDocumentHistory = expireSessionOnBrowserHistoryNavigation();
+    const expiredFromRouterHistory = shouldExpireSessionOnRouterHistoryNavigation({
+      locationChanged,
+      navigationType,
+      pathname: location.pathname
+    });
+
+    if (expiredFromRouterHistory) clearAuthData();
+
+    if ((expiredFromDocumentHistory || expiredFromRouterHistory) && location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, [location.key, location.pathname, navigationType, navigate]);
+
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (!event.persisted) return;
+
+      if (hasAuthSession()) {
+        clearAuthData();
+      }
+
+      if (window.location.pathname !== "/") {
+        navigate("/", { replace: true });
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [navigate]);
   
   // Show ChatPopup only on authenticated pages (not login/register/verify-notice/forgot-password/reset-password/landing)
   const showChat = !["/", "/register", "/verify-notice", "/verify-success", "/forgot-password", "/landing"].includes(location.pathname) && !location.pathname.startsWith("/reset-password");
@@ -54,11 +100,13 @@ function AppContent() {
           <Route path="/admin/archived-books" element={<ProtectedRoute element={<ArchivedBooks />} />} />
           <Route path="/admin/archived-users" element={<ProtectedRoute element={<ArchivedUsers />} />} />
           <Route path="/admin/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/admin/resources" element={<ProtectedRoute element={<Resources dashboardPath="/admin-dashboard" analyticsPath="/admin/analytics" />} />} />
           <Route path="/verify-notice" element={<VerifyNotice />} />
           <Route path="/admin/logs" element={<ProtectedRoute element={<AdminLogs />} />} />
           <Route path="/admin/user-management" element={<ProtectedRoute element={<UserManagement />} />} />
           <Route path="/librarian/user-management" element={<ProtectedRoute element={<LibrarianUserManagement />} />} />
           <Route path="/librarian/analytics" element={<ProtectedRoute element={<Analytics />} />} />
+          <Route path="/librarian/resources" element={<ProtectedRoute element={<Resources dashboardPath="/librarian-dashboard" analyticsPath="/librarian/analytics" />} />} />
           <Route path="/librarian-dashboard" element={<ProtectedRoute element={<LibrarianDashboard />} />} />
 
           <Route path="/user-home" element={<ProtectedRoute element={<UserLayout />} />}>
@@ -68,7 +116,7 @@ function AppContent() {
             <Route path="profile" element={<Profile />} />
             <Route path="shelf" element={<MyShelf />} />
             <Route path="bookmarks" element={<Bookmarks />} />
-            <Route path="holds" element={<MyHolds />} />
+            <Route path="holds" element={<Navigate to="/user-home" replace />} />
             <Route path="activity-logs" element={<UserActivityLogs />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />

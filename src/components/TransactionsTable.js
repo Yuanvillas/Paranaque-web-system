@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { autoTable } from 'jspdf-autotable';
+import './TransactionsTable.css';
 
 const TransactionsTable = () => {
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
@@ -15,6 +20,10 @@ const TransactionsTable = () => {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, typeFilter, statusFilter, dateFrom, dateTo]);
 
   const fetchTransactions = async () => {
     try {
@@ -50,10 +59,10 @@ const TransactionsTable = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Invalid Date';
+    if (!date) return '-';
     const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) return 'Invalid Date';
-    return parsedDate.toLocaleDateString('en-US', {
+    if (isNaN(parsedDate.getTime())) return '-';
+    return parsedDate.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -62,49 +71,110 @@ const TransactionsTable = () => {
     });
   };
 
-  const filteredBooks = transactions.filter((transaction) =>
-    transaction.bookTitle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTransactions = transactions.filter((transaction) => {
+    const search = searchTerm.trim().toLowerCase();
+    const matchesSearch = !search || [
+      transaction.bookTitle,
+      transaction.copyNumber,
+      transaction.userEmail,
+      transaction.type,
+      transaction.status
+    ].some(value => String(value || '').toLowerCase().includes(search));
+    const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
+    const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
+    const transactionDate = transaction.startDate ? new Date(transaction.startDate) : null;
+
+    if (!matchesSearch || !matchesType || !matchesStatus) return false;
+    if ((dateFrom || dateTo) && (!transactionDate || isNaN(transactionDate.getTime()))) return false;
+
+    if (dateFrom && transactionDate < new Date(`${dateFrom}T00:00:00`)) return false;
+    if (dateTo) {
+      const endExclusive = new Date(`${dateTo}T00:00:00`);
+      endExclusive.setDate(endExclusive.getDate() + 1);
+      if (transactionDate >= endExclusive) return false;
+    }
+
+    return true;
+  });
+
+  const activeFilters = [
+    searchTerm.trim() && `Search: ${searchTerm.trim()}`,
+    typeFilter !== 'all' && `Type: ${typeFilter}`,
+    statusFilter !== 'all' && `Status: ${statusFilter}`,
+    dateFrom && `From: ${dateFrom}`,
+    dateTo && `To: ${dateTo}`
+  ].filter(Boolean);
 
   const exportToExcel = () => {
-    const data = filteredBooks.map(transaction => ({
-      'Book Title': transaction.bookTitle,
-      'User': transaction.userEmail,
-      'Type': transaction.type,
-      'Status': transaction.status,
+    const data = filteredTransactions.map(transaction => ({
+      'Book Title': transaction.bookTitle || '-',
+      'Copy Number': transaction.copyNumber || '-',
+      'User': transaction.userEmail || '-',
+      'Type': transaction.type || '-',
+      'Status': transaction.status || '-',
       'Start Date': formatDate(transaction.startDate),
       'Due Date': formatDate(transaction.endDate),
       'Return Date': transaction.returnDate ? formatDate(transaction.returnDate) : '-'
     }));
     
     const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 40 },
+      { wch: 32 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 24 },
+      { wch: 24 },
+      { wch: 24 }
+    ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-    XLSX.writeFile(wb, `Transactions_Report_${new Date().toLocaleDateString()}.xlsx`);
+    XLSX.writeFile(wb, `Transactions_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
     setShowExportModal(false);
   };
 
   const exportToPDF = () => {
-    const data = filteredBooks.map(transaction => [
-      transaction.bookTitle,
-      transaction.userEmail,
-      transaction.type,
-      transaction.status,
+    const data = filteredTransactions.map(transaction => [
+      transaction.bookTitle || '-',
+      transaction.userEmail || '-',
+      transaction.type || '-',
+      transaction.status || '-',
       formatDate(transaction.startDate),
       formatDate(transaction.endDate),
       transaction.returnDate ? formatDate(transaction.returnDate) : '-'
     ]);
     
-    const doc = new jsPDF();
-    doc.autoTable({
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    doc.setFontSize(14);
+    doc.text('Transactions Report', 14, 12);
+    doc.setFontSize(8);
+    doc.text(`Records: ${filteredTransactions.length} | Filters: ${activeFilters.join(' | ') || 'None'}`, 14, 18);
+    autoTable(doc, {
       head: [['Book Title', 'User', 'Type', 'Status', 'Start Date', 'Due Date', 'Return Date']],
       body: data,
-      startY: 10,
-      margin: { top: 10 }
+      startY: 23,
+      margin: { top: 23, left: 10, right: 10, bottom: 12 },
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 48 },
+        1: { cellWidth: 46 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 38 },
+        5: { cellWidth: 38 },
+        6: { cellWidth: 38 }
+      },
+      didDrawPage: () => {
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${doc.internal.getNumberOfPages()}`,
+          doc.internal.pageSize.getWidth() - 20,
+          doc.internal.pageSize.getHeight() - 5
+        );
+      }
     });
     
-    doc.text('Transactions Report', 14, doc.internal.pageSize.getHeight() - 10);
-    doc.save(`Transactions_Report_${new Date().toLocaleDateString()}.pdf`);
+    doc.save(`Transactions_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
     setShowExportModal(false);
   };
 
@@ -115,25 +185,95 @@ const TransactionsTable = () => {
      <div className="pending-container">
       <div className="header-row">
         <h2 className="page-title">🧾 Transactions</h2>
-        <div className="search-container ">
-          <input type="text" placeholder="Search analytics..." onChange={(e) => setSearchTerm(e.target.value)} />
-          <button onClick={() => setShowExportModal(true)} className="um-btn um-edit" style={{ paddingTop: "10px", paddingBottom: "10px" }} title="Export to Excel or PDF" type="button">
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="um-btn um-edit"
+          style={{ paddingTop: "10px", paddingBottom: "10px" }}
+          title="Export filtered transactions to Excel or PDF"
+          type="button"
+          disabled={filteredTransactions.length === 0}
+        >
             📥 Export
-          </button>
-        </div>
+        </button>
+      </div>
+
+      <div className="transaction-filter-bar">
+        <input
+          type="search"
+          className="transaction-filter-control transaction-filter-search"
+          aria-label="Search book title or user email"
+          placeholder="Search book title or user email"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select
+          className="transaction-filter-control"
+          aria-label="Filter by transaction type"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        >
+          <option value="all">All types</option>
+          <option value="borrow">Borrow</option>
+          <option value="reserve">Reserve</option>
+        </select>
+        <select
+          className="transaction-filter-control"
+          aria-label="Filter by transaction status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All statuses</option>
+          {['active', 'pending', 'approved', 'completed', 'rejected', 'cancelled', 'expired'].map(status => (
+            <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+          ))}
+        </select>
+        <label className="transaction-filter-label">
+          Start date from
+          <input
+            type="date"
+            className="transaction-filter-control"
+            aria-label="Start date from"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => setDateFrom(e.target.value)}
+          />
+        </label>
+        <label className="transaction-filter-label">
+          Start date to
+          <input
+            type="date"
+            className="transaction-filter-control"
+            aria-label="Start date to"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => setDateTo(e.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            setSearchTerm('');
+            setTypeFilter('all');
+            setStatusFilter('all');
+            setDateFrom('');
+            setDateTo('');
+          }}
+          disabled={activeFilters.length === 0}
+          className="transaction-clear-filters"
+        >
+          Clear filters
+        </button>
+        <span role="status" className="transaction-filter-count">
+          {filteredTransactions.length} of {transactions.length} transactions
+        </span>
       </div>
 
       {(() => {
         // Calculate pagination
-        const totalPages = Math.ceil(filteredBooks.length / pageSize);
+        const totalPages = Math.ceil(filteredTransactions.length / pageSize);
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = startIndex + pageSize;
-        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
-
-        // Reset to page 1 if current page exceeds total pages
-        if (currentPage > totalPages && totalPages > 0) {
-          setCurrentPage(1);
-        }
+        const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
 
         return (
           <>
@@ -164,7 +304,7 @@ const TransactionsTable = () => {
                 </button>
 
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                  Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, filteredBooks.length - (currentPage - 1) * pageSize)} of {filteredBooks.length} transactions)
+                  Page {currentPage} of {totalPages} (Showing {Math.min(pageSize, filteredTransactions.length - (currentPage - 1) * pageSize)} of {filteredTransactions.length} transactions)
                 </span>
 
                 <button
@@ -198,18 +338,25 @@ const TransactionsTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedBooks.length === 0 ? (
+                {paginatedTransactions.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                      No transactions found
+                      No transactions match these filters
                     </td>
                   </tr>
                 ) : (
-                  paginatedBooks.map((transaction) => (
+                  paginatedTransactions.map((transaction) => (
                     <tr key={transaction._id} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '12px', fontWeight: '600' }}>{transaction.bookTitle}</td>
-                      <td style={{ padding: '12px' }}>{transaction.userEmail}</td>
-                      <td style={{ padding: '12px', textTransform: 'capitalize' }}>{transaction.type}</td>
+                      <td style={{ padding: '12px', fontWeight: '600' }}>
+                        {transaction.bookTitle || '-'}
+                        {transaction.copyNumber && (
+                          <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#666' }}>
+                            Copy: {transaction.copyNumber}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px' }}>{transaction.userEmail || '-'}</td>
+                      <td style={{ padding: '12px', textTransform: 'capitalize' }}>{transaction.type || '-'}</td>
                       <td style={{ padding: '12px' }}>
                         <span style={{
                           backgroundColor: getStatusColor(transaction.status),
@@ -218,7 +365,7 @@ const TransactionsTable = () => {
                           borderRadius: '12px',
                           fontSize: '0.85em'
                         }}>
-                          {transaction.status}
+                          {transaction.status || '-'}
                         </span>
                       </td>
                       <td style={{ padding: '12px' }}>{formatDate(transaction.startDate)}</td>
@@ -250,7 +397,8 @@ const TransactionsTable = () => {
             <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>📥 Choose Export Format</h2>
             
             <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>
-              Export all transactions as Excel or PDF
+              Export {filteredTransactions.length} matching transaction{filteredTransactions.length === 1 ? '' : 's'}.
+              {activeFilters.length > 0 && ` Active filters: ${activeFilters.join(' | ')}`}
             </p>
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>

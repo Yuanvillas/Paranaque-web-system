@@ -40,7 +40,7 @@ app.options('*', cors(corsOptions));
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://paranaque-web-system.onrender.com https://rqseuhdpktquhlqojoqg.supabase.co https://psgc.gitlab.io https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+    "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://paranaque-web-system.onrender.com https://rqseuhdpktquhlqojoqg.supabase.co https://psgc.gitlab.io https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
   );
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');

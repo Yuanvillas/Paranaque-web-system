@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-const PasswordInput = ({ value, onChange, onClick, name, placeholder }) => {
+const PasswordInput = ({ value, onChange, onClick, name, placeholder, preventClipboard = false }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const preventClipboardAction = preventClipboard ? (event) => event.preventDefault() : undefined;
 
   const toggleVisibility = () => {
     setShowPassword(!showPassword);
@@ -16,6 +17,9 @@ const PasswordInput = ({ value, onChange, onClick, name, placeholder }) => {
         name={name}
         value={value}
         onChange={onChange}
+        onCopy={preventClipboardAction}
+        onCut={preventClipboardAction}
+        onPaste={preventClipboardAction}
         placeholder={placeholder || "Enter password"}
         autoComplete="off"
         style={{ width: "100%", paddingRight: "2rem"}}
