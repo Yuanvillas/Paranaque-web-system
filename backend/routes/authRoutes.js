@@ -228,7 +228,7 @@ router.post('/login', async (req, res) => {
         ipAddress,
         userAgent
       }).save();
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'The account does not exist' });
     }
 
     if (!user.isVerified) {
@@ -261,7 +261,7 @@ router.post('/login', async (req, res) => {
         ipAddress,
         userAgent
       }).save();
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid password' });
     }
 
     // Log successful login
