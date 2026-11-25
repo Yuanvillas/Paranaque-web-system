@@ -71,7 +71,7 @@ router.post("/register", async (req, res) => {
     // Check for existing user
     const existingUser = await User.findOne({ email: emailLookupRegex(normalizedEmail) });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists." });
+      return res.status(400).json({ message: "User already exist" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -148,7 +148,7 @@ router.post("/register", async (req, res) => {
   } catch (err) {
     console.error("Error in /register route:", err);
     if (err.code === 11000) {
-      return res.status(400).json({ message: "Email already exists." });
+      return res.status(400).json({ message: "User already exist" });
     }
     return res.status(500).json({ message: 'Server error. Please check the backend logs.' });
   }
