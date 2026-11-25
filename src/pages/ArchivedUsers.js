@@ -73,6 +73,56 @@ const ArchivedUsers = () => {
     }
   };
 
+  const permanentlyDeleteAllUsers = async () => {
+    const confirmation = await Swal.fire({
+      title: "Permanently delete all archived users?",
+      text: `This will permanently delete ${archivedUsers.length} archived account record(s). Active accounts and transactions will not be deleted.`,
+      icon: "warning",
+      input: "text",
+      inputLabel: 'Type "admin" to confirm',
+      inputPlaceholder: "admin",
+      showCancelButton: true,
+      confirmButtonText: "Delete All",
+      confirmButtonColor: "#d33",
+      cancelButtonText: "Cancel",
+      inputValidator: (value) => {
+        if (value !== "admin") {
+          return 'You must type "admin" exactly to continue.';
+        }
+      },
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    try {
+      const res = await fetch("https://paranaque-web-system.onrender.com/api/auth/archived-users", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: confirmation.value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete archived users.");
+      }
+
+      setArchivedUsers([]);
+      await Swal.fire({
+        title: "Parañaledge",
+        text: `${data.deletedCount} archived user record(s) permanently deleted.`,
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+    } catch (err) {
+      console.error("Error permanently deleting all archived users:", err);
+      await Swal.fire({
+        title: "Parañaledge",
+        text: err.message || "Error deleting archived users.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
   const restoreUser = async (userId, userEmail) => {
     const confirm = window.confirm(
       `Are you sure you want to restore ${userEmail} to active users?`
@@ -127,7 +177,14 @@ const ArchivedUsers = () => {
           Back
         </button>
         <h1 style={styles.title}>Archived Users</h1>
-        <div style={{ width: '80px' }}></div>
+        <button
+          onClick={permanentlyDeleteAllUsers}
+          style={styles.deleteAllBtn}
+          disabled={archivedUsers.length === 0}
+        >
+          <FontAwesomeIcon icon={faTrash} style={{ marginRight: "8px" }} />
+          Delete All
+        </button>
       </div>
 
       {error && <div style={styles.errorMessage}>{error}</div>}
@@ -223,6 +280,19 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
     color: '#333',
+    transition: 'background-color 0.3s ease',
+  },
+  deleteAllBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px 16px',
+    backgroundColor: '#d32f2f',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#fff',
     transition: 'background-color 0.3s ease',
   },
   title: {

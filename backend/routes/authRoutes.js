@@ -611,6 +611,24 @@ router.get('/archived-users', async (req, res) => {
   }
 });
 
+// DELETE /archived-users - Permanently delete all archived users after confirmation
+router.delete('/archived-users', async (req, res) => {
+  if (req.body?.confirmation !== 'admin') {
+    return res.status(400).json({ error: 'Type "admin" to confirm permanent deletion.' });
+  }
+
+  try {
+    const result = await ArchivedUser.deleteMany({});
+    res.json({
+      message: 'All archived users permanently deleted.',
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    console.error("Error deleting all archived users:", err);
+    res.status(500).json({ error: 'Failed to delete archived users.' });
+  }
+});
+
 // DELETE /archived-users/:id - Permanently delete archived user
 router.delete('/archived-users/:id', async (req, res) => {
   try {
