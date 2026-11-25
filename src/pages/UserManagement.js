@@ -30,6 +30,7 @@ const UserManagement = () => {
     confirmPassword: "",
   });
   const [createErrors, setCreateErrors] = useState({});
+  const [createTouched, setCreateTouched] = useState({});
   const navigate = useNavigate();
 
   const ADMIN_PASSCODE = "1234";
@@ -156,49 +157,92 @@ const UserManagement = () => {
     setEditError("");
   };
 
-  const validateCreateField = (name, value) => {
-    let error = "";
+  const getCreateFieldError = (name, value, values = createForm) => {
     switch (name) {
       case "firstName":
       case "lastName":
-        if (!value.trim()) error = "This field is required.";
-        else if (!/^[a-zA-Z\s]+$/.test(value)) error = "Only letters and spaces are allowed.";
-        break;
+        if (!value.trim()) return "This field is required.";
+        if (value.trim().length < 2) return "Must be at least 2 characters.";
+        if (!/^[a-zA-Z\s]+$/.test(value)) return "Only letters and spaces are allowed.";
+        return "";
       case "contactNumber":
-        if (!/^09\d{9}$/.test(value)) error = "Must be 11 digits and start with '09'.";
-        break;
+        if (!/^09\d{9}$/.test(value)) return "Must be 11 digits and start with '09'.";
+        return "";
       case "email":
-        if (!value) {
-          error = "Email is required.";
-        } else {
-          if (!isValidEmail(value)) {
-            error = "Please enter a valid email address.";
-          }
-        }
-        break;
+        if (!value) return "Email is required.";
+        if (!isValidEmail(value)) return "Please enter a valid email address.";
+        return "";
       case "password":
-        if (!value) error = "Password is required.";
-        else if (
+        if (!value) return "Password is required.";
+        if (
           !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{8,}$/.test(value)
-        )
-          error = "Password must include uppercase, lowercase, number, special character.";
-        break;
+        ) return "Password must include uppercase, lowercase, number, special character.";
+        return "";
       case "confirmPassword":
-        if (value !== createForm.password) error = "Passwords do not match.";
-        break;
+        if (!value) return "Please confirm your password.";
+        if (value !== values.password) return "Passwords do not match.";
+        return "";
       case "address":
-        if (!value.trim()) error = "Address is required.";
-        break;
+        if (!value.trim()) return "Address is required.";
+        if (value.trim().length < 2) return "Address must be at least 2 characters.";
+        return "";
       default:
-        break;
+        return "";
     }
-    setCreateErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  const getCreateFieldFeedback = (name) => {
+    if (!createTouched[name]) return null;
+
+    const error = createErrors[name];
+    const validMessages = {
+      firstName: "Valid first name",
+      lastName: "Valid last name",
+      contactNumber: "Valid contact number",
+      email: "Valid email address",
+      password: "Password meets the requirements",
+      confirmPassword: "Passwords match",
+      address: "Valid address",
+    };
+
+    return (
+      <p
+        id={`${name}-feedback`}
+        className={`create-field-feedback ${error ? "error-text" : "valid-text"}`}
+        role="status"
+      >
+        {error || `✓ ${validMessages[name]}`}
+      </p>
+    );
   };
 
   const handleCreateChange = (e) => {
     const { name, value } = e.target;
-    setCreateForm((prev) => ({ ...prev, [name]: value }));
-    validateCreateField(name, value);
+    const updatedForm = { ...createForm, [name]: value };
+    setCreateForm(updatedForm);
+    setCreateTouched((prev) => ({ ...prev, [name]: true }));
+    setCreateErrors((prev) => ({
+      ...prev,
+      [name]: getCreateFieldError(name, value, updatedForm),
+      ...(name === "password" && createTouched.confirmPassword
+        ? {
+            confirmPassword: getCreateFieldError(
+              "confirmPassword",
+              updatedForm.confirmPassword,
+              updatedForm
+            ),
+          }
+        : {}),
+    }));
+  };
+
+  const handleCreateBlur = (e) => {
+    const { name, value } = e.target;
+    setCreateTouched((prev) => ({ ...prev, [name]: true }));
+    setCreateErrors((prev) => ({
+      ...prev,
+      [name]: getCreateFieldError(name, value),
+    }));
   };
 
   const handleCreateAccount = async (e) => {
@@ -206,12 +250,16 @@ const UserManagement = () => {
     
     // Validate all fields
     const fieldsToValidate = ["firstName", "lastName", "contactNumber", "email", "password", "confirmPassword", "address"];
-    let newErrors = {};
-    fieldsToValidate.forEach((field) => {
-      validateCreateField(field, createForm[field]);
-    });
+    const newErrors = fieldsToValidate.reduce((errors, field) => {
+      errors[field] = getCreateFieldError(field, createForm[field]);
+      return errors;
+    }, {});
+    setCreateErrors(newErrors);
+    setCreateTouched(
+      fieldsToValidate.reduce((touched, field) => ({ ...touched, [field]: true }), {})
+    );
 
-    if (Object.values(newErrors).some(err => err !== "")) {
+    if (Object.values(newErrors).some(Boolean)) {
       return;
     }
 
@@ -249,6 +297,7 @@ const UserManagement = () => {
           confirmPassword: "",
         });
         setCreateErrors({});
+        setCreateTouched({});
         fetchUsers();
       } else {
         Swal.fire({
@@ -281,6 +330,7 @@ const UserManagement = () => {
       confirmPassword: "",
     });
     setCreateErrors({});
+    setCreateTouched({});
   };
 
   const exportUsersToCSV = () => {
@@ -370,6 +420,7 @@ const UserManagement = () => {
                     confirmPassword: "",
                   });
                   setCreateErrors({});
+                  setCreateTouched({});
                 }}>
                   + Create New Account
                 </button>
@@ -688,7 +739,7 @@ const UserManagement = () => {
 
           {showCreateModal && (
             <div className="modal-overlay">
-              <div className="modal-content">
+              <div className="modal-content create-account-modal">
                 <h2>Create New Account</h2>
 
                 <input
@@ -696,74 +747,95 @@ const UserManagement = () => {
                   name="firstName"
                   value={createForm.firstName}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.firstName && createErrors.firstName)}
+                  aria-describedby="firstName-feedback"
+                  className={`modal-input ${createTouched.firstName ? (createErrors.firstName ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="First Name"
                 />
-                {createErrors.firstName && <p className="error-text">{createErrors.firstName}</p>}
+                {getCreateFieldFeedback("firstName")}
 
                 <input
                   type="text"
                   name="lastName"
                   value={createForm.lastName}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.lastName && createErrors.lastName)}
+                  aria-describedby="lastName-feedback"
+                  className={`modal-input ${createTouched.lastName ? (createErrors.lastName ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Last Name"
                 />
-                {createErrors.lastName && <p className="error-text">{createErrors.lastName}</p>}
+                {getCreateFieldFeedback("lastName")}
 
                 <input
                   type="text"
                   name="contactNumber"
                   value={createForm.contactNumber}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.contactNumber && createErrors.contactNumber)}
+                  aria-describedby="contactNumber-feedback"
+                  className={`modal-input ${createTouched.contactNumber ? (createErrors.contactNumber ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Contact Number (09XXXXXXXXX)"
                 />
-                {createErrors.contactNumber && <p className="error-text">{createErrors.contactNumber}</p>}
+                {getCreateFieldFeedback("contactNumber")}
 
                 <input
                   type="email"
                   name="email"
                   value={createForm.email}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.email && createErrors.email)}
+                  aria-describedby="email-feedback"
+                  className={`modal-input ${createTouched.email ? (createErrors.email ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Email"
                   autoComplete="off"
                 />
-                {createErrors.email && <p className="error-text">{createErrors.email}</p>}
+                {getCreateFieldFeedback("email")}
 
                 <input
                   type="text"
                   name="address"
                   value={createForm.address}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.address && createErrors.address)}
+                  aria-describedby="address-feedback"
+                  className={`modal-input ${createTouched.address ? (createErrors.address ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Address"
                   autoComplete="off"
                 />
-                {createErrors.address && <p className="error-text">{createErrors.address}</p>}
+                {getCreateFieldFeedback("address")}
 
                 <input
                   type="password"
                   name="password"
                   value={createForm.password}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.password && createErrors.password)}
+                  aria-describedby="password-feedback"
+                  className={`modal-input ${createTouched.password ? (createErrors.password ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Password"
                   autoComplete="new-password"
                 />
-                {createErrors.password && <p className="error-text">{createErrors.password}</p>}
+                {getCreateFieldFeedback("password")}
 
                 <input
                   type="password"
                   name="confirmPassword"
                   value={createForm.confirmPassword}
                   onChange={handleCreateChange}
-                  className="modal-input"
+                  onBlur={handleCreateBlur}
+                  aria-invalid={Boolean(createTouched.confirmPassword && createErrors.confirmPassword)}
+                  aria-describedby="confirmPassword-feedback"
+                  className={`modal-input ${createTouched.confirmPassword ? (createErrors.confirmPassword ? "is-invalid" : "is-valid") : ""}`}
                   placeholder="Confirm Password"
                   autoComplete="new-password"
                 />
-                {createErrors.confirmPassword && <p className="error-text">{createErrors.confirmPassword}</p>}
+                {getCreateFieldFeedback("confirmPassword")}
 
                 <div className="modal-actions">
                   <button className="modal-save" onClick={handleCreateAccount}>Create</button>

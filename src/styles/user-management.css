@@ -19,12 +19,26 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+.create-account-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
 .modal-input {
   width: 94%;
   padding: 10px;
   margin: 10px 0;
   border-radius: 5px;
   border: 1px solid #ccc;
+}
+
+.modal-input.is-invalid {
+  border-color: #f44336;
+}
+
+.modal-input.is-valid {
+  border-color: #4caf50;
 }
 
 .modal-actions {
@@ -53,6 +67,17 @@
 .error-text {
   color: red;
   margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+.valid-text {
+  color: #2e7d32;
+  font-size: 0.8rem;
+}
+
+.create-field-feedback {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
 }
 
 
