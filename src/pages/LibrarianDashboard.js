@@ -103,6 +103,19 @@ const LibrarianDashboard = () => {
     setSelectedSubResource(option);
   };
 
+  const openPendingRequests = () => {
+    setShowRequestsModal(false);
+    setSelectedResource("Resources");
+    setSelectedSubResource("Pending Requests");
+    setCurrentPage(1);
+    window.setTimeout(() => {
+      document.getElementById("pending-requests-section")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }, 0);
+  };
+
   useEffect(() => {
     const fetchEntryStats = async () => {
       try {
@@ -1234,7 +1247,9 @@ const LibrarianDashboard = () => {
           )}
 
           {selectedSubResource === "Pending Requests" && (
-            <PendingRequestTable />
+            <div id="pending-requests-section">
+              <PendingRequestTable />
+            </div>
           )}
 
           {selectedSubResource === "Reserved Books" && (
@@ -2284,7 +2299,7 @@ const LibrarianDashboard = () => {
                   <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Pending Requests</h2>
                   <div>
                     <button
-                      onClick={() => exportToCSV(requestsData, 'pending_requests.csv')}
+                      onClick={openPendingRequests}
                       style={{
                         backgroundColor: '#00BFA5',
                         color: 'white',
@@ -2296,7 +2311,7 @@ const LibrarianDashboard = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📥 Export CSV
+                      View Pending Requests
                     </button>
                     <button
                       onClick={() => setShowRequestsModal(false)}
