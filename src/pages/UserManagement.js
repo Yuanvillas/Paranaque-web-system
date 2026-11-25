@@ -47,6 +47,9 @@ const UserManagement = () => {
   const navigate = useNavigate();
 
   const ADMIN_PASSCODE = "1234";
+  const getUserRole = (user) =>
+    typeof user.role === "string" ? user.role.trim().toLowerCase() : "user";
+  const countUsersByRole = (role) => users.filter((user) => getUserRole(user) === role).length;
 
   useEffect(() => {
     try {
@@ -593,7 +596,10 @@ const UserManagement = () => {
                 type="text"
                 placeholder="Search by name, email, or contact number..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -610,7 +616,10 @@ const UserManagement = () => {
             <div className="um-filter-buttons" style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button 
                 className={`um-filter-btn ${filterRole === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterRole('all')}
+                onClick={() => {
+                  setFilterRole('all');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -625,7 +634,10 @@ const UserManagement = () => {
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'user' ? 'active' : ''}`}
-                onClick={() => setFilterRole('user')}
+                onClick={() => {
+                  setFilterRole('user');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -636,11 +648,14 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Regular Users ({users.filter(u => u.role === 'user').length})
+                Regular Users ({countUsersByRole('user')})
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'librarian' ? 'active' : ''}`}
-                onClick={() => setFilterRole('librarian')}
+                onClick={() => {
+                  setFilterRole('librarian');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -651,11 +666,14 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Librarians ({users.filter(u => u.role === 'librarian').length})
+                Librarians ({countUsersByRole('librarian')})
               </button>
               <button 
                 className={`um-filter-btn ${filterRole === 'admin' ? 'active' : ''}`}
-                onClick={() => setFilterRole('admin')}
+                onClick={() => {
+                  setFilterRole('admin');
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -666,7 +684,7 @@ const UserManagement = () => {
                   fontWeight: 'bold'
                 }}
               >
-                Admins ({users.filter(u => u.role === 'admin').length})
+                Admins ({countUsersByRole('admin')})
               </button>
             </div>
 
@@ -675,7 +693,7 @@ const UserManagement = () => {
             ) : (() => {
               // Filter users based on role and search
               const filteredUsers = users
-                .filter(user => filterRole === 'all' || user.role === filterRole)
+                .filter(user => filterRole === 'all' || getUserRole(user) === filterRole)
                 .filter(user => {
                   const searchLower = searchQuery.toLowerCase();
                   const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
@@ -769,51 +787,53 @@ const UserManagement = () => {
                             </td>
                           </tr>
                         ) : (
-                          paginatedUsers.map((user, idx) => (
-                          <tr 
-                            key={idx} 
-                            className={`um-row um-row-${user.role}`}
-                            style={{
-                              borderLeft: user.role === 'admin' ? '4px solid #F44336' : 
-                                          user.role === 'librarian' ? '4px solid #FF9800' : 
-                                          '4px solid #2196F3',
-                              backgroundColor: user.role === 'admin' ? '#FFEBEE' : 
-                                              user.role === 'librarian' ? '#FFF3E0' : 
-                                              'transparent'
-                            }}
-                          >
-                            <td>{user.firstName} {user.lastName}</td>
-                            <td>{user.email}</td>
-                            <td>{user.contactNumber}</td>
-                            <td>{user.address}</td>
-
-                            <td>
-                              <select
-                                name="role"
-                                className="um-select"
-                                value={editForm.role}
-                                onChange={(e) => handleChangeUserRole(e, user._id)}
-                                defaultValue={user.role}
+                          paginatedUsers.map((user) => {
+                            const role = getUserRole(user);
+                            return (
+                              <tr
+                                key={user._id}
+                                className={`um-row um-row-${role}`}
                                 style={{
-                                  fontWeight: 'bold',
-                                  color: user.role === 'admin' ? '#F44336' : 
-                                         user.role === 'librarian' ? '#FF9800' : 
-                                         '#2196F3'
+                                  borderLeft: role === 'admin' ? '4px solid #F44336' :
+                                    role === 'librarian' ? '4px solid #FF9800' :
+                                      '4px solid #2196F3',
+                                  backgroundColor: role === 'admin' ? '#FFEBEE' :
+                                    role === 'librarian' ? '#FFF3E0' :
+                                      'transparent'
                                 }}
                               >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                                <option value="librarian">Librarian</option>
-                              </select>
-                            </td>
+                                <td>{user.firstName} {user.lastName}</td>
+                                <td>{user.email}</td>
+                                <td>{user.contactNumber}</td>
+                                <td>{user.address}</td>
 
-                            <td className="um-actions">
-                              <button onClick={() => startEdit(user)} className="um-btn um-edit">Edit</button>
-                              <button onClick={() => deleteUser(user._id)} className="um-btn um-delete">Archive</button>
-                              <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">History</button>
-                            </td>
-                          </tr>
-                        ))
+                                <td>
+                                  <select
+                                    name="role"
+                                    className="um-select"
+                                    value={role}
+                                    onChange={(e) => handleChangeUserRole(e, user._id)}
+                                    style={{
+                                      fontWeight: 'bold',
+                                      color: role === 'admin' ? '#F44336' :
+                                        role === 'librarian' ? '#FF9800' :
+                                          '#2196F3'
+                                    }}
+                                  >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="librarian">Librarian</option>
+                                  </select>
+                                </td>
+
+                                <td className="um-actions">
+                                  <button onClick={() => startEdit(user)} className="um-btn um-edit">Edit</button>
+                                  <button onClick={() => deleteUser(user._id)} className="um-btn um-delete">Archive</button>
+                                  <button onClick={() => handleViewHistory(user.email)} className="um-btn um-save">History</button>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
