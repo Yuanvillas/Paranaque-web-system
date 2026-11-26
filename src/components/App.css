@@ -2393,8 +2393,16 @@ input[type=password]::-ms-clear
 }
 
 .user-home-borrow-form {
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex-wrap: wrap;
+}
+
+.user-home-borrow-form .modal-btn,
+.user-home-reserve-form > .modal-btn {
+  min-width: 180px;
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 14px;
 }
 
 .user-home-limit-warning {
@@ -2406,7 +2414,7 @@ input[type=password]::-ms-clear
 
 .user-home-reserve-form {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 260px) 180px;
   align-items: end !important;
 }
 
@@ -2421,7 +2429,7 @@ input[type=password]::-ms-clear
 
 .user-home-reserve-form input {
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   box-sizing: border-box;
 }
 
@@ -2470,6 +2478,12 @@ input[type=password]::-ms-clear
 
   .user-home-reserve-form {
     display: flex !important;
+  }
+
+  .user-home-borrow-form .modal-btn,
+  .user-home-reserve-form > .modal-btn {
+    width: 100%;
+    min-width: 0;
   }
 
   .user-home-book-cancel {
