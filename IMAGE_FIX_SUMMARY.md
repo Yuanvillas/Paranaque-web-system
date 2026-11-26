@@ -260,7 +260,7 @@ curl https://your-api-url/api/books/diagnostic/images
 Ensure these are set in `backend/.env`:
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://rqseuhdpktquhlqojoqg.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+EXPO_PUBLIC_SUPABASE_ANON_KEY=[REDACTED - set in deployment environment]
 ```
 
 ## Summary of Changes

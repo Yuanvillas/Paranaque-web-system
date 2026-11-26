@@ -103,7 +103,7 @@ const getResend = () => {
 **Lines:** 18-19
 
 ```
-RESEND_API_KEY=re_7y76JuJp_MaLBgTadkzUsd6RGK57FJeWP
+RESEND_API_KEY=[REDACTED - set in deployment environment]
 EMAIL_FROM=Paranaledge Library <noreply@paranaledge.online>
 ```
 

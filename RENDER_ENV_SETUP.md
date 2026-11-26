@@ -1,75 +1,25 @@
-# 🚀 Render Environment Variables - Quick Reference
+# Render Environment Setup
 
-## How to Use This Guide
+The Express backend serves the chatbot endpoint at `/api/ai/chat`. Configure provider keys on the Render backend service only. Never put provider keys in the frontend or commit them to this repository.
 
-1. Go to: https://dashboard.render.com
-2. Click on your backend service
-3. Click "Environment" tab
-4. Add/update each variable below
-5. Click "Save Changes"
-6. Wait 2-5 minutes for redeploy
+## OpenAI chatbot
 
----
+In the Render dashboard, open the web service, choose **Environment**, and add:
 
-## 📋 Environment Variables to Set
+| Variable | Value |
+| --- | --- |
+| `AI_PROVIDER` | `openai` |
+| `OPENAI_API_KEY` | Your OpenAI API key, stored as a secret in Render |
+| `OPENAI_MODEL` | `gpt-4o-mini` (or another model enabled for your API project) |
 
-### Copy these EXACTLY:
+Keep existing backend variables such as `MONGO_URI`, `RESEND_API_KEY`, and other service credentials configured in Render. Save changes and wait for Render to redeploy. Check the service logs for `[OpenAI] Successfully got response` after sending a chat message.
 
-```
-GMAIL_USER=yuanvillas89@gmail.com
-GMAIL_PASS=gnae rdti lzej rgdh
-MONGO_URI=mongodb+srv://User:Library@cluster0.pteo7.mongodb.net/libraryDB
-PORT=5050
-EXPO_PUBLIC_SUPABASE_URL=https://rqseuhdpktquhlqojoqg.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxc2V1aGRwa3RxdWhscW9qb3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0Mjg3OTYsImV4cCI6MjA3NjAwNDc5Nn0.-4NHkB9A7duUm60V-vT_g0b0CwMfxk0bK5UcoerpDC0
-AI_PROVIDER=mock
-AI_ENDPOINT=https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent
-GOOGLE_API_KEY=your_new_google_api_key_here
-```
+The OpenAI key is used only by the backend. Do not create a `REACT_APP_OPENAI_API_KEY` or add the key to Vercel.
 
----
+## Frontend on Vercel
 
-## 🎯 Key Settings Explained
+The frontend already posts chat messages to the backend URL in `src/config/api.js`. If deploying the frontend separately on Vercel, set `REACT_APP_API_URL` to the public Render backend URL, then redeploy the frontend. Do not set any AI provider key in Vercel.
 
-| Variable | Purpose | Current Value |
-|----------|---------|----------------|
-| **AI_PROVIDER** | Which AI to use | `mock` (no API needed) |
-| **GOOGLE_API_KEY** | Google Gemini key | `your_new_google_api_key_here` (placeholder) |
-| **MONGO_URI** | Database connection | Your MongoDB cluster |
-| **GMAIL_USER/PASS** | Email notifications | Your Gmail credentials |
+## Rotating exposed credentials
 
----
-
-## ✅ What This Fixes
-
-- ✅ Removes leaked API key error
-- ✅ AI chatbot works in mock mode
-- ✅ Searches real MongoDB database
-- ✅ Returns real books from inventory
-- ✅ No API setup needed
-
----
-
-## 🔄 After Saving
-
-1. Render will **auto-redeploy** (2-5 minutes)
-2. Watch the **"Deploys"** tab for status
-3. Test chatbot at your Vercel URL once done
-4. Click 💬 and ask "Find me a book"
-
----
-
-## 🆘 If You Want Real Google AI Later
-
-Replace `AI_PROVIDER=mock` with:
-```
-AI_PROVIDER=google
-GOOGLE_API_KEY=[your_new_key_from_makersuite.google.com]
-```
-
-Then save and redeploy.
-
----
-
-**Created:** December 18, 2025
-**Status:** Ready for deployment
+If a provider or service credential was previously committed to the repository, revoke or rotate it in that provider's dashboard, then update the corresponding secret in Render. Removing a value from the current files does not erase it from the repository's earlier history.

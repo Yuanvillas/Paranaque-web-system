@@ -6,7 +6,9 @@ require('dotenv').config();
 const fixTransactionEndDates = async () => {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/paranaque');
+    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+    if (!mongoUri) throw new Error('Set MONGO_URI before running this migration script');
+    await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 
     // Find all transactions without endDate

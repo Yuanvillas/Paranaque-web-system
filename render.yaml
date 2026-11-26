@@ -15,13 +15,17 @@ services:
         value: https://paranaque-web-system.onrender.com
       - key: FRONTEND_URL
         value: https://paranaque-web-system.onrender.com
-      - key: MONGO_URI
-        value: mongodb+srv://User:Library@cluster0.pteo7.mongodb.net/libraryDB
       - key: GOOGLE_API_KEY
-        value: AIzaSyBCzWBrxeSTOAuTJQQShzc2oKb0jHXWuDM
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
       - key: RESEND_API_KEY
-        value: re_7y76JuJp_MaLBgTadkzUsd6RGK57FJeWP
+        sync: false
+      - key: MONGO_URI
+        sync: false
       - key: EMAIL_FROM
         value: Paranaledge Library <noreply@paranaledge.online>
       - key: AI_PROVIDER
-        value: mock
+        value: openai

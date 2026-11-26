@@ -952,117 +952,35 @@ const UserHome = () => {
                     {selectedBook.reservedAt && <p><strong>Reserved At:</strong> {new Date(selectedBook.reservedAt).toLocaleString()}</p>}
                     {selectedBook.reserveUntil && <p><strong>Reserve Until:</strong> {new Date(selectedBook.reserveUntil).toLocaleString()}</p>}
                   </div>
-                </div>
-              </div>
-
-              <div className="modal-inputs user-home-book-actions">
-                <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
-                  <p style={{ margin: '0', fontSize: '13px', color: '#e65100', fontWeight: '500' }}>
-                    📌 <strong>Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.
-                  </p>
-                </div>
-                <div className="modal-form">
-                  {(() => {
-                    const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
-                    const activeBorrowedCount = borrowedBooks.filter(b => b.status === 'active').length;
-                    const isLimitReached = activeBorrowedCount >= 3;
-                    const isDisabled = isBookUnavailable || isLimitReached;
-                    return (
-                      <>
-                        <button
-                          className="modal-btn green"
-                          onClick={handleBorrow}
-                          disabled={isDisabled}
-                          style={{ 
-                            opacity: isDisabled ? 0.6 : 1, 
-                            cursor: isDisabled ? 'not-allowed' : 'pointer',
-                            backgroundColor: isLimitReached ? '#d1d5db' : '#4CAF50'
-                          }}
-                          title={isLimitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}
-                        >
-                          Confirm Borrow
-                        </button>
-                        {isLimitReached && (
-                          <p style={{ color: '#d32f2f', fontSize: '12px', marginTop: '8px' }}>
-                            ⚠️ Borrowing limit reached (3/3 books). Return some books to continue.
-                          </p>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-
-                <div className="modal-form">
-                  <label>
-                    Reserve date:
-                    <input
-                      type="date"
-                      value={reserveDate}
-                      min={today}
-                      max={max}
-                      onChange={(e) => setReserveDate(e.target.value)}
-                    />
-                  </label>
-                  <button
-                    className="modal-btn blue"
-                    onClick={handleReserve}
-                    disabled={((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0)}
-                    style={{ opacity: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 0.6 : 1, cursor: ((selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0) ? 'not-allowed' : 'pointer' }}
-                  >
-                    Confirm Reserve
-                  </button>
-                </div>
-
-                {(() => {
-                  const isBookUnavailable = (selectedBook ? (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) : 0) <= 0;
-                  const userHasHold = userHolds.some(h => h.bookId._id === selectedBook._id && h.status === 'active');
-                  
-                  return isBookUnavailable ? (
-                    <div className="modal-form" style={{ backgroundColor: '#e3f2fd', border: '1px solid #90caf9', borderRadius: '6px', padding: '12px' }}>
-                      <div style={{ marginBottom: '12px' }}>
-                        <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#1976d2', fontWeight: '600' }}>
-                          📚 Book Currently Unavailable
-                        </p>
-                        <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#1565c0' }}>
-                          This book is not available right now, but you can place a hold to be notified when it becomes available!
-                        </p>
-                      </div>
-                      {userHasHold ? (
-                        <div style={{ padding: '8px', backgroundColor: '#c8e6c9', borderRadius: '4px', border: '1px solid #81c784' }}>
-                          <p style={{ margin: '0', fontSize: '12px', color: '#2e7d32', fontWeight: '500' }}>
-                            ✓ You already have a hold on this book
-                          </p>
-                          {userHolds.find(h => h.bookId._id === selectedBook._id && h.status === 'active') && (
-                            <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#388e3c' }}>
-                              Position in queue: #{userHolds.find(h => h.bookId._id === selectedBook._id).queuePosition}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          className="modal-btn"
-                          onClick={handlePlaceHold}
-                          style={{ 
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            padding: '10px 16px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            width: '100%',
-                            fontWeight: '600',
-                            fontSize: '14px'
-                          }}
-                        >
-                          📋 Place a Hold
-                        </button>
-                      )}
+                  <div className="modal-inputs user-home-book-actions">
+                    <div className="user-home-borrowing-limit">
+                      <p><strong>📌 Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.</p>
                     </div>
-                  ) : null;
-                })()}
-
-                <button className="modal-btn cancel" onClick={closeModal}>Cancel</button>
+                    <div className="modal-form user-home-borrow-form">
+                      {(() => {
+                        const unavailable = (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0;
+                        const limitReached = borrowedBooks.filter(b => b.status === 'active').length >= 3;
+                        const disabled = unavailable || limitReached;
+                        return <>
+                          <button className="modal-btn green" onClick={handleBorrow} disabled={disabled} style={{ opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer', backgroundColor: limitReached ? '#d1d5db' : '#4CAF50' }} title={limitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}>Confirm Borrow</button>
+                          {limitReached && <p className="user-home-limit-warning">⚠️ Borrowing limit reached (3/3 books). Return some books to continue.</p>}
+                        </>;
+                      })()}
+                    </div>
+                    <div className="modal-form user-home-reserve-form">
+                      <label>Reserve date:<input type="date" value={reserveDate} min={today} max={max} onChange={(e) => setReserveDate(e.target.value)} /></label>
+                      <button className="modal-btn blue" onClick={handleReserve} disabled={(selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0}>Confirm Reserve</button>
+                    </div>
+                    {(() => {
+                      const unavailable = (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0;
+                      const userHasHold = userHolds.some(h => h.bookId._id === selectedBook._id && h.status === 'active');
+                      return unavailable ? <div className="modal-form user-home-hold-panel"><p><strong>📚 Book Currently Unavailable</strong></p><p>This book is not available right now, but you can place a hold to be notified when it becomes available.</p>{userHasHold ? <p>✓ You already have a hold on this book</p> : <button className="modal-btn" onClick={handlePlaceHold}>Place a Hold</button>}</div> : null;
+                    })()}
+                  </div>
+                </div>
               </div>
+
+                <button className="modal-btn cancel user-home-book-cancel" onClick={closeModal}>Cancel</button>
             </div>
           </div>
         </div>
