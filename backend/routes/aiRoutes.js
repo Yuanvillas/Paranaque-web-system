@@ -10,7 +10,8 @@ const User = require('../models/User');
  *
  * This route handles chat requests with enhanced book-finding capabilities.
  * Configuration (env):
- * - AI_PROVIDER: 'openai' | 'google' | 'mock' (default 'mock')
+ * - AI_PROVIDER: 'openrouter' | 'openai' | 'google' | 'mock' (default 'mock')
+ * - OPENROUTER_API_KEY and optional OPENROUTER_MODEL for OpenRouter
  * - OPENAI_API_KEY and optional OPENAI_MODEL for OpenAI
  * - GOOGLE_API_KEY for Google Gemini
  */
@@ -250,8 +251,56 @@ router.post('/chat', async (req, res) => {
 
     const systemPrompt = buildSystemPrompt(contextBooks, isLibraryQuery);
 
-    // Use the configured provider. OpenAI is selected explicitly with AI_PROVIDER=openai.
+    // Use the configured provider.
     const aiProvider = (process.env.AI_PROVIDER || 'mock').trim().toLowerCase();
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+
+    if (aiProvider === 'openrouter' && openrouterApiKey && !openrouterApiKey.includes('your_')) {
+      console.log('[AI Chat] Attempting OpenRouter API...');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      try {
+        const openrouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openrouterApiKey}`,
+            'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'http://localhost:3000',
+            'X-OpenRouter-Title': process.env.OPENROUTER_APP_NAME || 'Paranaque Library Chatbot'
+          },
+          body: JSON.stringify({
+            model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: message }
+            ],
+            max_tokens: 600,
+            temperature: 0.7
+          }),
+          signal: controller.signal
+        });
+
+        if (!openrouterRes.ok) {
+          const errorData = await openrouterRes.json().catch(() => ({}));
+          throw new Error(`OpenRouter error (${openrouterRes.status}): ${errorData?.error?.message || 'Unknown API error'}`);
+        }
+
+        const openrouterData = await openrouterRes.json();
+        const reply = openrouterData?.choices?.[0]?.message?.content?.trim();
+        if (!reply) throw new Error('Empty response from OpenRouter');
+
+        console.log('[OpenRouter] Successfully got response');
+        return res.json({ reply, provider: 'openrouter', books: contextBooks });
+      } catch (err) {
+        console.error('[OpenRouter] Error:', err.message);
+        console.warn('[OpenRouter] Falling back to mock mode with real library data');
+      } finally {
+        clearTimeout(timeout);
+      }
+    } else if (aiProvider === 'openrouter') {
+      console.warn('[OpenRouter] AI_PROVIDER is openrouter but OPENROUTER_API_KEY is missing; using mock mode');
+    }
+
     const openaiApiKey = process.env.OPENAI_API_KEY;
 
     if (aiProvider === 'openai' && openaiApiKey && !openaiApiKey.includes('your_')) {
