@@ -947,10 +947,34 @@ const UserHome = () => {
                     {selectedBook.reservedAt && <p><strong>Reserved At:</strong> {new Date(selectedBook.reservedAt).toLocaleString()}</p>}
                     {selectedBook.reserveUntil && <p><strong>Reserve Until:</strong> {new Date(selectedBook.reserveUntil).toLocaleString()}</p>}
                   </div>
+                  <div className="modal-inputs user-home-book-actions">
+                    <div className="user-home-borrowing-limit">
+                      <p><strong>📌 Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.</p>
+                    </div>
+                    <div className="modal-form">
+                      {(() => {
+                        const unavailable = (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0;
+                        const limitReached = borrowedBooks.filter(b => b.status === 'active').length >= 3;
+                        const disabled = unavailable || limitReached;
+                        return <>
+                          <button className="modal-btn green" onClick={handleBorrow} disabled={disabled} style={{ opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer', backgroundColor: limitReached ? '#d1d5db' : '#4CAF50' }} title={limitReached ? 'You have reached the maximum borrowing limit of 3 books' : ''}>Confirm Borrow</button>
+                          {limitReached && <p className="user-home-limit-warning">⚠️ Borrowing limit reached (3/3 books). Return some books to continue.</p>}
+                        </>;
+                      })()}
+                    </div>
+                    <div className="modal-form">
+                      <label>Reserve date:<input type="date" value={reserveDate} min={today} max={max} onChange={(e) => setReserveDate(e.target.value)} /></label>
+                      <button className="modal-btn blue" onClick={handleReserve} disabled={(selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0}>Confirm Reserve</button>
+                    </div>
+                    {(() => {
+                      const unavailable = (selectedBook.availableStock ?? selectedBook.available ?? selectedBook.stock ?? 0) <= 0;
+                      const userHasHold = userHolds.some(h => h.bookId._id === selectedBook._id && h.status === 'active');
+                      return unavailable ? <div className="modal-form user-home-hold-panel"><p><strong>📚 Book Currently Unavailable</strong></p><p>This book is not available right now, but you can place a hold to be notified when it becomes available.</p>{userHasHold ? <p>✓ You already have a hold on this book</p> : <button className="modal-btn" onClick={handlePlaceHold}>Place a Hold</button>}</div> : null;
+                    })()}
+                  </div>
                 </div>
               </div>
-
-              <div className="modal-inputs user-home-book-actions">
+              <div className="user-home-book-actions-legacy">
                 <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
                   <p style={{ margin: '0', fontSize: '13px', color: '#e65100', fontWeight: '500' }}>
                     📌 <strong>Borrowing Limit:</strong> You can only borrow up to 3 books at a time. Return a book to borrow another one.
