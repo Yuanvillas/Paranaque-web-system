@@ -407,7 +407,7 @@ router.get('/categories', async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const { genre, status, category } = req.query;
+  const { genre, status, category, search } = req.query;
   console.log("📚 api/books - GET called with genre:", genre, "category:", category, "status:", status);
 
   try {
@@ -467,6 +467,27 @@ router.get("/", async (req, res) => {
         : statusFilter;
     } else {
       filter = categoryFilter;
+    }
+
+    const searchTerm = typeof search === 'string' ? search.trim() : '';
+    if (searchTerm) {
+      const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchPattern = { $regex: escapedSearch, $options: 'i' };
+      const searchFilter = {
+        $or: [
+          { title: searchPattern },
+          { author: searchPattern },
+          { accessionNumber: searchPattern },
+          { callNumber: searchPattern },
+          { category: searchPattern },
+          { subject: searchPattern },
+          { publisher: searchPattern },
+          { genre: searchPattern }
+        ]
+      };
+      filter = Object.keys(filter).length
+        ? { $and: [filter, searchFilter] }
+        : searchFilter;
     }
 
     console.log("📊 Filter:", filter);

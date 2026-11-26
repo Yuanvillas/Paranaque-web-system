@@ -109,14 +109,17 @@ const UserHome = () => {
     const categoryQuery = categoryFilter !== "all"
       ? `&category=${encodeURIComponent(categoryFilter)}`
       : "";
-    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}`)
+    const searchQuery = searchTerm.trim()
+      ? `&search=${encodeURIComponent(searchTerm.trim())}`
+      : "";
+    fetch(`https://paranaque-web-system.onrender.com/api/books?page=${page}&limit=${limit}${categoryQuery}${searchQuery}`)
       .then((res) => res.json())
       .then((data) => {
         setBooks(data.books || []);
         setTotalPages(data.totalPages || 1);
       })
       .catch(console.error);
-  }, [page, categoryFilter]);
+  }, [page, categoryFilter, searchTerm]);
 
   const fetchBookmarks = useCallback(async () => {
     try {
@@ -216,8 +219,13 @@ const UserHome = () => {
   }, [fetchBookmarks, fetchUserTransactions, fetchUserHolds]);
 
   useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
+    const timeout = setTimeout(fetchBooks, searchTerm.trim() ? 250 : 0);
+    return () => clearTimeout(timeout);
+  }, [fetchBooks, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -570,9 +578,6 @@ const UserHome = () => {
   };
 
   const filteredBooks = books.filter((book) => {
-    const matchesSearch = (book.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (book.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    
     const avail = book.availableStock ?? book.available ?? book.stock ?? 0;
     let matchesAvailability = true;
     
@@ -587,7 +592,7 @@ const UserHome = () => {
       matchesCategory = book.category === categoryFilter;
     }
 
-    return matchesSearch && matchesAvailability && matchesCategory;
+    return matchesAvailability && matchesCategory;
   });
 
   const today = new Date().toISOString().split("T")[0];
