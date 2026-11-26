@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
-const { GoogleAuth } = require('google-auth-library');
 const Book = require('../models/Book');
 const User = require('../models/User');
 
@@ -11,9 +10,9 @@ const User = require('../models/User');
  *
  * This route handles chat requests with enhanced book-finding capabilities.
  * Configuration (env):
- * - AI_PROVIDER: 'google' | 'openai' | 'mock' (default 'mock')
- * - AI_ENDPOINT: full REST URL to call (when using 'google')
- * - GOOGLE_API_KEY or OPENAI_API_KEY for API authentication
+ * - AI_PROVIDER: 'openai' | 'google' | 'mock' (default 'mock')
+ * - OPENAI_API_KEY and optional OPENAI_MODEL for OpenAI
+ * - GOOGLE_API_KEY for Google Gemini
  */
 
 // Helper function to detect if query is library-related
@@ -251,10 +250,58 @@ router.post('/chat', async (req, res) => {
 
     const systemPrompt = buildSystemPrompt(contextBooks, isLibraryQuery);
 
-    // Try Google Gemini API first (free tier: 50 req/min)
+    // Use the configured provider. OpenAI is selected explicitly with AI_PROVIDER=openai.
+    const aiProvider = (process.env.AI_PROVIDER || 'mock').trim().toLowerCase();
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+
+    if (aiProvider === 'openai' && openaiApiKey && !openaiApiKey.includes('your_')) {
+      console.log('[AI Chat] Attempting OpenAI API...');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      try {
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiApiKey}`
+          },
+          body: JSON.stringify({
+            model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: message }
+            ],
+            max_tokens: 600,
+            temperature: 0.7
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!openaiRes.ok) {
+          const errorData = await openaiRes.json().catch(() => ({}));
+          throw new Error(`OpenAI error (${openaiRes.status}): ${errorData?.error?.message || 'Unknown API error'}`);
+        }
+
+        const openaiData = await openaiRes.json();
+        const reply = openaiData?.choices?.[0]?.message?.content?.trim();
+        if (!reply) throw new Error('Empty response from OpenAI');
+
+        console.log('[OpenAI] Successfully got response');
+        return res.json({ reply, provider: 'openai', books: contextBooks });
+      } catch (err) {
+        clearTimeout(timeout);
+        console.error('[OpenAI] Error:', err.message);
+        console.warn('[OpenAI] Falling back to mock mode with real library data');
+      }
+    } else if (aiProvider === 'openai') {
+      console.warn('[OpenAI] AI_PROVIDER is openai but OPENAI_API_KEY is missing; using mock mode');
+    }
+
+    // Google remains available when explicitly selected.
     const googleApiKey = process.env.GOOGLE_API_KEY;
     
-    if (googleApiKey && !googleApiKey.includes('your_')) {
+    if (aiProvider === 'google' && googleApiKey && !googleApiKey.includes('your_')) {
       console.log('[AI Chat] 🚀 Attempting Google Gemini API...');
       console.log('[Google] API Key configured:', !!googleApiKey);
       console.log('[Google] Books in context:', contextBooks.length);

@@ -197,8 +197,8 @@ http://localhost:3000
 ```
 AI_PROVIDER=google              # Currently using Google Gemini
 AI_ENDPOINT=[Google API URL]    # Gemini API endpoint
-GOOGLE_API_KEY=[your key]       # Google API authentication
-MONGO_URI=mongodb+srv://...     # Database connection
+GOOGLE_API_KEY=[REDACTED - set in deployment environment]
+MONGO_URI=mongodb+srv://[REDACTED]     # Database connection
 ```
 
 ### Database Query
